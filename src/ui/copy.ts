@@ -62,8 +62,36 @@ export const scene2 = {
   },
 };
 
+export const scene3 = {
+  kicker: "Scene 3",
+  title: "Add the wobble",
+  paragraphs: [
+    "Now we send a secret message through the grid: one bit, a 0 or a 1. The surprise is what keeps it secret. It is not the key alone. It is a small random shake we give the ball, called the wobble. Without the wobble, the public key is enough to read the message. With it, only the private key can.",
+    "Sending. Pick any dot (the public key can do that). For a 0, put the ball on the dot. For a 1, push it half a step to the side. Then shake it a little. Where the ball lands is the encrypted message. Press “Send 0” or “Send 1” to watch.",
+    "Reading. Round the ball to the nearest dot using your own arrows, then look at the leftover: near nothing means 0, near half a step means 1. Two readers try every ball. The owner (green, private key) rounds with the short arrows and gets it right. The eavesdropper (red, public key) rounds with the long arrows, lands on the wrong dot, and gets a coin flip. Press “Send 20 bits” and compare the scores.",
+    "Now drag the “Wobble” slider. At zero the eavesdropper reads every bit: a ball with no wobble sits exactly on a dot or exactly halfway, and anyone can see which. Raise it and the eavesdropper drops to guessing while the owner keeps reading. Raise it past the green dashed circle and even the owner is lost. Real systems live in between. This is Learning With Errors, the heart of Kyber.",
+  ],
+  hint: "Press “Send 0” or “Send 1” · Drag “Wobble” to change the shake",
+  labels: {
+    send0: "Send 0",
+    send1: "Send 1",
+    sendMany: "Send 20 bits",
+    wobble: "Wobble",
+    clear: "Clear",
+    owner: "Owner",
+    eaves: "Eavesdropper",
+    reads: "reads",
+    right: "right",
+  },
+  readout: {
+    result: "Sent {bit}  ·  Owner read {o}  ·  Eavesdropper read {e}",
+    sending: "Sending…  Owner {o} right  ·  Eavesdropper {e} right",
+    zero: "Wobble is zero: the ball sits exactly on a dot or exactly halfway, so anyone can read it.",
+    tooMuch: "Too much wobble: the ball can leave the green circle, and then even the owner misreads.",
+  },
+};
+
 export const comingSoon = [
-  { kicker: "Scene 3", title: "Add the wobble", blurb: "A little noise turns “find the nearest dot” into Learning With Errors, the heart of Kyber." },
   { kicker: "Scene 4", title: "Climb the dimensions", blurb: "2D, 3D, 4D. Run the attack live, and watch it stop working as the dimension rises." },
   { kicker: "Scene 5", title: "Kyber, for real", blurb: "A toy ML-KEM running in your browser, every value on screen, encrypting a message you type." },
 ];
