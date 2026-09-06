@@ -161,8 +161,8 @@ export function mountScene2(root: HTMLElement): () => void {
     }
     tally.innerHTML = "";
     tally.append(
-      el("span", { class: "pill good", text: `${copy.labels.good}: ${stats.good[0]} / ${stats.good[1]} ${copy.labels.wrong}` }),
-      el("span", { class: "pill bad", text: `${copy.labels.bad}: ${stats.bad[0]} / ${stats.bad[1]} ${copy.labels.wrong}` }),
+      el("span", { class: "pill good", text: `${copy.labels.tallyGood}: ${stats.good[0]} / ${stats.good[1]} ${copy.labels.wrong}` }),
+      el("span", { class: "pill bad", text: `${copy.labels.tallyBad}: ${stats.bad[0]} / ${stats.bad[1]} ${copy.labels.wrong}` }),
     );
     void s;
   }
