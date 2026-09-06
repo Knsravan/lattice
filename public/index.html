@@ -41,7 +41,7 @@
   .scene { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 36px; align-items: start; padding: 10vh 0; border-top: 1px solid var(--line); }
   .kicker { color: var(--secret); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
   .scene h2 { font-size: clamp(28px, 4vw, 40px); margin: .2em 0 .6em; line-height: 1.1; }
-  .prose p { margin: 0 0 1em; color: #c7cedb; }
+  .prose p { margin: 0 0 .9em; color: #c7cedb; font-size: 16px; }
   .prose { position: sticky; top: 40px; }
 
   .stage-wrap { min-width: 0; }
@@ -58,6 +58,13 @@
   .btn { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
   .btn:hover { border-color: var(--muted); }
 
+  .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg { background: transparent; color: var(--muted); border: 0; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+  .seg.active:first-child { background: rgba(61,220,151,.16); color: var(--secret); }
+  .seg.active:last-child { background: rgba(255,92,122,.16); color: var(--attacker); }
+  .tally { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+  .pill { padding: 3px 10px; border-radius: 999px; font-size: 13px; font-variant-numeric: tabular-nums; border: 1px solid var(--line); }
+  .pill.good { color: var(--secret); } .pill.bad { color: var(--attacker); }
   .placeholder { display: grid; place-items: center; aspect-ratio: 4/3; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
   .scene.soon .prose p { color: var(--muted); }
   .scene.soon .kicker { color: var(--muted); }
