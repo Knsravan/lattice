@@ -51,7 +51,7 @@ lattice/
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1 and 2 shipped the same evening. Next: Scene 3.
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Next: Scene 4 (Three.js).
 
 ### The five scenes (frozen scope)
 
@@ -61,8 +61,8 @@ A 2D lattice of dots on canvas. Two draggable arrows from the origin are the bas
 **Scene 2 — Good basis, bad basis.**
 Same lattice. A toggle switches between a "good" basis (short, near-perpendicular) and a "bad" basis (long, skewed) that generate the identical grid — prove it visually by fading the dots to show they don't move. With the bad basis, Babai's nearest-plane algorithm visibly picks the WRONG dot when the ball is thrown; with the good basis it picks the right one. Narration teaches: the secret key is just "knowing a good basis."
 
-**Scene 3 — Add the wobble.**
-A noise slider (0 → large). Each ball throw is a lattice point plus noise. Show: with small noise and good basis, decryption always works; with bad basis it fails once noise exceeds a visible threshold. Bind this to a 1-bit LWE encrypt/decrypt from `core/lwe.ts`: a "send bit 0 / send bit 1" button, the ciphertext is the noisy point, decryption is nearest-dot with the good basis. Narration teaches: LWE (learning with errors), which is the core of Kyber.
+**Scene 3 — Add the wobble.** (shipped)
+Geometric LWE from `core/lwe2d.ts`: ball = dot + bit·halfStep + wobble; readers round the ball in their own basis and look at the leftover along the first arrow. Two readers per ball (owner with the good basis, eavesdropper with the bad one), a wobble slider, "Send 0 / Send 1 / Send 20 bits", scores per reader. Zero wobble ⇒ both read 100% (the wobble is the secret's protection); moderate ⇒ owner 100%, eavesdropper ~50%; past |halfStep|/2 ⇒ owner fails too. Narration teaches: LWE, the heart of Kyber. (`core/lwe.ts` — the modular Regev scheme — is kept for Scene 5.)
 
 **Scene 4 — Climb the dimensions.** (the showpiece)
 - 3D lattice in Three.js with orbit controls, ball throw, nearest point highlight.

@@ -27,6 +27,12 @@
 - "Throw 20 balls" shows a running "x of y wrong so far" in the readout.
 - Copy rule adopted from feedback: say the payoff first, then give instructions that quote the exact button names; define every term (basis) the first time it appears.
 
+## Day 1, night — Scene 3
+- First decoder design (nearest dot via Babai, compare offset to 0 vs ±half-step) LEAKED in 2D: when the eavesdropper's wrong dot differs by a lattice vector perpendicular to the half-step, the comparison still reads correctly (eavesdropper 100% at small wobble). Replaced by the honest LWE analogue: round the ball in your own coordinates, read the leftover along arrow 1. In the bad basis a tiny wobble swings coordinates by whole units → coin flip.
+- Brute-forced public keys again: [4g1+g2, 3g1+g2] blinds the eavesdropper at wobble ≈0.25 (50%) while the owner's safe limit is 0.31. Uglier keys blind sooner but their arrows leave the canvas.
+- Sender picks dots with the good basis purely so they spread across the window (any basis of the same lattice picks the same dots).
+- Walkthrough script (scratch) checks every quoted control exists and the four promises in the text: owner 42/42 at default wobble, eavesdropper 25–75%, both 20/20 at zero wobble, owner < 100% at 0.6.
+
 ## Skipped / deferred
 - Nothing yet.
 
