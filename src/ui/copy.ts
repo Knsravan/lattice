@@ -58,6 +58,7 @@ export const scene2 = {
   readout: {
     right: "Found the nearest dot, {dist} away.",
     wrong: "Missed. This basis stopped {guess} away, but the nearest dot was {truth} away.",
+    throwing: "Throwing… {wrong} of {total} wrong so far",
   },
 };
 
