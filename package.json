@@ -1,0 +1,13 @@
+{
+  "name": "lattice",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "An explorable explanation of lattice-based post-quantum cryptography (Kyber / ML-KEM).",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.ts",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/core/**\" tests/*.test.ts",
+    "serve": "node scripts/serve.mjs"
+  }
+}
