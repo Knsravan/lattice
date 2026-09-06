@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lattice — coming soon</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0d12; color: #e8ecf1; font: 16px/1.5 system-ui, sans-serif; }
+  main { text-align: center; max-width: 36rem; padding: 2rem; }
+  h1 { font-weight: 600; letter-spacing: .04em; font-size: 2.2rem; margin: 0 0 .5rem; }
+  p { color: #98a2b3; margin: 0; }
+  canvas { display: block; margin: 0 auto 1.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <canvas id="c" width="320" height="200" aria-hidden="true"></canvas>
+  <h1>Lattice</h1>
+  <p>An explorable explanation of the math that is replacing the internet's locks. Coming soon.</p>
+</main>
+<script type="module">
+  // A tiny taste: a slowly shearing 2-D lattice.
+  const c = document.getElementById("c"), g = c.getContext("2d");
+  let t = 0;
+  (function frame() {
+    t += 0.004;
+    g.clearRect(0, 0, c.width, c.height);
+    const b1 = [26, 0], b2 = [26 * Math.sin(t) * 0.9, 24];
+    g.fillStyle = "#7aa2ff";
+    for (let i = -8; i <= 8; i++) for (let j = -5; j <= 5; j++) {
+      const x = 160 + i * b1[0] + j * b2[0], y = 100 + i * b1[1] + j * b2[1];
+      if (x < 0 || x > 320 || y < 0 || y > 200) continue;
+      g.beginPath(); g.arc(x, y, 2.2, 0, 7); g.fill();
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
