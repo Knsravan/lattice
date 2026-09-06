@@ -1,6 +1,7 @@
-import { site, scene1, comingSoon } from "./ui/copy.ts";
+import { site, scene1, scene2, comingSoon } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
 import { mountScene1 } from "./scenes/scene1-grid.ts";
+import { mountScene2 } from "./scenes/scene2-basis.ts";
 
 /** Builds the page from copy.ts and mounts each scene into its section. */
 function build() {
@@ -23,9 +24,14 @@ function build() {
   app.append(s1.section);
   mountScene1(s1.stage);
 
+  // scene 2
+  const s2 = section("scene-2", scene2.kicker, scene2.title, scene2.paragraphs);
+  app.append(s2.section);
+  mountScene2(s2.stage);
+
   // placeholders for the rest
   for (const [i, c] of comingSoon.entries()) {
-    const s = section(`scene-${i + 2}`, c.kicker, c.title, [c.blurb]);
+    const s = section(`scene-${i + 3}`, c.kicker, c.title, [c.blurb]);
     s.stage.append(el("div", { class: "placeholder", text: "In progress" }));
     s.section.classList.add("soon");
     app.append(s.section);
