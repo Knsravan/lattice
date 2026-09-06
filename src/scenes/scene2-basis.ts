@@ -9,10 +9,14 @@ const GOOD: Basis = [
   [1.2, 0.32],
   [-0.32, 1.2],
 ];
-/** bad = [2·g1 + g2, 3·g1 + 2·g2] — determinant 1, so it generates the SAME lattice. */
+/**
+ * bad = [3·g1 + g2, 2·g1 + g2] — determinant 1, so it generates the SAME lattice.
+ * Chosen by brute force over small unimodular matrices: Babai misses ~71% of uniform
+ * throws with it (the previous [2,1],[3,2] only ~40% on real screens) and both arrows fit on the canvas.
+ */
 const BAD: Basis = [
+  [3 * GOOD[0][0] + GOOD[1][0], 3 * GOOD[0][1] + GOOD[1][1]],
   [2 * GOOD[0][0] + GOOD[1][0], 2 * GOOD[0][1] + GOOD[1][1]],
-  [3 * GOOD[0][0] + 2 * GOOD[1][0], 3 * GOOD[0][1] + 2 * GOOD[1][1]],
 ];
 
 interface Throw {
@@ -59,8 +63,9 @@ export function mountScene2(root: HTMLElement): () => void {
     flash = 1;
     goodBtn.classList.toggle("active", m === "good");
     badBtn.classList.toggle("active", m === "bad");
-    // re-judge existing throws with the new basis, and keep the tally per basis
-    throws = throws.map((t) => judge(t.pos, t.born));
+    // start with a clean canvas so the picture always agrees with the tally (counts are kept per basis)
+    throws = [];
+    queue = [];
   }
   const currentBasis = (): Basis => (mode === "good" ? GOOD : BAD);
   const currentColor = () => (mode === "good" ? palette.secret : palette.attacker);
@@ -148,7 +153,10 @@ export function mountScene2(root: HTMLElement): () => void {
 
     // readout + tally
     const s = stats[mode];
-    if (last && time - last.born > 0.6) {
+    if (queue.length > 0) {
+      readout.textContent = copy.readout.throwing.replace("{wrong}", String(s[0])).replace("{total}", String(s[1]));
+      readout.classList.toggle("warn", mode === "bad");
+    } else if (last && time - last.born > 0.6) {
       const dg = norm(sub(last.pos, last.guess)).toFixed(2);
       const dtruth = norm(sub(last.pos, last.truth)).toFixed(2);
       readout.textContent = last.wrong
@@ -164,7 +172,6 @@ export function mountScene2(root: HTMLElement): () => void {
       el("span", { class: "pill good", text: `${copy.labels.tallyGood}: ${stats.good[0]} / ${stats.good[1]} ${copy.labels.wrong}` }),
       el("span", { class: "pill bad", text: `${copy.labels.tallyBad}: ${stats.bad[0]} / ${stats.bad[1]} ${copy.labels.wrong}` }),
     );
-    void s;
   }
 
   const stop = runWhileVisible(stage, draw);
