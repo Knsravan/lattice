@@ -51,7 +51,7 @@ lattice/
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) done — core math complete and tested. Scenes not started.
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scene 1 shipped the same evening (page shell, scene manager, interactive grid). Next: Scene 2.
 
 ### The five scenes (frozen scope)
 
