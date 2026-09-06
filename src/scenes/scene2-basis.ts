@@ -139,7 +139,7 @@ export function mountScene2(root: HTMLElement): () => void {
     const last = throws[throws.length - 1];
     if (last && time - last.born > 0.6) {
       drawRing(ctx, vp, last.guess, last.wrong ? palette.attacker : palette.secret, { r, label: last.wrong ? copy.labels.wrongDot : copy.labels.rightDot, alpha: 0 });
-      if (last.wrong) drawRing(ctx, vp, last.truth, palette.secret, { r, label: copy.labels.realDot, alpha: 0, labelBelow: false });
+      if (last.wrong) drawRing(ctx, vp, last.truth, palette.secret, { r, label: copy.labels.realDot, alpha: 0, labelBelow: false, labelLeft: true });
     }
 
     // arrows of the shown basis

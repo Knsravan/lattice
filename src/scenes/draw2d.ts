@@ -123,7 +123,7 @@ export function drawDashedLine(ctx: CanvasRenderingContext2D, vp: Viewport, from
   ctx.restore();
 }
 
-export function drawRing(ctx: CanvasRenderingContext2D, vp: Viewport, at: Vec, color: string, opts: { pulse?: number; label?: string; r?: number; filled?: boolean; alpha?: number; labelBelow?: boolean } = {}) {
+export function drawRing(ctx: CanvasRenderingContext2D, vp: Viewport, at: Vec, color: string, opts: { pulse?: number; label?: string; r?: number; filled?: boolean; alpha?: number; labelBelow?: boolean; labelLeft?: boolean } = {}) {
   const [x, y] = vp.toScreen(at);
   const r = opts.r ?? 3.2;
   ctx.save();
@@ -133,8 +133,9 @@ export function drawRing(ctx: CanvasRenderingContext2D, vp: Viewport, at: Vec, c
   if (opts.filled !== false) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r + 1, 0, Math.PI * 2); ctx.fill(); }
   if (opts.label) {
     ctx.globalAlpha = 1; // labels are always legible, even when the ring itself is hidden
-    ctx.fillStyle = color; ctx.font = "12px system-ui, sans-serif"; ctx.textAlign = "left";
-    ctx.fillText(opts.label, x + 12, opts.labelBelow === false ? y - 12 : y + 22);
+    ctx.fillStyle = color; ctx.font = "12px system-ui, sans-serif";
+    ctx.textAlign = opts.labelLeft ? "right" : "left";
+    ctx.fillText(opts.label, opts.labelLeft ? x - 12 : x + 12, opts.labelBelow === false ? y - 12 : y + 22);
   }
   ctx.restore();
 }
