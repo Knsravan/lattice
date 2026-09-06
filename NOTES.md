@@ -21,6 +21,12 @@
 - Shared 2-D drawing moved into `scenes/draw2d.ts` (viewport, dots, cell, arrows, ball, rings). Scene 1 still has its own copy; fold it in during polish.
 - Toggling the basis re-judges existing throws so the picture stays consistent; the tally is kept per basis.
 
+## Day 1, late — Scene 2 fixes from the user's screen recording
+- Red basis only missed ~38% on the user's screen; replaced with [3g1+g2, 2g1+g2] (71% in simulation, 65% measured in-browser at 3 viewport sizes). Both arrows now fit on the canvas.
+- Switching basis used to re-judge old throws (picture said "missed", tally said 0/0). Now switching clears the canvas; counts stay per basis.
+- "Throw 20 balls" shows a running "x of y wrong so far" in the readout.
+- Copy rule adopted from feedback: say the payoff first, then give instructions that quote the exact button names; define every term (basis) the first time it appears.
+
 ## Skipped / deferred
 - Nothing yet.
 
