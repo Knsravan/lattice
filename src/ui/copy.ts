@@ -33,8 +33,33 @@ export const scene1 = {
   },
 };
 
+export const scene2 = {
+  kicker: "Scene 2",
+  title: "Good basis, bad basis",
+  paragraphs: [
+    "Here is the same grid. Not a copy: the exact same dots. But there is a second pair of arrows that builds it too. Flip the switch. The arrows change; the dots don't move.",
+    "The green pair is short and square. The red pair is long and skewed. Both make every dot, so both are “correct”. Now try finding the nearest dot with each.",
+    "Click to throw. The rule is simple: walk along the arrows in whole steps and stop as close as you can. With the green arrows that lands on the right dot every time. With the red arrows the steps are huge and lopsided, and you land on the wrong dot again and again.",
+    "That is the whole secret. The lock's public key is the ugly red pair, handed to everyone. The private key is the tidy green pair, kept by the owner. Same grid. Only one of them lets you find your way around it.",
+  ],
+  hint: "Flip the switch · Click anywhere to throw a ball",
+  labels: {
+    good: "Good basis",
+    bad: "Bad basis",
+    throwMany: "Throw 20 balls",
+    clear: "Clear",
+    wrong: "wrong",
+    rightDot: "found it",
+    wrongDot: "missed",
+    realDot: "the real nearest dot",
+  },
+  readout: {
+    right: "Found the nearest dot, {dist} away.",
+    wrong: "Missed. This basis stopped {guess} away, but the nearest dot was {truth} away.",
+  },
+};
+
 export const comingSoon = [
-  { kicker: "Scene 2", title: "Good basis, bad basis", blurb: "The same grid, described two ways. Only one makes “nearest” easy. That difference is the secret key." },
   { kicker: "Scene 3", title: "Add the wobble", blurb: "A little noise turns “find the nearest dot” into Learning With Errors, the heart of Kyber." },
   { kicker: "Scene 4", title: "Climb the dimensions", blurb: "2D, 3D, 4D. Run the attack live, and watch it stop working as the dimension rises." },
   { kicker: "Scene 5", title: "Kyber, for real", blurb: "A toy ML-KEM running in your browser, every value on screen, encrypting a message you type." },
