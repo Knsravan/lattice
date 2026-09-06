@@ -15,6 +15,12 @@
 - Degenerate basis (|det| < 0.12) shows a warning in the readout instead of an exploding grid.
 - Headless Chromium check via Playwright (scratch script) — no console errors on desktop or 390px mobile.
 
+## Day 1 night — Scene 2
+- Good basis is an *orthogonal* pair rotated ~15° ([1.2,.32],[-.32,1.2]) so Babai nearest-plane is exact with it; a merely "nearly square" pair still misses ~6% of throws, which would muddy the story.
+- Bad basis = [2g1+g2, 3g1+2g2] (det 1 ⇒ same lattice). Babai misses ~60% of throws with it. "Throw 20 balls" makes the tally land in seconds.
+- Shared 2-D drawing moved into `scenes/draw2d.ts` (viewport, dots, cell, arrows, ball, rings). Scene 1 still has its own copy; fold it in during polish.
+- Toggling the basis re-judges existing throws so the picture stays consistent; the tally is kept per basis.
+
 ## Skipped / deferred
 - Nothing yet.
 
