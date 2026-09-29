@@ -1,6 +1,6 @@
 import { babaiNearestPlane, closestVectorExact, mulberry32, norm, sub } from "../core/index.ts";
 import type { Basis, Vec } from "../core/index.ts";
-import { el, fitCanvas, runWhileVisible, approach, easeOut, palette } from "../ui/dom.ts";
+import { el, fitCanvas, runWhileVisible, approach, easeOut, pulse, palette } from "../ui/dom.ts";
 import { scene2 as copy } from "../ui/copy.ts";
 import { makeViewport, visiblePoints, drawDots, drawCell, drawArrow, drawBall, drawDashedLine, drawRing, lerpBasis } from "./draw2d.ts";
 
@@ -145,7 +145,7 @@ export function mountScene2(root: HTMLElement): () => void {
       const guessColor = t.wrong ? palette.attacker : palette.secret;
       drawDashedLine(ctx, vp, t.pos, t.guess, reach, guessColor);
       if (reach >= 1) {
-        drawRing(ctx, vp, t.guess, guessColor, { r, pulse: t.wrong ? 0 : 0.5 + 0.5 * Math.sin(age * 5) });
+        drawRing(ctx, vp, t.guess, guessColor, { r, pulse: t.wrong ? 0 : pulse(age * 5) });
         if (t.wrong) {
           // show where it should have gone
           drawDashedLine(ctx, vp, t.pos, t.truth, easeOut((age - 0.6) / 0.4), palette.secret);

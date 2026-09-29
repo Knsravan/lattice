@@ -3,7 +3,7 @@ import {
   encode2d, decode2d, halfStepOf, mulberry32, center,
 } from "../core/index.ts";
 import type { Poly, PolyVec, EncapsResult, Sent, Read, Vec } from "../core/index.ts";
-import { el, fitCanvas, runWhileVisible, easeOut, palette } from "../ui/dom.ts";
+import { el, fitCanvas, runWhileVisible, easeOut, reducedMotion, palette } from "../ui/dom.ts";
 import { scene5 as copy } from "../ui/copy.ts";
 import { makeViewport, visiblePoints, drawDots, drawArrow, drawBall, drawDashedLine, drawRing } from "./draw2d.ts";
 import { GOOD, BAD } from "./scene3-noise.ts";
@@ -95,7 +95,7 @@ export function mountScene5(root: HTMLElement): () => void {
     mode = m;
     modeBorn = time;
     readout.textContent = copy.lattice[m];
-    if (scroll) stage.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (scroll) stage.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center" });
   }
   input.addEventListener("input", () => renderMessages());
 

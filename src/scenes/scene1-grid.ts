@@ -1,6 +1,6 @@
 import { closestVectorExact, determinant } from "../core/index.ts";
 import type { Basis, Vec } from "../core/index.ts";
-import { el, fitCanvas, runWhileVisible, easeOut, palette } from "../ui/dom.ts";
+import { el, fitCanvas, runWhileVisible, easeOut, pulse, palette } from "../ui/dom.ts";
 import { scene1 as copy } from "../ui/copy.ts";
 import { makeViewport, visiblePoints, drawDots, drawCoords, drawCell, drawArrow, drawBall, drawDashedLine, drawRing, lerpBasis } from "./draw2d.ts";
 
@@ -137,7 +137,7 @@ export function mountScene1(root: HTMLElement): () => void {
       const age = time - ball.born;
       const reach = easeOut((age - 0.25) / 0.45); // line grows toward the nearest dot
       drawDashedLine(ctx, vp, ball.pos, ball.nearest, reach, palette.ball);
-      if (reach >= 1) drawRing(ctx, vp, ball.nearest, palette.secret, { r, pulse: 0.5 + 0.5 * Math.sin((age - 0.7) * 5), label: copy.labels.nearest });
+      if (reach >= 1) drawRing(ctx, vp, ball.nearest, palette.secret, { r, pulse: pulse((age - 0.7) * 5), label: copy.labels.nearest });
       drawBall(ctx, vp, ball.pos, easeOut(age / 0.35));
     }
 

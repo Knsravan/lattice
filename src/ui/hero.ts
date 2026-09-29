@@ -1,5 +1,5 @@
 import type { Basis } from "../core/index.ts";
-import { el, fitCanvas, runWhileVisible, palette } from "./dom.ts";
+import { el, fitCanvas, runWhileVisible, reducedMotion, palette } from "./dom.ts";
 import { visiblePoints, drawDots, drawArrow } from "../scenes/draw2d.ts";
 import type { Viewport } from "../scenes/draw2d.ts";
 
@@ -12,10 +12,10 @@ export function mountHero(hero: HTMLElement): () => void {
   const canvas = el("canvas", { class: "hero-bg", "aria-hidden": "true" });
   hero.prepend(canvas);
   const ctx = canvas.getContext("2d")!;
-  let t = 0;
+  let t = 0.7; // starts sheared, so the still frame (reduced motion) is not just a square grid
 
   const stop = runWhileVisible(hero, (dt) => {
-    t += dt * 0.22;
+    if (!reducedMotion()) t += dt * 0.22; // a still, sheared grid when the visitor asks for less motion
     canvas.style.height = `${hero.offsetHeight}px`;
     const { w, h, dpr } = fitCanvas(canvas);
     // the grid's origin sits to the right of the title on wide screens, low and centred on phones
