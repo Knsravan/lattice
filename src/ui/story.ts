@@ -1,6 +1,6 @@
 import { el, fitCanvas, runWhileVisible } from "./dom.ts";
 import { sfx, voiceStep, voiceStop, registerVoiceText } from "./sound.ts";
-import type { Sfx } from "./sound.ts";
+import type { Sfx, SfxOptions } from "./sound.ts";
 
 /**
  * Scroll-story ("scrollytelling") layout.
@@ -10,8 +10,9 @@ import type { Sfx } from "./sound.ts";
  * Each chapter's draw(frame) decides what the picture looks like for (step, t) — steps are cumulative,
  * so the end of step k looks like the start of step k + 1 and nothing jumps.
  *
- * Sound: draw() calls frame.cue(at, "pop") at the moment something happens; the effect plays once when
- * the step's clock passes `at` (or every `period` seconds for a looping animation). When a step becomes
+ * Sound: draw() calls frame.cue(at, "pop", { pan, dur, … }) at the moment something happens; the effect plays
+ * once when the step's clock passes `at` (or every `period` seconds for a looping animation), placed left/right
+ * where it happens on screen (frame.pan(x)) and lasting as long as the movement it belongs to. When a step becomes
  * active, its narration clip `<id>-s<step>` plays (if the visitor turned Voice on).
  */
 export interface StoryFrame {
@@ -26,7 +27,13 @@ export interface StoryFrame {
   clock: number;
   dt: number;
   /** Play sound `name` when the step clock passes `at` seconds (again every `period` seconds, if given). */
-  cue(at: number, name: Sfx, period?: number): void;
+  cue(at: number, name: Sfx, opts?: CueOptions): void;
+  /** Stereo position (−1 left … 1 right) of a canvas x coordinate, for cue({ pan }). */
+  pan(x: number): number;
+}
+
+export interface CueOptions extends SfxOptions {
+  period?: number;
 }
 
 export interface StoryOptions {
@@ -91,17 +98,19 @@ export function mountStory(root: HTMLElement, opts: StoryOptions): { setStep(i: 
     t += dt;
     clock += dt;
     const from = prevT;
-    const cue = (at: number, name: Sfx, period?: number) => {
+    const { w, h, dpr } = fitCanvas(canvas);
+    const cue = (at: number, name: Sfx, o: CueOptions = {}) => {
+      const period = o.period;
       if (period && period > 0) {
         if (t < at) return;
         const k = Math.floor((t - at) / period);
-        if (at + k * period > from) sfx(name);
-      } else if (at > from && at <= t) sfx(name);
+        if (at + k * period > from) sfx(name, o);
+      } else if (at > from && at <= t) sfx(name, o);
     };
-    const { w, h, dpr } = fitCanvas(canvas);
+    const pan = (x: number) => Math.max(-1, Math.min(1, (x / Math.max(1, w)) * 2 - 1)) * 0.75;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    opts.draw({ ctx, w, h, step, t, clock, dt, cue });
+    opts.draw({ ctx, w, h, step, t, clock, dt, cue, pan });
     prevT = t;
   });
 

@@ -108,6 +108,16 @@
 - `public/voice/manifest.json` ships as `{}` so there is no 404; the Voice switch is greyed out ("recordings haven't been added yet") until clips exist.
 - Both switches start OFF (browsers block sound before a click anyway); the choice is remembered in localStorage. On phones they shrink to two icons in the picture's top-right corner — at the bottom they covered long step text.
 
+## Day 2 — Chapters 2–5 as stories; natural sound effects
+- Chapter 2 (8 steps): green pair → red pair → swap, dots don't move ("same dots") → short green walk to (1,1) vs red walk (−1, 2) in red steps → finder (Babai, core) with green: right; with red: wrong dot 1.8 away, real one next to the ball → Sam private / Eve public. Ball (0.4, 0.5) found by searching with core. Uses Scene 2's pairs (exported) so the playground below matches.
+- Chapter 3 (9 steps): 0 on a dot, 1 exactly halfway (encode2d with no shake), Eve reads both → shake → Sam reads right, Eve wrong → 10 bits (seed 1735: Sam 10/10, Eve 5/10) → too much shake (seed 934, 0.62: Sam 5/10, Eve 5/10). All from core encode2d/decode2d.
+  - Correction found while picking examples: Eve's rounded dot is never "whole dots" away — over 10k cases it lands within 0.82 of the ball (median 0.59). What goes wrong is that it's the wrong *neighbouring* dot, so her leftover is nonsense. Copy says that now; the example (seed 1595) shows Sam's and Eve's dots clearly different.
+- Chapter 4 (8 steps): LLL's real 2-D trace, one labelled move at a time ("shorten"/"swap") → tidy, Eve opens the padlock → "500 directions" burst → the live chart (the real attack in the worker, 10 grids × 2…40; the chart now has `paint()` so it draws inside the story) → "Eve finds the secret" vs "safe" → real padlocks 500–1,000 → → quantum: finds the repeating pattern in today's puzzle, finds none in the grid.
+- Chapter 5 (8 steps): the 97-hour clock wrapping 96 → 0 → Sam's secret → jumble, shake, padlock → Alex's key, 1s → 49, sent → Eve sees a mess → the clock splits the eight numbers into 0s and 1s, "Sam reads" = Alex's key → same key ✓. All numbers from core kyber with fixed seeds.
+- Playgrounds renamed "Chapter N · Try it yourself", text cut to the buttons; Scene 3's "Owner/Eavesdropper" → Sam/Eve.
+- Sound effects redone: modelled on real sounds (bell partials for arrivals, a metallic click + thunk for the padlock, a key-turn for unlock, footsteps for the walker, rising air for travel, a woodblock for counting, a shutter for Eve's copies), a shared small-room reverb, soft low-pass, ±2.5% random detune, stereo pan that follows the object (`frame.pan(x)`), and durations matched to each animation (`dur`). Checked in the browser: every chapter fires its effects (20–94 sounds per chapter while scrolling), placed left/centre/right; no errors.
+- Phones: nothing important in the picture's top-right corner (the sound switches live there).
+
 ## Skipped / deferred
 - Nothing yet.
 

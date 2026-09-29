@@ -1,9 +1,13 @@
-import { site, chapter0, chapter1, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
+import { site, chapter0, chapter1, chapter2, chapter3, chapter4, chapter5, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
 import { mountSoundControls } from "./ui/sound.ts";
 import { mountChapter0 } from "./scenes/chapter0-problem.ts";
 import { mountChapter1 } from "./scenes/chapter1-grid.ts";
+import { mountChapter2 } from "./scenes/chapter2-basis.ts";
+import { mountChapter3 } from "./scenes/chapter3-wobble.ts";
+import { mountChapter4 } from "./scenes/chapter4-dimensions.ts";
+import { mountChapter5 } from "./scenes/chapter5-kyber.ts";
 import { mountScene1 } from "./scenes/scene1-grid.ts";
 import { mountScene2 } from "./scenes/scene2-basis.ts";
 import { mountScene3 } from "./scenes/scene3-noise.ts";
@@ -40,22 +44,38 @@ function build() {
   app.append(s1.section);
   mountScene1(s1.stage);
 
-  // scene 2
+  // chapter 2: the story, then "try it yourself"
+  const c2 = chapter("chapter-2", chapter2.kicker, chapter2.title);
+  app.append(c2.section);
+  mountChapter2(c2.body);
+
   const s2 = section("scene-2", scene2.kicker, scene2.title, scene2.paragraphs);
   app.append(s2.section);
   mountScene2(s2.stage);
 
-  // scene 3
+  // chapter 3: the story, then "try it yourself"
+  const c3 = chapter("chapter-3", chapter3.kicker, chapter3.title);
+  app.append(c3.section);
+  mountChapter3(c3.body);
+
   const s3 = section("scene-3", scene3.kicker, scene3.title, scene3.paragraphs);
   app.append(s3.section);
   mountScene3(s3.stage);
 
-  // scene 4
+  // chapter 4: the story, then "try it yourself"
+  const c4 = chapter("chapter-4", chapter4.kicker, chapter4.title);
+  app.append(c4.section);
+  mountChapter4(c4.body);
+
   const s4 = section("scene-4", scene4.kicker, scene4.title, scene4.paragraphs);
   app.append(s4.section);
   mountScene4(s4.stage);
 
-  // scene 5
+  // chapter 5: the story, then "try it yourself"
+  const c5 = chapter("chapter-5", chapter5.kicker, chapter5.title);
+  app.append(c5.section);
+  mountChapter5(c5.body);
+
   const s5 = section("scene-5", scene5.kicker, scene5.title, scene5.paragraphs);
   app.append(s5.section);
   mountScene5(s5.stage);
@@ -75,7 +95,7 @@ function build() {
 
   // nav dots
   const nav = el("nav", { class: "dots", "aria-label": "Scenes" });
-  const ids = ["chapter-0", "chapter-1", "scene-2", "scene-3", "scene-4", "scene-5"];
+  const ids = ["chapter-0", "chapter-1", "chapter-2", "chapter-3", "chapter-4", "chapter-5"];
   const links = ids.map((id, i) => el("a", { href: `#${id}`, title: `Chapter ${i}`, "aria-label": `Chapter ${i}` }));
   nav.append(...links);
   document.body.append(nav);
