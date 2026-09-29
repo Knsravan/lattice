@@ -33,10 +33,20 @@
 - Sender picks dots with the good basis purely so they spread across the window (any basis of the same lattice picks the same dots).
 - Walkthrough script (scratch) checks every quoted control exists and the four promises in the text: owner 42/42 at default wobble, eavesdropper 25–75%, both 20/20 at zero wobble, owner < 100% at 0.6.
 
+## Day 2 (Sept 29) — Scene 4
+- LLL rewritten with the textbook incremental Gram–Schmidt updates (O(n) per step, no row recompute). q-ary n=32 went from 2.5 s to ~8 ms; n=40 ~15 ms. The 2 s cap is kept (`shouldStop`) but never fires on a laptop. Trace recording is now optional (`trace: false` for sweeps).
+- Attack lattice (`core/attack.ts`): q-ary [I | A ; 0 | qI], q = 97, k = n/2, wobble uniform in ±3. Brute-tuned: LLL+Babai recovers the secret ~90% at n ≤ 12, ~60% at 24, ~25% at 30, ~0–5% at 40. Success = Babai lands on a point at least as close as the planted one (at n = 2 the wobble sometimes makes another dot nearer; counting that as a miss made the chart dip at 2D).
+- Secondary chart line uses Kannan's embedding: LLL's shortest vector ÷ |(error, 1)|. Rises from ~1.0 to ~1.15 by n = 40. Small effect; kept small on the chart.
+- Chart sweep runs in a module worker (`scene4-worker.ts`), 20 grids × dims 2,4,…,40, ~1 s total; bars are revealed one per 90 ms. Main-thread fallback if module workers fail.
+- Three.js is imported dynamically so a CDN failure only disables the 3D view (message in the readout); scenes 1–3 and the chart keep working. `src/types/three.d.ts` declares only what Scene 4 uses (no @types/three).
+- Sandbox can't reach the jsDelivr CDN; tested in headless Chromium by routing the CDN URLs to `npm pack three@0.170.0` in a scratch dir (not in the repo). Desktop + 390 px: no console errors, throws work in 2D/3D/4D, attack animates (3/8/11 steps). FPS under SwiftShader is 22 — software GL, not meaningful; needs a check on a real 2020 laptop.
+- 3D camera sits at (-5, 3.2, 5.8): from the (+,+,+) side the bad arrows pointed at the camera and looked like stubs.
+
 ## Skipped / deferred
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
 - Hero: put the slowly shearing lattice from the placeholder behind the title (polish week).
 - Scene 4: a "Grover vs Shor" one-paragraph panel explaining why quantum helps against factoring but not lattices.
+- Scene 4: let the reader pick how many grids per dimension, or a "run to 60D" button (LLL is fast enough now).
 - Scene 5: show real ML-KEM-768 key sizes next to the toy ones for scale.

@@ -1,8 +1,9 @@
-import { site, scene1, scene2, scene3, comingSoon } from "./ui/copy.ts";
+import { site, scene1, scene2, scene3, scene4, comingSoon } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
 import { mountScene1 } from "./scenes/scene1-grid.ts";
 import { mountScene2 } from "./scenes/scene2-basis.ts";
 import { mountScene3 } from "./scenes/scene3-noise.ts";
+import { mountScene4 } from "./scenes/scene4-dimensions.ts";
 
 /** Builds the page from copy.ts and mounts each scene into its section. */
 function build() {
@@ -35,9 +36,14 @@ function build() {
   app.append(s3.section);
   mountScene3(s3.stage);
 
+  // scene 4
+  const s4 = section("scene-4", scene4.kicker, scene4.title, scene4.paragraphs);
+  app.append(s4.section);
+  mountScene4(s4.stage);
+
   // placeholders for the rest
   for (const [i, c] of comingSoon.entries()) {
-    const s = section(`scene-${i + 4}`, c.kicker, c.title, [c.blurb]);
+    const s = section(`scene-${i + 5}`, c.kicker, c.title, [c.blurb]);
     s.stage.append(el("div", { class: "placeholder", text: "In progress" }));
     s.section.classList.add("soon");
     app.append(s.section);

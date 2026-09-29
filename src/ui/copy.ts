@@ -91,7 +91,45 @@ export const scene3 = {
   },
 };
 
+export const scene4 = {
+  kicker: "Scene 4",
+  title: "Climb the dimensions",
+  paragraphs: [
+    "So far the grid was flat. Real locks hide their grid in hundreds of dimensions. We can't draw that, but we can climb a few steps and watch what happens to the attacker.",
+    "Press “3D” and drag to spin the grid. Click to throw a ball: the nearest dot still lights up. Press “4D”: this is a four-dimensional grid, squashed into three so we can see it. Dots that fade are far away in the fourth direction.",
+    "The red arrows are a bad basis, like a public key. Press “Run the attack”. The attacker runs a famous method called LLL: shorten one arrow using another, swap two when they are in the wrong order, repeat. In a few steps the arrows turn short and square. The attacker has rebuilt a good basis, so in 2, 3 or 4 dimensions the lock is broken.",
+    "The chart below the grid runs the same attack in more dimensions, up to 40, on grids hidden the way Kyber hides them. LLL always finishes, in a blink. But the higher you climb, the less good its arrows are. Its answer lands on the wrong dot more and more often, and by 40 dimensions the secret stays hidden. Real Kyber uses 512 dimensions or more.",
+    "What about quantum computers? They break today's locks with a trick (Shor's algorithm) that finds hidden repeating patterns in numbers. A grid in hundreds of dimensions has no such pattern to find. The best known quantum attacks on grids are only a little faster than normal ones, and both would take far longer than the age of the universe. That is why the internet is switching to grids.",
+  ],
+  hint: "Press “3D” or “4D” · Click to throw a ball · Press “Run the attack”",
+  labels: {
+    dims: ["2D", "3D", "4D"],
+    run: "Run the attack",
+    reset: "Reset arrows",
+    loading: "Loading 3D…",
+    failed: "The 3D view could not load (it needs Three.js from the internet). The chart below still works.",
+  },
+  readout: {
+    reduce: "Step {s} of {n}: shorten arrow {i} using arrow {j}",
+    swap: "Step {s} of {n}: swap arrows {a} and {b}",
+    done: "Done in {n} steps. The arrows are short and square: in {d}D the attacker wins.",
+    reset: "Back to the bad basis.",
+    ball: "The ball's nearest dot is {dist} away.",
+  },
+  chart: {
+    title: "Did the attack recover the secret?",
+    ratio: "Attacker's shortest arrow ÷ the hidden one",
+    found: "1× = found it",
+    dimension: "D",
+    gaveUp: "gave up (over 2 s)",
+    kyber: "Kyber: 512+ →",
+    idle: "Press “Run the attack” to fill in the chart.",
+    running: "Attacking {trials} random grids in {d} dimensions…",
+    done: "{trials} random grids per dimension. Each attack took under {ms} ms.",
+    noWorker: "Running on the main thread (this browser has no module workers).",
+  },
+};
+
 export const comingSoon = [
-  { kicker: "Scene 4", title: "Climb the dimensions", blurb: "2D, 3D, 4D. Run the attack live, and watch it stop working as the dimension rises." },
   { kicker: "Scene 5", title: "Kyber, for real", blurb: "A toy ML-KEM running in your browser, every value on screen, encrypting a message you type." },
 ];
