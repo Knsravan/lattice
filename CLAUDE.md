@@ -12,7 +12,7 @@ A curious 15-year-old, or an adult developer who has never studied cryptography.
 - Tests: Node's built-in runner (`node --test`, Node ≥ 22.18 strips types natively). `npm test`, `npm run coverage`.
 - Three.js is loaded at runtime by the visitor's browser via an `<script type="importmap">` pointing at a CDN
   (`https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js` and `.../examples/jsm/` for addons). Never vendored, never installed.
-- Scenes 1–3 use plain 2D `<canvas>`. Scenes 4–5 use Three.js.
+- Scenes 1–3 and 5 use plain 2D `<canvas>`. Scene 4 uses Three.js.
 - No frameworks. Vanilla DOM + a small hand-written scroll/scene manager.
 - Static files live in `public/` and are copied to `dist/` by `npm run build`. `npm run serve` previews `dist/` on port 5173.
 - Deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main` (installs only `typescript` globally).
