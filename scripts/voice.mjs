@@ -6,23 +6,44 @@
 //      npm run voice -- --voice <id>     # use one of them (default: VoiceStudio's default voice)
 //      npm run voice -- --force          # re-record everything
 //      npm run voice -- --dry-run        # just show what would be recorded
+//      npm run voice -- --samples        # the same sentence in several voices → voice-samples/index.html, to pick one
+//      npm run voice -- --design "female, young adult, british accent" --seed 7   # record with a designed voice
 //      npm run voice -- --url http://host:port --format wav --out /some/folder
 //   3. Commit public/voice/ — the site plays these files; visitors never talk to VoiceStudio.
 //
 // Zero dependencies. The words come straight from src/ui/copy.ts, so the voice always says what the page shows;
 // the manifest stores each clip's text, and the page skips any clip whose text no longer matches.
 import { mkdir, readFile, writeFile, access } from "node:fs/promises";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { chapter0, chapter1, chapter2, chapter3, chapter4, chapter5 } from "../src/ui/copy.ts";
 
 const STORIES = { c0: chapter0.steps, c1: chapter1.steps, c2: chapter2.steps, c3: chapter3.steps, c4: chapter4.steps, c5: chapter5.steps };
+
+/** Voices for --samples: VoiceStudio's default, plus voices designed from OmniVoice's tags (gender, age, pitch, accent). */
+const SAMPLES = [
+  { id: "default", label: "VoiceStudio default voice" },
+  { id: "f-us", label: "Woman, young, American", design: "female, young adult, moderate pitch, american accent" },
+  { id: "f-uk", label: "Woman, middle-aged, British, lower", design: "female, middle-aged, low pitch, british accent" },
+  { id: "f-in", label: "Woman, young, Indian", design: "female, young adult, moderate pitch, indian accent" },
+  { id: "f-au", label: "Woman, young, Australian, brighter", design: "female, young adult, high pitch, australian accent" },
+  { id: "m-us", label: "Man, young, American", design: "male, young adult, moderate pitch, american accent" },
+  { id: "m-uk", label: "Man, middle-aged, British, deep", design: "male, middle-aged, low pitch, british accent" },
+  { id: "m-in", label: "Man, young, Indian", design: "male, young adult, moderate pitch, indian accent" },
+  { id: "m-teen", label: "Teenage boy, American", design: "male, teenager, moderate pitch, american accent" },
+];
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(`--${name}`);
 const opt = (name, fallback) => { const i = args.indexOf(`--${name}`); return i >= 0 && args[i + 1] ? args[i + 1] : fallback; };
 const base = opt("url", process.env.VOICESTUDIO_URL || "http://localhost:3900").replace(/\/$/, "");
-const voice = opt("voice", process.env.VOICESTUDIO_VOICE || "alloy");
+const voice = opt("voice", process.env.VOICESTUDIO_VOICE || "default");
+const design = opt("design", process.env.VOICESTUDIO_DESIGN || "");
+const seed = Number(opt("seed", process.env.VOICESTUDIO_SEED || "7"));
 const format = opt("format", "mp3");
-const OUT = opt("out", "") ? new URL(`file://${opt("out", "").replace(/\/?$/, "/")}`) : new URL("../public/voice/", import.meta.url);
+const dirUrl = (p) => pathToFileURL(resolve(p) + "/"); // works with Windows paths too
+const OUT = opt("out", "") ? dirUrl(opt("out", "")) : new URL("../public/voice/", import.meta.url);
+const SAMPLES_OUT = new URL("../voice-samples/", import.meta.url);
 
 async function api(path, init) {
   let r;
@@ -42,7 +63,49 @@ const looksLikeAudio = (buf, fmt) => {
   return true;
 };
 
+/** One clip from VoiceStudio. A designed voice uses a fixed seed so it stays the same person in every clip. */
+async function speak(text, key, v = { voice, design }) {
+  const body = { model: "tts-1", voice: v.voice || "default", input: text, response_format: format, seed };
+  if (v.design) body.instruct = v.design;
+  const r = await api("/v1/audio/speech", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (!r.ok) throw new Error(`${key}: VoiceStudio answered ${r.status}: ${buf.toString("utf8").slice(0, 300)}`);
+  if (!looksLikeAudio(buf, format)) throw new Error(`${key}: the reply isn't ${format} audio (${buf.length} bytes). Nothing was saved for this step.`);
+  return buf;
+}
+
+/** --samples: Chapter 0's first two steps in every SAMPLES voice, plus a page to listen and compare. */
+async function samples() {
+  const text = `${chapter0.steps[0]} ${chapter0.steps[1]}`;
+  await mkdir(SAMPLES_OUT, { recursive: true });
+  const done = [];
+  for (const s of SAMPLES) {
+    const t0 = Date.now();
+    process.stdout.write(`  ${s.label} … `);
+    try {
+      const buf = await speak(text, s.id, { voice: "default", design: s.design });
+      await writeFile(new URL(`${s.id}.${format}`, SAMPLES_OUT), buf);
+      done.push(s);
+      console.log(`✓ (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
+    } catch (e) {
+      console.log(`✗ ${e.message}`);
+    }
+  }
+  const esc = (x) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const rows = done.map((s) => `<li><b>${esc(s.label)}</b><br><audio controls preload="none" src="${s.id}.${format}"></audio><br>
+<code>npm run voice -- --force${s.design ? ` --design "${s.design}" --seed ${seed}` : ""}</code></li>`).join("\n");
+  await writeFile(new URL("index.html", SAMPLES_OUT), `<!doctype html><meta charset="utf-8"><title>Voice samples</title>
+<style>body{font:16px system-ui;background:#0b0d12;color:#e8eaf0;max-width:720px;margin:32px auto;padding:0 16px}li{margin:0 0 22px}audio{margin:8px 0;width:100%}code{color:#9ad;font-size:13px}</style>
+<h1>Pick a voice</h1><p>“${esc(text)}”</p><p>Each command below records all ${Object.values(STORIES).flat().length} story steps in that voice.</p><ol>${rows}</ol>`);
+  console.log(`\n${done.length} of ${SAMPLES.length} voices recorded. Open voice-samples/index.html to listen.`);
+}
+
 async function main() {
+  if (flag("samples")) {
+    const health = await api("/health");
+    if (!health.ok) throw new Error(`VoiceStudio at ${base} answered ${health.status} on /health.`);
+    return samples();
+  }
   const jobs = Object.entries(STORIES).flatMap(([id, steps]) => steps.map((text, i) => ({ key: `${id}-s${i}`, text })));
   let manifest = {};
   try { manifest = JSON.parse(await readFile(new URL("manifest.json", OUT), "utf8")); } catch { /* first run */ }
@@ -68,14 +131,7 @@ async function main() {
 
   await mkdir(OUT, { recursive: true });
   for (const j of todo) {
-    const r = await api("/v1/audio/speech", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "tts-1", voice, input: j.text, response_format: format }),
-    });
-    const buf = Buffer.from(await r.arrayBuffer());
-    if (!r.ok) throw new Error(`${j.key}: VoiceStudio answered ${r.status}: ${buf.toString("utf8").slice(0, 300)}`);
-    if (!looksLikeAudio(buf, format)) throw new Error(`${j.key}: the reply isn't ${format} audio (${buf.length} bytes). Nothing was saved for this step.`);
+    const buf = await speak(j.text, j.key);
     const file = `${j.key}.${format}`;
     await writeFile(new URL(file, OUT), buf);
     manifest[j.key] = { file, text: j.text };

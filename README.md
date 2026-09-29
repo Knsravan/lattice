@@ -36,6 +36,8 @@ The scroll stories can read every step aloud. The clips are recorded with [Voice
 npm run voice                    # records new/changed steps into public/voice/
 npm run voice -- --list          # show VoiceStudio's voices
 npm run voice -- --voice <id>    # pick one
+npm run voice -- --samples       # one sentence in 9 voices → voice-samples/index.html, to compare
+npm run voice -- --force --design "female, young adult, british accent" --seed 7   # record with a designed voice
 ```
 
 Commit `public/voice/` and deploy. Visitors turn Voice and Sound effects on with the switches in the corner (both start off).
