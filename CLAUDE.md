@@ -51,7 +51,7 @@ lattice/
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5. Next: polish.
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5, then polish (spec audit, animated resets/clears, phone fixes, a11y). The user then promoted every item in NOTES.md "Ideas": hero shearing lattice, prefers-reduced-motion, ML-KEM-768 sizes (Scene 5), Grover vs Shor panel and chart settings — grids per dimension, climb to 60D (Scene 4). All deployed; 70 tests, 100% line coverage of `core`. Open: confirm 60 fps on a real 2020 laptop and the Three.js CDN on the live site. Next: nothing scheduled — new work goes through NOTES.md "Ideas".
 
 ### The five scenes (frozen scope)
 
