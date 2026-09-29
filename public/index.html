@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230b0d12'/%3E%3Cg fill='%235b6b8c'%3E%3Ccircle cx='4' cy='4' r='1.3'/%3E%3Ccircle cx='12' cy='4' r='1.3'/%3E%3Ccircle cx='4' cy='12' r='1.3'/%3E%3Ccircle cx='12' cy='12' r='1.3'/%3E%3C/g%3E%3Ccircle cx='8' cy='8' r='2' fill='%23ffb454'/%3E%3C/svg%3E">
 <title>Lattice — the math replacing the internet's locks</title>
 <meta name="description" content="An explorable explanation of lattice-based post-quantum cryptography (Kyber / ML-KEM). Drag, throw, attack, encrypt.">
 <meta property="og:title" content="Lattice">
@@ -57,6 +58,8 @@
   .controls label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
   .btn { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
   .btn:hover { border-color: var(--muted); }
+  .btn:focus-visible, .seg:focus-visible, .linklike:focus-visible, .dots a:focus-visible, .scroll-hint:focus-visible,
+  input:focus-visible { outline: 2px solid var(--ball); outline-offset: 2px; }
 
   .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .seg { background: transparent; color: var(--muted); border: 0; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }

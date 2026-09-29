@@ -29,15 +29,15 @@ interface Throw {
 
 export function mountScene2(root: HTMLElement): () => void {
   // ---------- DOM ----------
-  const canvas = el("canvas", { class: "scene-canvas", "aria-label": "The same lattice with a good and a bad basis" });
+  const canvas = el("canvas", { class: "scene-canvas", "aria-label": copy.labels.canvas });
   const readout = el("div", { class: "readout", text: copy.hint });
-  const goodBtn = el("button", { type: "button", class: "seg active", text: copy.labels.good, onClick: () => setMode("good") });
-  const badBtn = el("button", { type: "button", class: "seg", text: copy.labels.bad, onClick: () => setMode("bad") });
+  const goodBtn = el("button", { type: "button", class: "seg active", text: copy.labels.good, "aria-pressed": "true", onClick: () => setMode("good") });
+  const badBtn = el("button", { type: "button", class: "seg", text: copy.labels.bad, "aria-pressed": "false", onClick: () => setMode("bad") });
   const tally = el("div", { class: "tally" });
   const controls = el(
     "div",
     { class: "controls" },
-    el("div", { class: "segmented", role: "group", "aria-label": "Basis" }, goodBtn, badBtn),
+    el("div", { class: "segmented", role: "group", "aria-label": copy.labels.group }, goodBtn, badBtn),
     el("button", { type: "button", class: "btn", text: copy.labels.throwMany, onClick: () => throwMany(20) }),
     el("button", { type: "button", class: "btn", text: copy.labels.clear, onClick: () => clear() }),
     tally,
@@ -70,6 +70,8 @@ export function mountScene2(root: HTMLElement): () => void {
     flash = 1;
     goodBtn.classList.toggle("active", m === "good");
     badBtn.classList.toggle("active", m === "bad");
+    goodBtn.setAttribute("aria-pressed", String(m === "good"));
+    badBtn.setAttribute("aria-pressed", String(m === "bad"));
     // start with a clean canvas so the picture always agrees with the tally (counts are kept per basis)
     throws = [];
     queue = [];
@@ -161,8 +163,8 @@ export function mountScene2(root: HTMLElement): () => void {
     }
 
     // arrows of the shown basis
-    drawArrow(ctx, vp, [0, 0], shown[0], color, { label: "b₁", handle: true, handleR: 9 });
-    drawArrow(ctx, vp, [0, 0], shown[1], color, { label: "b₂", handle: true, handleR: 9 });
+    drawArrow(ctx, vp, [0, 0], shown[0], color, { label: copy.labels.basis1, handle: true, handleR: 9 });
+    drawArrow(ctx, vp, [0, 0], shown[1], color, { label: copy.labels.basis2, handle: true, handleR: 9 });
 
     // readout + tally
     const s = stats[mode];
