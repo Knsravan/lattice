@@ -129,6 +129,19 @@ export const scene4 = {
     reset: "Back to the bad basis.",
     ball: "The ball's nearest dot is {dist} away.",
   },
+  quantum: {
+    title: "Two quantum tricks, two different stories",
+    shor: {
+      name: "Shor’s algorithm",
+      body: "Finds a hidden repeating pattern in numbers. Today’s locks (RSA and elliptic curves) are built on exactly such a pattern, so a big enough quantum computer opens them completely.",
+      verdict: "Today’s locks: broken",
+    },
+    grover: {
+      name: "Grover’s algorithm",
+      body: "Speeds up blind guessing, but only by a square root: a million guesses become a thousand. A grid has no pattern for Shor to find, and Grover-style searching trims the grid attack only a little.",
+      verdict: "Grids: still safe (just make them a bit bigger)",
+    },
+  },
   chart: {
     title: "Did the attack recover the secret?",
     ratio: "Attacker's shortest arrow ÷ the hidden one",
