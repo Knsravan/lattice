@@ -30,9 +30,16 @@
     -webkit-font-smoothing: antialiased;
   }
   a { color: var(--secret); }
-  #app { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+  body { overflow-x: clip; } /* the hero background is 100vw wide; clip (not hidden) keeps sticky prose working */
+  #app { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; position: relative; }
 
   .hero { min-height: 92vh; display: flex; flex-direction: column; justify-content: center; padding: 8vh 0 6vh; max-width: 680px; }
+  .hero > :not(.hero-bg) { position: relative; z-index: 1; }
+  .hero-bg {
+    position: absolute; top: 0; left: 50%; width: 100vw; transform: translateX(-50%); z-index: 0; pointer-events: none;
+    -webkit-mask-image: radial-gradient(ellipse 55% 75% at 72% 50%, #000 0%, rgba(0,0,0,.45) 60%, transparent 100%);
+    mask-image: radial-gradient(ellipse 55% 75% at 72% 50%, #000 0%, rgba(0,0,0,.45) 60%, transparent 100%);
+  }
   .hero h1 { font-size: clamp(44px, 8vw, 84px); letter-spacing: .02em; margin: 0 0 .2em; font-weight: 700; line-height: 1; }
   .tagline { font-size: clamp(19px, 2.6vw, 24px); color: var(--muted); margin: 0 0 1.4em; }
   .intro { margin: 0 0 1em; }
@@ -112,6 +119,10 @@
     .prose { position: static; }
     .dots { display: none; }
     .hero { min-height: 70vh; }
+    .hero-bg {
+      -webkit-mask-image: radial-gradient(ellipse 80% 55% at 50% 62%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.2) 60%, transparent 100%);
+      mask-image: radial-gradient(ellipse 80% 55% at 50% 62%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.2) 60%, transparent 100%);
+    }
   }
 </style>
 </head>

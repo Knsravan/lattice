@@ -64,11 +64,15 @@
 - Accessibility: `aria-pressed` on the Good/Bad and 2D/3D/4D toggles, group labels, visible keyboard focus rings.
 - Inline SVG favicon (the page used to request /favicon.ico and get a 404).
 
+## Day 2 — Hero (promoted from Ideas by the user)
+- `src/ui/hero.ts`: the Day-1 placeholder's shearing lattice, rebuilt on `draw2d`. b₁ = (1, 0) fixed, b₂ = (0.9·sin t, 1) swinging at ~0.22 rad/s; faint dots plus the two green arrows. Origin sits right of the title on desktop, low-centre on phones; a CSS radial mask fades it out under the text. aria-hidden; runs only while the hero is on screen.
+- Full-bleed needs a 100vw canvas; `body { overflow-x: clip }` stops the scrollbar-width overflow without breaking `position: sticky` (which `hidden` would).
+- QA: no horizontal scroll, sticky prose still sticks, no console errors (desktop + 390 px).
+
 ## Skipped / deferred
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
-- Hero: put the slowly shearing lattice from the placeholder behind the title (polish week).
 - Scene 4: a "Grover vs Shor" one-paragraph panel explaining why quantum helps against factoring but not lattices.
 - Respect `prefers-reduced-motion` (skip the 4D spin and the drop-in animations).
 - Scene 4: let the reader pick how many grids per dimension, or a "run to 60D" button (LLL is fast enough now).

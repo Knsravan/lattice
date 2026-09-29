@@ -1,5 +1,6 @@
 import { site, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
+import { mountHero } from "./ui/hero.ts";
 import { mountScene1 } from "./scenes/scene1-grid.ts";
 import { mountScene2 } from "./scenes/scene2-basis.ts";
 import { mountScene3 } from "./scenes/scene3-noise.ts";
@@ -10,17 +11,17 @@ import { mountScene5 } from "./scenes/scene5-kyber.ts";
 function build() {
   const app = $("#app");
 
-  // hero
-  app.append(
-    el(
-      "header",
-      { class: "hero" },
-      el("h1", { text: site.title }),
-      el("p", { class: "tagline", text: site.tagline }),
-      ...site.intro.map((t) => el("p", { class: "intro", text: t })),
-      el("a", { class: "scroll-hint", href: "#scene-1", text: site.scrollHint + " ↓" }),
-    ),
+  // hero, with a slowly shearing lattice behind the title
+  const hero = el(
+    "header",
+    { class: "hero" },
+    el("h1", { text: site.title }),
+    el("p", { class: "tagline", text: site.tagline }),
+    ...site.intro.map((t) => el("p", { class: "intro", text: t })),
+    el("a", { class: "scroll-hint", href: "#scene-1", text: site.scrollHint + " ↓" }),
   );
+  app.append(hero);
+  mountHero(hero);
 
   // scene 1
   const s1 = section("scene-1", scene1.kicker, scene1.title, scene1.paragraphs);
