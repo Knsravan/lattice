@@ -29,6 +29,7 @@ lattice/
   tsconfig.json
   public/
     index.html              # page shell: styles, colour tokens, Three.js import map
+    voice/                  # narration clips + manifest.json (empty {} until recorded)
   src/
     core/                   # PURE MATH. No DOM, no Three.js imports. Fully tested.
       index.ts              # re-exports everything below
@@ -61,7 +62,8 @@ lattice/
       copy.ts               # ALL narration and on-screen text
       dom.ts                # el/$, canvas sizing, run-while-visible, easing, reduced-motion check, palette
       hero.ts               # shearing lattice behind the title
-      story.ts              # scroll-story engine: sticky picture, steps, active-step clock
+      story.ts              # scroll-story engine: sticky picture, steps, active-step clock, sound cues, voice per step
+      sound.ts              # Voice / Sound-effects switches; Web Audio effects; plays public/voice clips
     types/
       three.d.ts            # minimal types for the parts of Three.js Scene 4 uses
     main.ts                 # builds the page from copy.ts, mounts hero + scenes, nav dots
@@ -69,22 +71,27 @@ lattice/
     lattice.test.ts  lll_cvp.test.ts  attack.test.ts  lwe2d.test.ts  crypto.test.ts  project4d.test.ts
   scripts/build.mjs         # tsc + copy public/ → dist/
   scripts/serve.mjs         # local static preview
+  scripts/voice.mjs         # npm run voice: record every story step with a running VoiceStudio → public/voice/
   .github/workflows/deploy.yml
 ```
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5, then polish (spec audit, animated resets/clears, phone fixes, a11y). The user then promoted every item in NOTES.md "Ideas": hero shearing lattice, prefers-reduced-motion, ML-KEM-768 sizes (Scene 5), Grover vs Shor panel and chart settings — grids per dimension, climb to 60D (Scene 4). All deployed; 70 tests, 100% line coverage of `core`. Open: confirm 60 fps on a real 2020 laptop and the Three.js CDN on the live site. Then the user found the site hard to follow for a 15-year-old and chose a rebuild as a scroll story (see "Format" below): Chapter 0 (new) and Chapter 1 done, 71 tests. Next: user reviews Chapters 0–1; then Chapters 2–5 in the same format.
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5, then polish (spec audit, animated resets/clears, phone fixes, a11y). The user then promoted every item in NOTES.md "Ideas": hero shearing lattice, prefers-reduced-motion, ML-KEM-768 sizes (Scene 5), Grover vs Shor panel and chart settings — grids per dimension, climb to 60D (Scene 4). All deployed; 70 tests, 100% line coverage of `core`. Open: confirm 60 fps on a real 2020 laptop and the Three.js CDN on the live site. Then the user found the site hard to follow for a 15-year-old and chose a rebuild as a scroll story (see "Format" below): Chapter 0 (new) and Chapter 1 done, 71 tests. User feedback on 0–1: the padlock step and "trip from the centre" step were confusing → split the padlock into 4 steps and replaced the trip with addresses (3, 2), (−1, 2), no half steps; added Voice (VoiceStudio clips, recorded by the user with `npm run voice`) and synthesized sound effects. Next: user records the voice clips and reviews; then Chapters 2–5 in the same format.
 
 ### Format: a scroll story (user decision, Sept 29)
 Each chapter is told as a scroll story: the picture stays pinned while short text steps (one or two sentences each) scroll past, and the picture animates to match the step in view (`src/ui/story.ts`). The story starts from a problem the reader already knows and adds one idea per step. The same three people run through every chapter: **Alex** sends, **Sam** receives, **Eve** snoops. Interactive playgrounds come after a chapter's story as "Try it yourself".
 
 Rollout: Chapter 0 and Chapter 1 are rebuilt in this format; Chapters 2–5 keep the older scene layout until the user has reviewed 0–1.
 
-**Chapter 0 — The problem.** (added by the user, Sept 29; no maths)
-Alex sends Sam "meet at 5"; it hops through computers; Eve copies it; locking needs a key they can't share; the padlock trick (Sam sends open padlocks, keeps the key); that is the browser padlock; today's padlocks rest on multiplying vs. going back (37 × 53 = 1,961); a quantum computer goes back fast and Eve's saved copies open; so: a new puzzle, about dots. Story in `scenes/chapter0-problem.ts`.
+**Sound (user decision, Sept 29).** Two switches pinned in the corner, both OFF until the visitor turns them on (remembered on their device):
+- *Voice* reads each story step aloud. Clips are pre-recorded with VoiceStudio (the user's choice of engine) by `npm run voice`, which posts each step's text from `copy.ts` to the user's running VoiceStudio backend (`http://localhost:3900/v1/audio/speech`) and writes `public/voice/<chapter>-s<step>.mp3` + `manifest.json`. The page only plays a clip whose recorded text still matches the step, and the Voice switch is greyed out while the manifest is empty. VoiceStudio can't run in the cloud sandbox (its model downloads from Hugging Face, which is blocked there), so the user records the clips on their own machine.
+- *Sound effects* are synthesized in the browser with Web Audio (`src/ui/sound.ts`): no files, no network. Chapters trigger them from their animation timeline with `frame.cue(at, "pop")`.
 
-**Chapter 1** is Scene 1 below, told as a story first (`scenes/chapter1-grid.ts`: arrow A → row of dots → arrow B → rows stack into a grid → "lattice", "basis" → a trip of 3 × A + 2 × B → drop a ball → measure → the question), then the Scene 1 playground as "Try it yourself".
+**Chapter 0 — The problem.** (added by the user, Sept 29; no maths)
+Alex sends Sam "meet at 5"; it hops through computers; Eve copies it; locking needs a key they can't share; the padlock trick in four steps (Sam's padlock + key, key stays home → the open padlock travels, Eve's copy "can only lock" → Alex clicks it shut → the locked box travels, Eve's copy stays shut, Sam opens it); that is the browser padlock; today's padlocks rest on multiplying vs. going back (37 × 53 = 1,961); a quantum computer goes back fast and Eve's saved copies open; so: a new puzzle, about dots. Story in `scenes/chapter0-problem.ts`.
+
+**Chapter 1** is Scene 1 below, told as a story first (`scenes/chapter1-grid.ts`: arrow A → row of dots → arrow B → rows stack into a grid → "lattice", "basis" → every dot has an address: a walker hops 3 × A then 2 × B with a step counter → (3, 2) → backwards: (−1, 2) → no half steps (✗) → drop a ball → measure → the question), then the Scene 1 playground as "Try it yourself".
 
 ### The five scenes (frozen scope, plus Chapter 0 above)
 

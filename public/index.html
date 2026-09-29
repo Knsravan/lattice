@@ -88,6 +88,11 @@
   .mono { font-variant-numeric: tabular-nums; min-width: 2.6em; color: var(--ball); }
   .pill { padding: 3px 10px; border-radius: 999px; font-size: 13px; font-variant-numeric: tabular-nums; border: 1px solid var(--line); }
   .pill.good { color: var(--secret); } .pill.bad { color: var(--attacker); }
+  .snd { position: fixed; left: 14px; bottom: 14px; z-index: 20; display: flex; gap: 6px; flex-wrap: wrap; }
+  .snd-btn { background: rgba(17,20,28,.92); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; backdrop-filter: blur(6px); }
+  .snd-btn[aria-pressed=true] { border-color: var(--ball); color: var(--ball); }
+  .snd-btn:disabled { opacity: .5; cursor: default; }
+  .snd-btn:focus-visible { outline: 2px solid var(--ball); outline-offset: 2px; }
   .btn:disabled { opacity: .45; cursor: default; }
   .dims .seg.active, .dims .seg.active:first-child, .dims .seg.active:last-child { background: var(--line); color: var(--ink); }
   .chart-panel { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px 12px; }
@@ -160,6 +165,9 @@
     .story-step.active p { background: var(--panel); }
     .prose { position: static; }
     .dots { display: none; }
+    .snd { left: auto; right: 8px; bottom: auto; top: 8px; }
+    .snd-btn { padding: 6px 9px; font-size: 16px; }
+    .snd-txt { display: none; }
     .hero { min-height: 70vh; }
     .hero-bg {
       -webkit-mask-image: radial-gradient(ellipse 80% 55% at 50% 62%, rgba(0,0,0,.55) 0%, rgba(0,0,0,.2) 60%, transparent 100%);
