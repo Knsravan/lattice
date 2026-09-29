@@ -5,12 +5,12 @@ import { scene3 as copy } from "../ui/copy.ts";
 import { makeViewport, visiblePoints, drawDots, drawArrow, drawBall, drawDashedLine, drawRing } from "./draw2d.ts";
 
 /** Same private key as Scene 2; a slightly uglier public key so a small wobble is enough to blind it. */
-const GOOD: Basis = [
+export const GOOD: Basis = [
   [1.2, 0.32],
   [-0.32, 1.2],
 ];
 const g = (a: number, b: number): Vec => [a * GOOD[0][0] + b * GOOD[1][0], a * GOOD[0][1] + b * GOOD[1][1]];
-const BAD: Basis = [g(4, 1), g(3, 1)]; // determinant 1 → the same lattice
+export const BAD: Basis = [g(4, 1), g(3, 1)]; // determinant 1 → the same lattice
 const H = halfStepOf(GOOD);
 const SAFE = safeWobble(H);
 const MAX_WOBBLE = 0.6;
