@@ -23,30 +23,49 @@ A curious 15-year-old, or an adult developer who has never studied cryptography.
 ```
 lattice/
   CLAUDE.md                 # this spec
-  index.html
+  README.md
+  NOTES.md                  # things tried, skipped, or deferred — plus "Ideas"
+  package.json              # scripts only: test, coverage, build, serve (no dependencies)
+  tsconfig.json
+  public/
+    index.html              # page shell: styles, colour tokens, Three.js import map
   src/
     core/                   # PURE MATH. No DOM, no Three.js imports. Fully tested.
-      lattice.ts            # Lattice class: basis, points in a window, gram-schmidt
-      cvp.ts                # closest-vector: exact for dim<=3 (enumeration), Babai nearest-plane for any dim
-      lll.ts                # LLL reduction that yields step-by-step trace (for animation)
-      lwe.ts                # toy LWE: keygen, encrypt one bit, decrypt, with noise
-      kyber.ts              # toy ML-KEM over Z_q[x]/(x^n+1): n=4..16, q small; keygen/encaps/decaps
-      project4d.ts          # 4D -> 3D projection (perspective + rotation in 6 planes)
-      types.ts
-    scenes/
+      index.ts              # re-exports everything below
+      types.ts              # Vec, Basis, Rng
+      vec.ts                # vector/matrix helpers: dot, combine, determinant, inverse, coordinates
+      rng.ts                # seeded PRNG (mulberry32), randInt, centred-binomial noise
+      lattice.ts            # Gram–Schmidt, points in a ball/box, same-lattice test, skewing a basis
+      cvp.ts                # closest vector: Babai nearest-plane and rounding (any dim); exact via LLL + search (dim ≤ 4)
+      lll.ts                # LLL with incremental Gram–Schmidt; optional step trace (for animation) and time budget
+      attack.ts             # Scene 4: LWE-style q-ary lattices, LLL + Babai attack, Kannan embedding, showcase bases
+      lwe2d.ts              # Scene 3: geometric LWE in 2D (encode = dot + bit·halfStep + wobble, decode)
+      lwe.ts                # toy modular LWE (Regev): keygen, encrypt/decrypt one bit
+      kyber.ts              # toy ML-KEM over Z_q[x]/(x^n+1): presets (scene: n=8, q=97), keygen/encaps/decaps, byte sizes
+      hash.ts               # pure-TS SHA-256, XOR keystream
+      project4d.ts          # 4D -> 3D projection (perspective + rotation in 6 planes), unrotate
+    scenes/                 # draw only; all math comes from core
+      draw2d.ts             # shared 2-D canvas drawing (viewport, dots, arrows, ball, rings)
       scene1-grid.ts
       scene2-basis.ts
       scene3-noise.ts
-      scene4-dimensions.ts
-      scene5-kyber.ts
-    ui/                     # scroll manager, sliders, buttons, narration text
-    main.ts
-  tests/                    # mirrors src/core (node --test)
+      scene4-dimensions.ts  # Three.js view (loaded from the CDN on demand), LLL animation
+      scene4-chart.ts       # the success-vs-dimension chart (2-D canvas)
+      scene4-sweep.ts       # runs the chart's attacks: module worker, main-thread fallback
+      scene4-worker.ts
+      scene5-kyber.ts       # panels, 97-hour clock, "show it on the lattice", for-scale box
+    ui/
+      copy.ts               # ALL narration and on-screen text
+      dom.ts                # el/$, canvas sizing, run-while-visible, easing, reduced-motion check, palette
+      hero.ts               # shearing lattice behind the title
+    types/
+      three.d.ts            # minimal types for the parts of Three.js Scene 4 uses
+    main.ts                 # builds the page from copy.ts, mounts hero + scenes, nav dots
+  tests/                    # node --test, one file per area of src/core
+    lattice.test.ts  lll_cvp.test.ts  attack.test.ts  lwe2d.test.ts  crypto.test.ts  project4d.test.ts
   scripts/build.mjs         # tsc + copy public/ → dist/
   scripts/serve.mjs         # local static preview
   .github/workflows/deploy.yml
-  README.md
-  NOTES.md                  # things tried, skipped, or deferred — plus "Ideas"
 ```
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
