@@ -51,7 +51,7 @@ lattice/
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Next: Scene 4 (Three.js).
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart). Next: Scene 5.
 
 ### The five scenes (frozen scope)
 
@@ -64,7 +64,7 @@ Same lattice. A toggle switches between a "good" basis (short, near-perpendicula
 **Scene 3 — Add the wobble.** (shipped)
 Geometric LWE from `core/lwe2d.ts`: ball = dot + bit·halfStep + wobble; readers round the ball in their own basis and look at the leftover along the first arrow. Two readers per ball (owner with the good basis, eavesdropper with the bad one), a wobble slider, "Send 0 / Send 1 / Send 20 bits", scores per reader. Zero wobble ⇒ both read 100% (the wobble is the secret's protection); moderate ⇒ owner 100%, eavesdropper ~50%; past |halfStep|/2 ⇒ owner fails too. Narration teaches: LWE, the heart of Kyber. (`core/lwe.ts` — the modular Regev scheme — is kept for Scene 5.)
 
-**Scene 4 — Climb the dimensions.** (the showpiece)
+**Scene 4 — Climb the dimensions.** (the showpiece, shipped)
 - 3D lattice in Three.js with orbit controls, ball throw, nearest point highlight.
 - A dimension slider 2 → 3 → 4. At 4, render the 4D lattice as a rotating 3D projection using `core/project4d.ts`; points fade with the 4th coordinate.
 - A "Run the attack" button runs LLL from `core/lll.ts` and ANIMATES the trace: basis vectors visibly swap and shorten, step by step, ~100ms per step, until reduced.
