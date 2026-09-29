@@ -1,5 +1,5 @@
 import {
-  KYBER_PRESETS, kyberKeygen, kyberEncaps, kyberDecaps, kyberDecryptBits, sealMessage, openMessage, toHex,
+  KYBER_PRESETS, ML_KEM, toyKemSizes, mlkemSizes, kyberKeygen, kyberEncaps, kyberDecaps, kyberDecryptBits, sealMessage, openMessage, toHex,
   encode2d, decode2d, halfStepOf, mulberry32, center,
 } from "../core/index.ts";
 import type { Poly, PolyVec, EncapsResult, Sent, Read, Vec } from "../core/index.ts";
@@ -49,12 +49,41 @@ export function mountScene5(root: HTMLElement): () => void {
       body,
     );
   const clock = el("canvas", { class: "clock-canvas", "aria-label": copy.labels.diff });
+
+  // "for scale": the toy's sizes next to the real ML-KEM-768 (both computed in core)
+  const toy = toyKemSizes(P), real = mlkemSizes(ML_KEM[768]);
+  const most = Math.max(...Object.values(real), ...Object.values(toy));
+  const fmt = (b: number) => `${b.toLocaleString("en-US")} ${copy.scale.bytes}`;
+  const bar = (b: number, cls: string, label: string, delay: number) =>
+    el("div", { class: "sbar-row" },
+      el("span", { class: "sbar-who", text: label }),
+      el("span", { class: "sbar-track" }, el("span", { class: `sbar ${cls}`, style: `width:${Math.max(0.6, (100 * b) / most)}%; animation-delay:${delay}ms` })),
+      el("span", { class: "sbar-num", text: fmt(b) }));
+  const scaleRows = (["publicKey", "ciphertext", "sharedKey"] as const).flatMap((key, i) => {
+    const cls = { publicKey: "public", ciphertext: "ball", sharedKey: "secret" }[key];
+    return [
+      el("div", { class: "sbar-label", text: copy.scale.rows[key] }),
+      bar(toy[key], cls, copy.scale.toy, i * 120),
+      bar(real[key], cls, copy.scale.real, i * 120 + 60),
+    ];
+  });
+  const scalePanel = el("div", { class: "kpanel kscale" },
+    el("div", { class: "khead" }, el("h3", { text: copy.scale.title })),
+    el("p", { class: "kscale-intro", text: copy.scale.intro }),
+    ...scaleRows,
+    el("p", { class: "kscale-note", text: copy.scale.note }));
+  // the bars grow when the box first scrolls into view, not at page load
+  const scaleIO = new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting)) { scalePanel.classList.add("shown"); scaleIO.disconnect(); }
+  }, { threshold: 0.3 });
+  scaleIO.observe(scalePanel);
   root.append(
     stage,
     msgRow,
     panel(copy.labels.keygen, el("button", { type: "button", class: "btn", text: copy.labels.keygenBtn, onClick: () => newKeys() }), "keygen", body1),
     panel(copy.labels.encaps, lockBtn, "encaps", body2),
     panel(copy.labels.decaps, unlockBtn, "decaps", body3),
+    scalePanel,
   );
   const ctx = canvas.getContext("2d")!;
   const cctx = clock.getContext("2d")!;
@@ -250,5 +279,5 @@ export function mountScene5(root: HTMLElement): () => void {
 
   // one loop for the whole column: the lattice picture and the clock share the clock `time`
   const stop = runWhileVisible(root, (dt) => { time += dt; drawLattice(); drawClock(); });
-  return () => { stop(); root.innerHTML = ""; };
+  return () => { stop(); scaleIO.disconnect(); root.innerHTML = ""; };
 }

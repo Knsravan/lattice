@@ -182,3 +182,41 @@ export function sealMessage(sharedSecret: Uint8Array, text: string): Uint8Array 
 export function openMessage(sharedSecret: Uint8Array, sealed: Uint8Array): string {
   return new TextDecoder().decode(xorStream(sharedSecret, sealed));
 }
+
+// ---------- sizes, for "how big is the real thing?" ----------
+
+export interface KemSizes { publicKey: number; ciphertext: number; sharedKey: number } // bytes
+
+/**
+ * Bytes the toy would need on the wire, exactly as drawn: every number packed in ⌈log₂ q⌉ bits,
+ * public key = A and t (sent in full), ciphertext = u and v, shared key = one SHA-256.
+ */
+export function toyKemSizes(p: KyberParams): KemSizes {
+  const bits = Math.ceil(Math.log2(p.q));
+  const bytes = (numbers: number) => Math.ceil((numbers * bits) / 8);
+  return {
+    publicKey: bytes(p.k * p.k * p.n + p.k * p.n),
+    ciphertext: bytes(p.k * p.n + p.n),
+    sharedKey: 32,
+  };
+}
+
+/** ML-KEM parameter sets from FIPS 203 (n = 256, q = 3329). du, dv = ciphertext compression bits. */
+export const ML_KEM = {
+  512: { k: 2, du: 10, dv: 4 },
+  768: { k: 3, du: 10, dv: 4 },
+  1024: { k: 4, du: 11, dv: 5 },
+} as const;
+
+/**
+ * FIPS 203 byte sizes. The public key is t (k·256 numbers at 12 bits) plus a 32-byte seed that regrows A;
+ * the ciphertext is u and v squeezed to du and dv bits per number.
+ */
+export function mlkemSizes(set: { k: number; du: number; dv: number }): KemSizes {
+  const n = 256;
+  return {
+    publicKey: (set.k * n * 12) / 8 + 32,
+    ciphertext: (set.k * n * set.du + n * set.dv) / 8,
+    sharedKey: 32,
+  };
+}

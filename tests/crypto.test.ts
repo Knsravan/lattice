@@ -4,7 +4,7 @@ import {
   lweKeygen, lweEncrypt, lweDecrypt, lweNoiseTerm, lweEncryptBits, lweDecryptBits, mod, center,
   mulberry32, sha256, toHex, utf8, xorStream, concatBytes,
   KYBER_PRESETS, kyberKeygen, kyberEncryptBits, kyberDecryptBits, kyberEncaps, kyberDecaps,
-  polyMul, polyAdd, polySub, matVecMul, sealMessage, openMessage, centeredBinomial, randInt,
+  polyMul, polyAdd, polySub, matVecMul, sealMessage, toyKemSizes, mlkemSizes, ML_KEM, openMessage, centeredBinomial, randInt,
 } from "../src/core/index.ts";
 
 describe("rng", () => {
@@ -133,6 +133,24 @@ describe("kyber", () => {
       raw.forEach((x, i) => assert.ok(enc.m[i] ? 48.5 - Math.abs(x) < 18 : Math.abs(x) < 18, `seed ${seed}: ${x}`));
       for (const c of [...pk.t, ...enc.ciphertext.u, enc.ciphertext.v].flat()) assert.ok(c >= 0 && c < 97);
     }
+  });
+  test("ML-KEM sizes match FIPS 203 for all three parameter sets", () => {
+    assert.deepEqual(mlkemSizes(ML_KEM[512]), { publicKey: 800, ciphertext: 768, sharedKey: 32 });
+    assert.deepEqual(mlkemSizes(ML_KEM[768]), { publicKey: 1184, ciphertext: 1088, sharedKey: 32 });
+    assert.deepEqual(mlkemSizes(ML_KEM[1024]), { publicKey: 1568, ciphertext: 1568, sharedKey: 32 });
+  });
+  test("toy sizes count exactly what the scene shows (7 bits per number at q = 97)", () => {
+    const p = KYBER_PRESETS.scene;
+    const rng = mulberry32(3);
+    const { pk } = kyberKeygen(p, rng);
+    const enc = kyberEncaps(pk, rng);
+    const pkNumbers = pk.A.flat(2).length + pk.t.flat().length; // 32 + 16
+    const ctNumbers = enc.ciphertext.u.flat().length + enc.ciphertext.v.length; // 16 + 8
+    const sizes = toyKemSizes(p);
+    assert.equal(sizes.publicKey, Math.ceil((pkNumbers * 7) / 8));
+    assert.equal(sizes.ciphertext, Math.ceil((ctNumbers * 7) / 8));
+    assert.equal(sizes.sharedKey, enc.sharedSecret.length);
+    assert.deepEqual(sizes, { publicKey: 42, ciphertext: 21, sharedKey: 32 });
   });
   test("toy preset: mostly works, and every value is small enough to display", () => {
     const p = KYBER_PRESETS.toy;
