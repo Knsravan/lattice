@@ -4,7 +4,7 @@ import {
   lweKeygen, lweEncrypt, lweDecrypt, lweNoiseTerm, lweEncryptBits, lweDecryptBits, mod, center,
   mulberry32, sha256, toHex, utf8, xorStream, concatBytes,
   KYBER_PRESETS, kyberKeygen, kyberEncryptBits, kyberDecryptBits, kyberEncaps, kyberDecaps,
-  polyMul, polyAdd, polySub, sealMessage, openMessage, centeredBinomial, randInt,
+  polyMul, polyAdd, polySub, matVecMul, sealMessage, openMessage, centeredBinomial, randInt,
 } from "../src/core/index.ts";
 
 describe("rng", () => {
@@ -115,6 +115,22 @@ describe("kyber", () => {
       const { bits, raw } = kyberDecryptBits(sk, ct);
       assert.deepEqual(bits, m, `seed ${seed}`);
       assert.equal(raw.length, p.n);
+    }
+  });
+  test("scene preset (n=8, q=97): KEM always agrees, the wobble is t − A·s, all values two digits", () => {
+    const p = KYBER_PRESETS.scene;
+    for (let seed = 1; seed <= 300; seed++) {
+      const rng = mulberry32(seed);
+      const { pk, sk, e } = kyberKeygen(p, rng);
+      const As = matVecMul(pk.A, sk.s, p.q);
+      pk.t.forEach((poly, i) => assert.deepEqual(polySub(poly, As[i], p.q), e[i]));
+      const enc = kyberEncaps(pk, rng);
+      const dec = kyberDecaps(sk, pk, enc.ciphertext);
+      assert.ok(dec.ok, `seed ${seed}`);
+      assert.equal(toHex(dec.sharedSecret), toHex(enc.sharedSecret));
+      const { raw } = kyberDecryptBits(sk, enc.ciphertext);
+      raw.forEach((x, i) => assert.ok(Math.abs(x - (enc.m[i] ? 48 : 0)) < 24 || Math.abs(x + 48) < 24));
+      for (const c of [...pk.t, ...enc.ciphertext.u, enc.ciphertext.v].flat()) assert.ok(c >= 0 && c < 97);
     }
   });
   test("toy preset: mostly works, and every value is small enough to display", () => {
