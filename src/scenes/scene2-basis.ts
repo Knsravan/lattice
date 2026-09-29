@@ -39,7 +39,7 @@ export function mountScene2(root: HTMLElement): () => void {
     { class: "controls" },
     el("div", { class: "segmented", role: "group", "aria-label": "Basis" }, goodBtn, badBtn),
     el("button", { type: "button", class: "btn", text: copy.labels.throwMany, onClick: () => throwMany(20) }),
-    el("button", { type: "button", class: "btn", text: copy.labels.clear, onClick: () => { throws = []; stats = { good: [0, 0], bad: [0, 0] }; } }),
+    el("button", { type: "button", class: "btn", text: copy.labels.clear, onClick: () => clear() }),
     tally,
   );
   const stage = el("div", { class: "stage" }, canvas, readout);
@@ -52,10 +52,17 @@ export function mountScene2(root: HTMLElement): () => void {
   let blend = 0; // 0 = good basis drawn, 1 = bad basis drawn (animated)
   let flash = 0; // dots flash briefly on toggle to show they don't move
   let throws: Throw[] = [];
+  let fading: { list: Throw[]; born: number } = { list: [], born: 0 }; // cleared throws fade out
   let stats: Record<Mode, [number, number]> = { good: [0, 0], bad: [0, 0] }; // [wrong, total]
   let time = 0;
   let queue: { pos: Vec; at: number }[] = [];
   const rng = mulberry32(7);
+
+  function clear() {
+    fading = { list: throws, born: time };
+    throws = [];
+    stats = { good: [0, 0], bad: [0, 0] };
+  }
 
   function setMode(m: Mode) {
     if (m === mode) return;
@@ -123,8 +130,13 @@ export function mountScene2(root: HTMLElement): () => void {
     // the cell of the shown basis
     drawCell(ctx, vp, shown, color, [0, 0], 0.08);
 
-    // throws
-    for (const t of throws) {
+    // throws (plus any just-cleared ones, fading out)
+    const fadeA = 1 - easeOut((time - fading.born) / 0.3);
+    if (fadeA <= 0) fading.list = [];
+    const layers = [...fading.list.map((t) => [t, fadeA] as const), ...throws.map((t) => [t, 1] as const)];
+    for (const [t, alpha] of layers) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
       const age = time - t.born;
       const drop = easeOut(age / 0.35);
       const reach = easeOut((age - 0.2) / 0.4);
@@ -139,6 +151,7 @@ export function mountScene2(root: HTMLElement): () => void {
         }
       }
       drawBall(ctx, vp, t.pos, drop);
+      ctx.restore();
     }
     // labels only for the newest throw, so the canvas doesn't fill with text
     const last = throws[throws.length - 1];

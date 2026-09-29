@@ -1,4 +1,5 @@
-/** Shared 2-D canvas drawing for scenes 1–3. No math here — only pixels. */
+/** Shared 2-D canvas drawing for scenes 1–3 and 5. No math here — only pixels.
+ *  Every helper multiplies the current globalAlpha, so a caller can fade a whole layer. */
 import type { Basis, Vec } from "../core/index.ts";
 import { pointsInBox } from "../core/index.ts";
 import { palette } from "../ui/dom.ts";
@@ -30,7 +31,7 @@ export function visiblePoints(basis: Basis, vp: Viewport, maxPoints = 3000): Dot
 export function drawDots(ctx: CanvasRenderingContext2D, vp: Viewport, pts: DotInfo[], opts: { color?: string; radius?: number; alpha?: number } = {}) {
   const r = opts.radius ?? (pts.length > 700 ? 2 : 3.2);
   ctx.save();
-  ctx.globalAlpha = opts.alpha ?? 1;
+  ctx.globalAlpha *= opts.alpha ?? 1;
   ctx.fillStyle = opts.color ?? palette.dot;
   for (const { point } of pts) {
     const [x, y] = vp.toScreen(point);
@@ -66,8 +67,9 @@ export function drawCell(ctx: CanvasRenderingContext2D, vp: Viewport, basis: Bas
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(o[0], o[1]); ctx.lineTo(a[0], a[1]); ctx.lineTo(ab[0], ab[1]); ctx.lineTo(b[0], b[1]); ctx.closePath();
-  ctx.globalAlpha = fillAlpha; ctx.fillStyle = color; ctx.fill();
-  ctx.globalAlpha = Math.min(1, fillAlpha * 3.5); ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
+  const base = ctx.globalAlpha;
+  ctx.globalAlpha = base * fillAlpha; ctx.fillStyle = color; ctx.fill();
+  ctx.globalAlpha = base * Math.min(1, fillAlpha * 3.5); ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
   ctx.restore();
 }
 
@@ -79,7 +81,8 @@ export function drawArrow(
   const [tx, ty] = vp.toScreen(to);
   const ang = Math.atan2(ty - oy, tx - ox);
   ctx.save();
-  ctx.globalAlpha = opts.alpha ?? 1;
+  const base = ctx.globalAlpha;
+  ctx.globalAlpha = base * (opts.alpha ?? 1);
   ctx.strokeStyle = color; ctx.fillStyle = color;
   ctx.lineWidth = opts.width ?? (opts.active ? 3 : 2.2);
   ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(tx, ty); ctx.stroke();
@@ -91,8 +94,8 @@ export function drawArrow(
   if (opts.handle) {
     const R = opts.handleR ?? 13;
     ctx.beginPath(); ctx.arc(tx, ty, opts.active ? R : R - 3, 0, Math.PI * 2);
-    ctx.globalAlpha = (opts.alpha ?? 1) * (opts.active ? 0.28 : 0.14); ctx.fill();
-    ctx.globalAlpha = opts.alpha ?? 1; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.globalAlpha = base * (opts.alpha ?? 1) * (opts.active ? 0.28 : 0.14); ctx.fill();
+    ctx.globalAlpha = base * (opts.alpha ?? 1); ctx.lineWidth = 1.2; ctx.stroke();
   }
   if (opts.label) {
     ctx.fillStyle = palette.ink;
@@ -127,12 +130,13 @@ export function drawRing(ctx: CanvasRenderingContext2D, vp: Viewport, at: Vec, c
   const [x, y] = vp.toScreen(at);
   const r = opts.r ?? 3.2;
   ctx.save();
-  ctx.globalAlpha = opts.alpha ?? 1;
+  const base = ctx.globalAlpha;
+  ctx.globalAlpha = base * (opts.alpha ?? 1);
   ctx.strokeStyle = color; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(x, y, r + 4 + (opts.pulse ?? 0) * 2.5, 0, Math.PI * 2); ctx.stroke();
   if (opts.filled !== false) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r + 1, 0, Math.PI * 2); ctx.fill(); }
   if (opts.label) {
-    ctx.globalAlpha = 1; // labels are always legible, even when the ring itself is hidden
+    ctx.globalAlpha = base; // labels are always legible, even when the ring itself is hidden
     ctx.fillStyle = color; ctx.font = "12px system-ui, sans-serif";
     ctx.textAlign = opts.labelLeft ? "right" : "left";
     ctx.fillText(opts.label, opts.labelLeft ? x - 12 : x + 12, opts.labelBelow === false ? y - 12 : y + 22);
