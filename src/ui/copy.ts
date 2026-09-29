@@ -98,6 +98,136 @@ export const chapter1 = {
   },
 };
 
+export const chapter2 = {
+  kicker: "Chapter 2",
+  title: "Two ways to walk",
+  steps: [
+    "Here is a new grid. It is built by two short, square arrows. Let’s call them the green arrows.",
+    "Now meet a different pair: two long, crooked arrows. Call them the red arrows.",
+    "Watch the dots while we swap the green arrows for the red ones. Not a single dot moves. The red arrows build exactly the same grid.",
+    "Take this dot. With the green arrows the walk is short: 1 step along the first arrow, 1 step along the second.",
+    "Now reach the same dot with the red arrows: 1 step backwards along the first, then 2 along the second. A long zig-zag, far out and back, to the same dot.",
+    "Now drop a ball. To find the closest dot, there is a simple method: walk with your two arrows, rounding to whole steps. With the green arrows, it lands on the closest dot.",
+    "With the red arrows, the very same method lands on the wrong dot, far from the ball. The real closest dot was right next to it.",
+    "This is the secret behind the new padlock. Sam keeps the green arrows private. Everyone, even Eve, gets the red arrows. Same grid, but only Sam can find the closest dot easily.",
+  ],
+  labels: {
+    green: "green arrows",
+    red: "red arrows",
+    same: "same dots",
+    short: "short walk",
+    long: "long walk",
+    right: "closest dot ✓",
+    wrong: "wrong dot ✗",
+    real: "the real closest dot",
+    sam: "Sam",
+    eve: "Eve",
+    private: "private",
+    public: "public",
+    aria: "The same grid built by a short square pair of arrows and by a long crooked pair",
+  },
+};
+
+export const chapter3 = {
+  kicker: "Chapter 3",
+  title: "Add a shake",
+  steps: [
+    "Now Alex sends Sam a secret bit: a 0 or a 1. Alex only has the red arrows, but that’s enough to find dots on Sam’s grid.",
+    "To send a 0, Alex picks any dot and puts the ball right on it.",
+    "To send a 1, Alex puts the ball exactly halfway between two dots.",
+    "But there’s a problem. Eve can read that too. On a dot means 0, exactly halfway means 1. No secret needed.",
+    "So before sending, Alex gives the ball a small random shake. Now it sits near its spot, but not exactly on it.",
+    "Sam rounds the shaken ball with the green arrows and looks at what is left over. Almost nothing means 0. About half a step means 1. Sam reads it right.",
+    "Eve rounds with the red arrows. Her long, crooked arrows take her to the wrong neighbouring dot, so the leftover she measures is nonsense. Her answer is just a guess.",
+    "Send ten bits. Sam reads all ten. Eve gets about half: no better than flipping a coin.",
+    "But too much shake and even Sam gets lost. Real padlocks use a shake that is just right. This trick is called Learning With Errors, and it is the heart of the new padlock.",
+  ],
+  labels: {
+    zero: "0",
+    one: "1",
+    halfway: "halfway",
+    eveReads: "Eve reads {b} ✓",
+    samReads: "Sam reads {b}",
+    eveGuess: "Eve reads {b}",
+    shake: "shake",
+    leftover: "leftover",
+    sam: "Sam",
+    eve: "Eve",
+    score: "{r} of {n} right",
+    tooMuch: "too much shake",
+    aria: "Sending one secret bit as a ball on a grid, with a small shake",
+  },
+};
+
+export const chapter4 = {
+  kicker: "Chapter 4",
+  title: "Why bigger grids win",
+  steps: [
+    "Eve has a weapon: a famous method called LLL. It takes crooked red arrows and tidies them, one move at a time.",
+    "Move one: shorten an arrow by taking the other one away from it. Move two: swap the arrows if the shorter one is second. Repeat until nothing changes.",
+    "In a flat grid, Eve needs only a few moves to get short, square arrows. With those, she can read Sam’s messages. A flat grid is not safe.",
+    "So real padlocks don’t use a flat grid. They use grids that go in hundreds of directions at once. We can’t draw that, but we can test it.",
+    "This chart runs Eve’s weapon on grids with more and more directions: 2, 4, 6… up to 40. Each bar shows how often she found the secret.",
+    "With a few directions, Eve wins almost every time. Past about 30 directions she almost never does. Her weapon still finishes, but its arrows are no longer good enough.",
+    "Real padlocks use 500 to 1,000 directions. Far beyond anything Eve can tidy.",
+    "What about quantum computers? They are brilliant at one thing: finding hidden repeating patterns. That’s how they crack today’s number puzzle. A grid in hundreds of directions has no such pattern, so they barely help.",
+  ],
+  labels: {
+    lll: "LLL",
+    move: "move {n}",
+    shorten: "shorten",
+    swap: "swap",
+    done: "tidy ✓",
+    directions: "directions",
+    wins: "Eve finds the secret",
+    safe: "safe",
+    real: "real padlocks: 500–1,000 →",
+    pattern: "no pattern to find",
+    quantum: "quantum computer",
+    eve: "Eve",
+    message: "meet at 5",
+    aria: "Eve's LLL weapon tidying crooked arrows, and a chart of how often it works as the grid gets more directions",
+  },
+};
+
+export const chapter5 = {
+  kicker: "Chapter 5",
+  title: "The real thing",
+  steps: [
+    "Now the real padlock, shrunk until every number fits on screen. It is called ML-KEM, and your browser has used it since 2024.",
+    "First, the numbers live on a clock with 97 hours. Go past 96 and you wrap back round to 0, just like a clock going past 12.",
+    "Sam makes keys. Sam’s secret is a short list of tiny numbers: −1, 0 or 1. These play the part of the green arrows.",
+    "Sam mixes the secret into a big public jumble of numbers, then adds a small shake. The result is Sam’s public padlock. Anyone can have it.",
+    "Alex picks a random secret key: eight 0s and 1s. Each 1 is pushed halfway round the clock, to 49. Then Alex mixes in Sam’s padlock, adds a fresh shake, and sends the result.",
+    "Eve sees the jumble, the padlock and Alex’s message. Without Sam’s secret, it is just a mess of numbers.",
+    "Sam uses the secret to cancel the jumble. On the clock, the eight numbers slide into two groups: near 0 means 0, near the far side means 1.",
+    "Now Alex and Sam share the same secret key, and nobody else has it. They use it to lock their real messages. The same trick as the grid, done with numbers.",
+  ],
+  labels: {
+    hours: "97-hour clock",
+    wrap: "96 → 0",
+    secret: "Sam’s secret",
+    jumble: "public jumble",
+    shake: "shake",
+    padlock: "Sam’s padlock",
+    alexKey: "Alex’s secret key",
+    sent: "sent to Sam",
+    eve: "Eve sees",
+    mess: "just a mess",
+    zero: "0",
+    one: "1",
+    read: "Sam reads",
+    same: "same key ✓",
+    alex: "Alex",
+    sam: "Sam",
+    eveName: "Eve",
+    url: "any-website.com",
+    pushed: "each 1 → 49",
+    title: "ML-KEM",
+    aria: "The toy ML-KEM: keys, a message on a 97-hour clock, and the shared key",
+  },
+};
+
 export const scene1 = {
   kicker: "Chapter 1 · Try it yourself",
   title: "Play with the grid",
@@ -123,13 +253,11 @@ export const scene1 = {
 };
 
 export const scene2 = {
-  kicker: "Chapter 2",
-  title: "Good basis, bad basis",
+  kicker: "Chapter 2 · Try it yourself",
+  title: "Play with good and bad arrows",
   paragraphs: [
-    "Here is the trick that turns the dot game into a lock. A pair of arrows that builds a grid is called a basis. The same grid can be built by many different bases. One basis makes “find the nearest dot” easy. Another makes it nearly impossible.",
-    "Look at the grid on the right. The green arrows are a good basis: short and square. Press “Bad basis” below the grid. The arrows are replaced by a red pair: long and skewed. The dots stay exactly where they are, because both pairs build the same grid.",
-    "Now click anywhere on the grid to throw a ball. The finder walks along the current arrows in whole steps and stops as close to the ball as it can. With the green arrows it finds the nearest dot every time. Press “Bad basis” and throw again: with the red arrows it usually stops at the wrong dot. Press “Throw 20 balls” to compare the two counts.",
-    "That is the whole secret. The lock's public key is the ugly red pair, handed to everyone. The private key is the tidy green pair, kept by the owner. Same grid. Only one of them lets you find your way around it.",
+    "Click anywhere on the grid to drop a ball. The finder walks with the current arrows and stops at a dot.",
+    "Switch between “Good basis” and “Bad basis”, then press “Throw 20 balls” and compare how often each one misses.",
   ],
   hint: "Press “Bad basis” below · Click anywhere to throw a ball",
   labels: {
@@ -156,13 +284,11 @@ export const scene2 = {
 };
 
 export const scene3 = {
-  kicker: "Chapter 3",
-  title: "Add the wobble",
+  kicker: "Chapter 3 · Try it yourself",
+  title: "Play with the shake",
   paragraphs: [
-    "Now we send a secret message through the grid: one bit, a 0 or a 1. The surprise is what keeps it secret. It is not the key alone. It is a small random shake we give the ball, called the wobble. Without the wobble, the public key is enough to read the message. With it, only the private key can.",
-    "Sending. Pick any dot (the public key can do that). For a 0, put the ball on the dot. For a 1, push it half a step to the side. Then shake it a little. Where the ball lands is the encrypted message. Press “Send 0” or “Send 1” to watch.",
-    "Reading. Round the ball to the nearest dot using your own arrows, then look at the leftover: near nothing means 0, near half a step means 1. Two readers try every ball. The owner (green, private key) rounds with the short arrows and gets it right. The eavesdropper (red, public key) rounds with the long arrows, lands on the wrong dot, and gets a coin flip. Press “Send 20 bits” and compare the scores.",
-    "Now drag the “Wobble” slider. At zero the eavesdropper reads every bit: a ball with no wobble sits exactly on a dot or exactly halfway, and anyone can see which. Raise it and the eavesdropper drops to guessing while the owner keeps reading. Raise it past the green dashed circle and even the owner is lost. Real systems live in between. This is Learning With Errors, the heart of Kyber.",
+    "Press “Send 0”, “Send 1” or “Send 20 bits”. Sam (green) and Eve (red) both try to read every ball.",
+    "Drag the “Wobble” slider. At zero, Eve reads everything. A little shake blinds her. Too much, and Sam fails too.",
   ],
   hint: "Press “Send 0” or “Send 1” · Drag “Wobble” to change the shake",
   labels: {
@@ -171,29 +297,26 @@ export const scene3 = {
     sendMany: "Send 20 bits",
     wobble: "Wobble",
     clear: "Clear",
-    owner: "Owner",
-    eaves: "Eavesdropper",
+    owner: "Sam",
+    eaves: "Eve",
     reads: "reads",
     right: "right",
     canvas: "Sending a secret bit through the lattice with a wobble",
   },
   readout: {
-    result: "Sent {bit}  ·  Owner read {o}  ·  Eavesdropper read {e}",
-    sending: "Sending…  Owner {o} right  ·  Eavesdropper {e} right",
+    result: "Sent {bit}  ·  Sam read {o}  ·  Eve read {e}",
+    sending: "Sending…  Sam {o} right  ·  Eve {e} right",
     zero: "Wobble is zero: the ball sits exactly on a dot or exactly halfway, so anyone can read it.",
-    tooMuch: "Too much wobble: the ball can leave the green circle, and then even the owner misreads.",
+    tooMuch: "Too much wobble: the ball can leave the green circle, and then even Sam misreads.",
   },
 };
 
 export const scene4 = {
-  kicker: "Chapter 4",
-  title: "Climb the dimensions",
+  kicker: "Chapter 4 · Try it yourself",
+  title: "Climb the dimensions yourself",
   paragraphs: [
-    "So far the grid was flat. Real locks hide their grid in hundreds of dimensions. We can't draw that, but we can climb a few steps and watch what happens to the attacker.",
-    "Press “3D” and drag to spin the grid. Click to throw a ball: the nearest dot still lights up. Press “4D”: this is a four-dimensional grid, squashed into three so we can see it. Dots that fade are far away in the fourth direction.",
-    "The red arrows are a bad basis, like a public key. Press “Run the attack”. The attacker runs a famous method called LLL: shorten one arrow using another, swap two when they are in the wrong order, repeat. In a few steps the arrows turn short and square. The attacker has rebuilt a good basis, so in 2, 3 or 4 dimensions the lock is broken.",
-    "The chart below the grid runs the same attack in more dimensions, up to 40 (or 60, if you pick it), on grids hidden the way Kyber hides them. LLL always finishes, in a blink. But the higher you climb, the less good its arrows are. Its answer lands on the wrong dot more and more often, and by 40 dimensions the secret stays hidden. Real Kyber uses 512 dimensions or more.",
-    "What about quantum computers? They break today's locks with a trick (Shor's algorithm) that finds hidden repeating patterns in numbers. A grid in hundreds of dimensions has no such pattern to find. The best known quantum attacks on grids are only a little faster than normal ones, and both would take far longer than the age of the universe. That is why the internet is switching to grids.",
+    "Press “3D” or “4D” and drag to spin the grid. Click to drop a ball. In 4D, dots that fade are far away in the fourth direction.",
+    "Press “Run the attack” to watch Eve’s weapon tidy the red arrows move by move. Under the grid, pick how many grids to test and how high to climb.",
   ],
   hint: "Press “3D” or “4D” · Click to throw a ball · Press “Run the attack”",
   labels: {
@@ -242,15 +365,11 @@ export const scene4 = {
 };
 
 export const scene5 = {
-  kicker: "Chapter 5",
-  title: "Kyber, for real",
+  kicker: "Chapter 5 · Try it yourself",
+  title: "Lock your own message",
   paragraphs: [
-    "Everything so far was a picture. This is the real recipe, shrunk until every number fits on screen. It is called ML-KEM (you may know it as Kyber), and since 2024–2025 it is what your browser uses to lock the connection to many websites.",
-    "Two changes from the pictures. The numbers wrap around at 97, like a clock with 97 hours. And instead of one bit at a time, Kyber sends eight at once, packed in lists of eight numbers. The trick is the one you already know.",
-    "Step 1, make keys. The owner picks a secret s of tiny numbers (−1, 0 or 1), mixes it with a big public jumble A, and adds a wobble e. The result t is published with A. Getting s back from A and t means solving the nearest-dot puzzle in a grid of many dimensions.",
-    "Step 2, lock. The sender picks eight random bits: they become the shared key. Each 1 is pushed half way round the clock (49 of the 97 hours), and everything gets a fresh wobble. That is the ciphertext.",
-    "Step 3, unlock. The owner uses s to strip away the jumble. What is left is each bit plus a small wobble: near 0 o’clock means 0, near the far side of the clock means 1. Now both sides hold the same key, and the message locked with it opens. Type your own message in the box, and press “show it on the lattice” in any step to see it as dots and arrows.",
-    "Real ML-KEM uses lists of 256 numbers that wrap around at 3,329, in 512 to 1,024 dimensions. Same trick, bigger grid.",
+    "Type a message in the box. Then press “Make new keys”, “Lock a new key” and “Unlock”, one after another. Every number on screen is real.",
+    "Press “show it on the lattice” in any step to see the same step as dots and arrows.",
   ],
   labels: {
     message: "Your message",
@@ -296,6 +415,6 @@ export const scene5 = {
     lockedBall: "t = A·s + e",
     keygen: "Keys: the green arrows are the secret key, the red ones are the public key. Same grid.",
     encaps: "Lock: each bit is a ball. 0 sits on a dot, 1 is pushed half a step, then everything wobbles.",
-    decaps: "Unlock: the owner rounds each ball with the green arrows and reads the leftover.",
+    decaps: "Unlock: Sam rounds each ball with the green arrows and reads the leftover.",
   },
 };

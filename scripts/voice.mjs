@@ -12,9 +12,9 @@
 // Zero dependencies. The words come straight from src/ui/copy.ts, so the voice always says what the page shows;
 // the manifest stores each clip's text, and the page skips any clip whose text no longer matches.
 import { mkdir, readFile, writeFile, access } from "node:fs/promises";
-import { chapter0, chapter1 } from "../src/ui/copy.ts";
+import { chapter0, chapter1, chapter2, chapter3, chapter4, chapter5 } from "../src/ui/copy.ts";
 
-const STORIES = { c0: chapter0.steps, c1: chapter1.steps }; // add later chapters here as they become stories
+const STORIES = { c0: chapter0.steps, c1: chapter1.steps, c2: chapter2.steps, c3: chapter3.steps, c4: chapter4.steps, c5: chapter5.steps };
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(`--${name}`);

@@ -26,7 +26,7 @@ export function mountChapter0(root: HTMLElement): () => void {
 type P = [number, number];
 
 function draw(f: StoryFrame) {
-  const { ctx, w, h, step, t, cue } = f;
+  const { ctx, w, h, step, t, cue, pan } = f;
   const s = Math.max(0.72, Math.min(1.6, Math.min(w / 430, h / 400)));
   const alexP: P = [w * 0.12, h * 0.42];
   const samP: P = [w * 0.86, h * 0.42];
@@ -56,10 +56,10 @@ function draw(f: StoryFrame) {
 
   if (step === 0) {
     bubble(ctx, alexP[0] + 8 * s, alexP[1] - 34 * s, s, L.message, MSG, prog(t, 0.9, 0.5));
-    cue(0.05, "pop"); cue(0.35, "pop"); cue(0.9, "blip");
+    cue(0.05, "pop", { pan: pan(alexP[0]) }); cue(0.35, "pop", { pan: pan(samP[0]), pitch: 1.12 }); cue(0.9, "blip", { pan: pan(alexP[0]) });
   }
-  if (step === 1) cue(0.1, "pop");
-  if (step === 2) cue(0.15, "pop");
+  if (step === 1) nodes.forEach((n, i) => cue(0.05 + i * 0.1, "tick", { pan: pan(n[0]), gain: 0.7 }));
+  if (step === 2) cue(0.15, "pop", { pan: pan(eveP[0]), pitch: 0.8 });
 
   // steps 1–3: the message hops across; from step 2 Eve takes a copy; from step 3 it is locked
   if (step >= 1 && step <= 3) {
@@ -68,14 +68,16 @@ function draw(f: StoryFrame) {
     const u = Math.min(1, tt / travel);
     const [ex, ey] = along(path, u);
     const locked = step === 3;
-    cue(0, "whoosh", period);
-    if (locked) cue(0.02, "click");
+    const across = { pan: [pan(path[0][0]), pan(path[path.length - 1][0])] as [number, number], dur: travel };
+    cue(0, "whoosh", { ...across, period });
+    cue(travel, "blip", { pan: pan(samP[0]), period, gain: 0.8 });
+    if (locked) cue(0.02, "click", { pan: pan(alexP[0]) });
     envelope(ctx, ex, ey - 22 * s, s, { locked });
     if (step === 1 || u < 0.08) bubble(ctx, ex, ey - 36 * s, s, locked ? L.scrambled : L.message, locked ? palette.muted : MSG, step === 1 ? 1 : 1 - u / 0.08);
     if (u >= 1) bubble(ctx, samP[0], samP[1] - 34 * s, s, L.message, MSG, prog(tt, travel, 0.3));
     if (step >= 2) {
       // Eve's copy drops down her wire the moment the message passes her computer
-      cue(eveAt * travel, "snap", period);
+      cue(eveAt * travel, "snap", { period, pan: pan(eveNode[0]) });
       const drop = prog(tt, eveAt * travel, 0.6);
       const kept = t > eveAt * travel + 0.6 || drop >= 1;
       if (drop > 0 && drop < 1) envelope(ctx, lerp(eveNode[0], eveP[0], drop), lerp(eveNode[1], eveP[1] - 48 * s, drop), s, { locked, color: MSG, alpha: 0.85 });
@@ -92,9 +94,9 @@ function draw(f: StoryFrame) {
     const tt = loop(t, period);
     const u = Math.min(1, tt / travel);
     const [kx, ky] = along(path, u);
-    cue(0, "whoosh", period);
-    cue(eveAt * travel, "snap", period);
-    cue(0.5, "blip");
+    cue(0, "whoosh", { period, dur: travel, pan: [pan(path[0][0]), pan(path[path.length - 1][0])] });
+    cue(eveAt * travel, "snap", { period, pan: pan(eveNode[0]) });
+    cue(0.4, "nope", { gain: 0.8 });
     key(ctx, kx, ky - 22 * s, 1.1 * s, SAM);
     envelope(ctx, eveP[0] + 34 * s, eveP[1] - 6 * s, s, { locked: true });
     const drop = prog(tt, eveAt * travel, 0.6);
@@ -120,18 +122,18 @@ function draw(f: StoryFrame) {
     const b = puzzle ? prog(t, 1.4, 0.6) : 1;
     label(ctx, L.product, cx - 120 * s, backY, { size: 24 * s, weight: 700, alpha: b });
     if (puzzle) {
-      cue(1.2, "ding");
+      cue(1.2, "ding", { gain: 0.6 });
       const tries = L.tries;
       const tt = loop(t - 1.9, tries.length * 0.45 + 1.4, tries.length * 0.45);
       const i = Math.max(0, Math.min(tries.length - 1, Math.floor(Math.max(0, tt) / 0.45)));
-      if (t > 1.9 && tt < tries.length * 0.45) cue(1.9, "tick", 0.45);
+      if (t > 1.9 && tt < tries.length * 0.45) cue(1.9, "tick", { period: 0.45, pan: 0.35 });
       arrowLine(ctx, cx - 60 * s, backY, cx + 60 * s, backY, Math.min(1, Math.max(0, tt) / (tries.length * 0.45)), palette.muted, b);
       if (t > 1.9) label(ctx, tries[i], cx + 120 * s, backY, { size: 22 * s, weight: 700, color: i === tries.length - 1 ? palette.ink : palette.muted });
       label(ctx, L.hard, cx, backY + 30 * s, { size: 14 * s, color: palette.muted, alpha: b });
     } else {
       // the quantum computer goes backwards fast, and the padlock pops
-      cue(0.9, "zap"); cue(1.8, "crack");
-      [2.3, 2.65, 3.0].forEach((at) => cue(at, "unlock"));
+      cue(0.9, "zap", { pan: pan(w * 0.8) }); cue(1.75, "crack");
+      [2.3, 2.65, 3.0].forEach((at, i) => cue(at, "unlock", { pan: pan(w * 0.12 + i * 34 * s), pitch: 1 + i * 0.08 }));
       const zap = prog(t, 0.9, 0.35);
       const chipP: P = [w * 0.8, h * 0.78];
       chip(ctx, chipP[0], chipP[1], s, 0.5 + 0.5 * Math.sin(f.clock * 4) * (1 - zap) + zap, prog(t, 0, 0.5));
@@ -155,7 +157,7 @@ function draw(f: StoryFrame) {
 
   // step 12: dots — the new puzzle
   if (step === S.DOTS) {
-    cue(0.3, "shimmer");
+    cue(0.25, "shimmer");
     const vp = makeViewport(w, h, 8);
     const grow = prog(t, 0.2, 1.4);
     ctx.save();
@@ -184,7 +186,7 @@ function drawPadlockStory(
   f: StoryFrame, s: number,
   g: { alexP: P; samP: P; eveP: P; eveNode: P; path: P[]; eveAt: number; cast: number },
 ) {
-  const { ctx, w, h, step, t, cue } = f;
+  const { ctx, w, h, step, t, cue, pan } = f;
   const { alexP, samP, eveP, eveNode, path, eveAt, cast } = g;
   const back = path.slice().reverse(); // Sam → Alex
   const samLockP: P = [samP[0] - 44 * s, samP[1] - 46 * s];
@@ -212,11 +214,15 @@ function drawPadlockStory(
   const opened = at(S.PAD_TRAVEL, 4.0, 0.5);
   const read = at(S.PAD_TRAVEL, 4.4, 0.4);
 
-  if (step === S.PAD_KEY) { cue(0.2, "pop"); cue(0.7, "blip"); }
-  if (step === S.PAD_SEND) { cue(0.3, "whoosh"); cue(0.3 + 2.6 * (1 - eveAt), "snap"); cue(2.4, "ding"); }
-  if (step === S.PAD_LOCK) { cue(0.2, "pop"); cue(1.5, "click"); }
-  if (step === S.PAD_TRAVEL) { cue(0.3, "whoosh"); cue(0.3 + 2.8 * eveAt, "snap"); cue(2.3, "nope"); cue(4.0, "unlock"); cue(4.4, "ding"); }
-  if (step === S.BROWSER) cue(0.1, "ding");
+  const toAlex: [number, number] = [pan(samP[0]), pan(alexP[0])], toSam: [number, number] = [pan(alexP[0]), pan(samP[0])];
+  if (step === S.PAD_KEY) { cue(0.2, "pop", { pan: pan(samLockP[0]) }); cue(0.7, "unlock", { pan: pan(keyHome[0]), gain: 0.6 }); cue(1.2, "blip", { pan: pan(keyHome[0]) }); }
+  if (step === S.PAD_SEND) { cue(0.3, "whoosh", { pan: toAlex, dur: 2.6 }); cue(0.3 + 2.6 * (1 - eveAt), "snap", { pan: pan(eveNode[0]) }); cue(2.4, "coin", { pan: pan(eveP[0]) }); }
+  if (step === S.PAD_LOCK) { cue(0.2, "pop", { pan: pan(alexLockP[0]) }); cue(0.7, "slide", { pan: pan(alexLockP[0]), dur: 0.6 }); cue(1.45, "click", { pan: pan(alexLockP[0]) }); }
+  if (step === S.PAD_TRAVEL) {
+    cue(0.3, "whoosh", { pan: toSam, dur: 2.8 }); cue(0.3 + 2.8 * eveAt, "snap", { pan: pan(eveNode[0]) });
+    cue(2.3, "nope", { pan: pan(eveP[0]) }); cue(3.3, "slide", { pan: pan(samP[0]), dur: 0.6 }); cue(4.0, "unlock", { pan: pan(samBoxP[0]) }); cue(4.4, "ding", { pan: pan(samP[0]) });
+  }
+  if (step === S.BROWSER) cue(0.1, "ding", { gain: 0.7 });
 
   // Sam's key: appears at home, and only ever moves as far as Sam's own box
   if (keyIn > 0) {

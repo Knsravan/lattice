@@ -14,8 +14,8 @@ interface Column {
 }
 
 
-export function createAttackChart(canvas: HTMLCanvasElement) {
-  const ctx = canvas.getContext("2d")!;
+export function createAttackChart(canvas: HTMLCanvasElement | null) {
+  const own = canvas?.getContext("2d") ?? null;
   let dims: number[] = [];
   let trials = 1;
   let cols = new Map<number, Column>();
@@ -47,12 +47,19 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
     }
   }
 
+  /** Draw into the chart's own canvas. */
   function draw(dt: number) {
+    if (!canvas || !own) return;
+    const { w, h, dpr } = fitCanvas(canvas);
+    own.setTransform(dpr, 0, 0, dpr, 0, 0);
+    own.clearRect(0, 0, w, h);
+    paint(own, w, h, dt);
+  }
+
+  /** Draw into any context, in a w × h box at its current origin (the Chapter 4 story uses this). */
+  function paint(ctx: CanvasRenderingContext2D, w: number, h: number, dt: number) {
     clock += dt;
     if (revealed < dims.length && complete(dims[revealed]) && clock > 0.09) { revealed++; clock = 0; }
-    const { w, h, dpr } = fitCanvas(canvas);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
 
     const L = 38, R = 14, T = 26, B = 24;
     const plotW = w - L - R;
@@ -136,5 +143,5 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
     }
   }
 
-  return { reset, add, draw, finished: () => revealed === dims.length && dims.length > 0 };
+  return { reset, add, draw, paint, revealedCount: () => revealed, finished: () => revealed === dims.length && dims.length > 0 };
 }

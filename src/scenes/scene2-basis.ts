@@ -5,7 +5,7 @@ import { scene2 as copy } from "../ui/copy.ts";
 import { makeViewport, visiblePoints, drawDots, drawCell, drawArrow, drawBall, drawDashedLine, drawRing, lerpBasis } from "./draw2d.ts";
 
 /** The good basis is orthogonal (rotated ~15°) so Babai is exact with it. */
-const GOOD: Basis = [
+export const GOOD: Basis = [
   [1.2, 0.32],
   [-0.32, 1.2],
 ];
@@ -14,7 +14,7 @@ const GOOD: Basis = [
  * Chosen by brute force over small unimodular matrices: Babai misses ~71% of uniform
  * throws with it (the previous [2,1],[3,2] only ~40% on real screens) and both arrows fit on the canvas.
  */
-const BAD: Basis = [
+export const BAD: Basis = [
   [3 * GOOD[0][0] + GOOD[1][0], 3 * GOOD[0][1] + GOOD[1][1]],
   [2 * GOOD[0][0] + GOOD[1][0], 2 * GOOD[0][1] + GOOD[1][1]],
 ];

@@ -62,7 +62,7 @@ function target(step: number): Vec {
 }
 
 function draw(f: StoryFrame) {
-  const { ctx, w, h, step, t, cue } = f;
+  const { ctx, w, h, step, t, cue, pan } = f;
   // the last step zooms out a little: many more dots, same question
   const zoom = step === S.QUESTION ? 1 + prog(t, 1.2, 2.2) * 0.9 : 1;
   const from = target(step - 1), to = target(step), glide = prog(t, 0, 0.9);
@@ -78,7 +78,10 @@ function draw(f: StoryFrame) {
     for (let k = 1; k <= ROW; k++) order.push(-k);
     const period = order.length * 0.28 + 1.2;
     const shown = Math.floor(loop(t, period, order.length * 0.28) / 0.28) + 1;
-    if (loop(t, period, 0) < order.length * 0.28) cue(0, "tick", 0.28);
+    if (loop(t, period, 0) < order.length * 0.28 && shown <= order.length) {
+      const i = order[Math.min(order.length - 1, shown - 1)];
+      cue(0, "tick", { period: 0.28, pan: pan(vp.toScreen(pt(i, 0))[0]), pitch: 1 + i * 0.03 });
+    }
     const pts = order.slice(0, shown).map((i) => ({ point: pt(i, 0), coeffs: [i, 0] }));
     drawDots(ctx, vp, pts, { color: palette.dotBright, radius: r });
     for (let k = 0; k < Math.min(shown, order.length) - 1; k++) {
@@ -91,7 +94,7 @@ function draw(f: StoryFrame) {
     // rows slide out along B, one after another, up and down
     drawDots(ctx, vp, rowPoints(0), { color: palette.dotBright, radius: r });
     for (let k = 1; k <= ROWS; k++) {
-      cue(0.3 + (k - 1) * 0.45, "whoosh");
+      cue(0.3 + (k - 1) * 0.45, "slide", { dur: 0.7, pitch: 1 + k * 0.06 });
       for (const j of [k, -k]) {
         const slide = prog(t, 0.3 + (k - 1) * 0.45, 0.7);
         if (slide <= 0) continue;
@@ -107,6 +110,7 @@ function draw(f: StoryFrame) {
     if (step === 4) {
       // a ripple runs out from the centre across the new grid
       cue(0.1, "shimmer");
+      cue(1.0, "blip", { gain: 0.7 });
       const wave = loop(t, 3.2, 99) * 3.2;
       ctx.save();
       for (const p of pts) {
@@ -126,8 +130,8 @@ function draw(f: StoryFrame) {
   // ---------- the two arrows ----------
   const aGrow = step === 0 ? prog(t, 0.2, 0.9) : 1;
   const bGrow = step < 2 ? 0 : step === 2 ? prog(t, 0.2, 0.9) : 1;
-  if (step === 0) cue(0.2, "pop");
-  if (step === 2) cue(0.2, "pop");
+  if (step === 0) cue(0.2, "grow", { dur: 0.9, pan: [0, 0.35] });
+  if (step === 2) cue(0.2, "grow", { dur: 0.9, pan: [0, 0.1], pitch: 1.2 });
   const arrowAlpha = step >= S.BALL ? 0.55 : 1;
   if (step === 4) drawCell(ctx, vp, BASIS, palette.secret, [0, 0], 0.12 * prog(t, 0.2, 0.6));
   if (aGrow > 0) drawArrow(ctx, vp, [0, 0], [BASIS[0][0] * aGrow, BASIS[0][1] * aGrow], palette.secret, { alpha: arrowAlpha, width: step === 0 ? 3 : 2.4, label: L.a });
@@ -151,7 +155,7 @@ function draw(f: StoryFrame) {
     // the start flag at the centre dot
     const [ox, oy] = vp.toScreen([0, 0]);
     const flag = step === S.ADDRESS ? prog(t, 0.3, 0.4) : 1;
-    if (step === S.ADDRESS) cue(0.3, "pop");
+    if (step === S.ADDRESS) cue(0.3, "pop", { pan: pan(ox) });
     drawRing(ctx, vp, [0, 0], WALKER, { r, alpha: flag * leaving, filled: false });
     label(ctx, L.start, ox, oy + 22 * s, { size: 13 * s, weight: 700, color: WALKER, alpha: flag * leaving });
 
@@ -167,12 +171,12 @@ function draw(f: StoryFrame) {
   // ---------- steps 8–10: the ball, the measuring lines, the answer ----------
   if (step >= S.BALL) {
     const drop = step === S.BALL ? prog(t, 0.6, 0.6) : 1;
-    if (step === S.BALL) cue(0.6, "pop");
+    if (step === S.BALL) cue(0.6, "pop", { pan: pan(vp.toScreen(BALL)[0]), pitch: 0.85 });
     if (step >= S.MEASURE) {
       NEAR.forEach((n, i) => {
         const g = step === S.MEASURE ? prog(t, 0.3 + i * 0.35, 0.5) : 1;
         const decided = step === S.MEASURE ? prog(t, 0.3 + NEAR.length * 0.35 + 0.4, 0.5) : 1;
-        if (step === S.MEASURE) cue(0.3 + i * 0.35, "tick");
+        if (step === S.MEASURE) cue(0.3 + i * 0.35, "tick", { pan: pan(vp.toScreen(n.point)[0]) });
         const best = i === 0;
         ctx.save();
         ctx.globalAlpha = best ? 1 : 1 - 0.7 * decided;
@@ -181,7 +185,7 @@ function draw(f: StoryFrame) {
         ctx.restore();
         if (best && decided > 0) drawRing(ctx, vp, n.point, palette.secret, { r, alpha: decided, pulse: pulse(f.clock * 5), label: L.closest });
       });
-      if (step === S.MEASURE) cue(0.3 + NEAR.length * 0.35 + 0.4, "ding");
+      if (step === S.MEASURE) cue(0.3 + NEAR.length * 0.35 + 0.4, "ding", { pan: pan(vp.toScreen(NEAR[0].point)[0]) });
     }
     drawBall(ctx, vp, BALL, drop);
   }
@@ -192,7 +196,7 @@ function draw(f: StoryFrame) {
  * address (or, for a half step, a red ✗: no dot there). `tt` = time into the walk (99 = finished).
  */
 function drawWalk(f: StoryFrame, vp: Viewport, s: number, walk: { moves: Move[]; address: [string, string]; lands: boolean }, tt: number, alpha: number, live: boolean) {
-  const { ctx, w, cue } = f;
+  const { ctx, w, cue, pan } = f;
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha *= alpha;
@@ -202,7 +206,7 @@ function drawWalk(f: StoryFrame, vp: Viewport, s: number, walk: { moves: Move[];
   let lift = 0;
   walk.moves.forEach((m, k) => {
     const start = T0 + k * PER;
-    if (live) cue(start, "hop");
+    if (live) cue(start, "hop", { pan: pan(vp.toScreen(at)[0]), pitch: 1 + k * 0.07 });
     const g = prog(tt, start, PER * 0.8);
     if (g <= 0) return;
     const d: Vec = [BASIS[m.axis][0] * m.amount, BASIS[m.axis][1] * m.amount];
@@ -215,7 +219,7 @@ function drawWalk(f: StoryFrame, vp: Viewport, s: number, walk: { moves: Move[];
   });
   const arriveAt = T0 + walk.moves.length * PER;
   const arrived = prog(tt, arriveAt, 0.3);
-  if (live) cue(arriveAt, walk.lands ? "ding" : "nope");
+  if (live) cue(arriveAt, walk.lands ? "ding" : "nope", { pan: pan(vp.toScreen(endOf(walk.moves))[0]) });
 
   // the walker itself
   if (live && tt > T0 - 0.2) {

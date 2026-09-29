@@ -50,11 +50,15 @@ lattice/
       story-draw.ts         # story picture painters: people, envelope, padlock, key, browser bar, chip; prog/loop timing
       chapter0-problem.ts   # Chapter 0 story (no maths)
       chapter1-grid.ts      # Chapter 1 story (the grid, the question)
+      chapter2-basis.ts     # Chapter 2 story (green vs red arrows, the finder right vs wrong)
+      chapter3-wobble.ts    # Chapter 3 story (0 on a dot, 1 halfway, the shake, 10 bits, too much shake)
+      chapter4-dimensions.ts # Chapter 4 story (LLL's moves, hundreds of directions, the live chart, quantum)
+      chapter5-kyber.ts     # Chapter 5 story (97-hour clock, keys, lock, the clock split, same key)
       scene1-grid.ts        # Chapter 1 "Try it yourself" playground
-      scene2-basis.ts
-      scene3-noise.ts
+      scene2-basis.ts       # Chapter 2 "Try it yourself" (exports its GOOD/BAD pair for the story)
+      scene3-noise.ts       # Chapter 3 "Try it yourself" (exports GOOD/BAD)
       scene4-dimensions.ts  # Three.js view (loaded from the CDN on demand), LLL animation
-      scene4-chart.ts       # the success-vs-dimension chart (2-D canvas)
+      scene4-chart.ts       # the success-vs-dimension chart (own canvas, or paint() into a story)
       scene4-sweep.ts       # runs the chart's attacks: module worker, main-thread fallback
       scene4-worker.ts
       scene5-kyber.ts       # panels, 97-hour clock, "show it on the lattice", for-scale box
@@ -77,16 +81,16 @@ lattice/
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5, then polish (spec audit, animated resets/clears, phone fixes, a11y). The user then promoted every item in NOTES.md "Ideas": hero shearing lattice, prefers-reduced-motion, ML-KEM-768 sizes (Scene 5), Grover vs Shor panel and chart settings — grids per dimension, climb to 60D (Scene 4). All deployed; 70 tests, 100% line coverage of `core`. Open: confirm 60 fps on a real 2020 laptop and the Three.js CDN on the live site. Then the user found the site hard to follow for a 15-year-old and chose a rebuild as a scroll story (see "Format" below): Chapter 0 (new) and Chapter 1 done, 71 tests. User feedback on 0–1: the padlock step and "trip from the centre" step were confusing → split the padlock into 4 steps and replaced the trip with addresses (3, 2), (−1, 2), no half steps; added Voice (VoiceStudio clips, recorded by the user with `npm run voice`) and synthesized sound effects. Next: user records the voice clips and reviews; then Chapters 2–5 in the same format.
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5, then polish (spec audit, animated resets/clears, phone fixes, a11y). The user then promoted every item in NOTES.md "Ideas": hero shearing lattice, prefers-reduced-motion, ML-KEM-768 sizes (Scene 5), Grover vs Shor panel and chart settings — grids per dimension, climb to 60D (Scene 4). All deployed; 70 tests, 100% line coverage of `core`. Open: confirm 60 fps on a real 2020 laptop and the Three.js CDN on the live site. Then the user found the site hard to follow for a 15-year-old and chose a rebuild as a scroll story (see "Format" below): Chapter 0 (new) and Chapter 1 done, 71 tests. User feedback on 0–1: the padlock step and "trip from the centre" step were confusing → split the padlock into 4 steps and replaced the trip with addresses (3, 2), (−1, 2), no half steps; added Voice (VoiceStudio clips, recorded by the user with `npm run voice`) and synthesized sound effects. Then Chapters 2–5 rebuilt as stories too, and the sound effects redesigned to sound natural and fit each animation. 57 story steps. Next: user records the voice clips (`npm run voice`) and reviews.
 
 ### Format: a scroll story (user decision, Sept 29)
 Each chapter is told as a scroll story: the picture stays pinned while short text steps (one or two sentences each) scroll past, and the picture animates to match the step in view (`src/ui/story.ts`). The story starts from a problem the reader already knows and adds one idea per step. The same three people run through every chapter: **Alex** sends, **Sam** receives, **Eve** snoops. Interactive playgrounds come after a chapter's story as "Try it yourself".
 
-Rollout: Chapter 0 and Chapter 1 are rebuilt in this format; Chapters 2–5 keep the older scene layout until the user has reviewed 0–1.
+All six chapters (0–5) are told this way; each of Chapters 1–5 ends with its original interactive scene as "Try it yourself".
 
 **Sound (user decision, Sept 29).** Two switches pinned in the corner, both OFF until the visitor turns them on (remembered on their device):
 - *Voice* reads each story step aloud. Clips are pre-recorded with VoiceStudio (the user's choice of engine) by `npm run voice`, which posts each step's text from `copy.ts` to the user's running VoiceStudio backend (`http://localhost:3900/v1/audio/speech`) and writes `public/voice/<chapter>-s<step>.mp3` + `manifest.json`. The page only plays a clip whose recorded text still matches the step, and the Voice switch is greyed out while the manifest is empty. VoiceStudio can't run in the cloud sandbox (its model downloads from Hugging Face, which is blocked there), so the user records the clips on their own machine.
-- *Sound effects* are synthesized in the browser with Web Audio (`src/ui/sound.ts`): no files, no network. Chapters trigger them from their animation timeline with `frame.cue(at, "pop")`.
+- *Sound effects* are synthesized in the browser with Web Audio (`src/ui/sound.ts`): no files, no network. Each is modelled on a real sound (a small bell for arrivals, a metal click for the padlock, footsteps for the walker, air for things travelling), shares one small room echo, varies slightly each time, and is shaped to its animation: chapters call `frame.cue(at, name, { pan, dur, pitch })` so a sound starts when the thing moves, lasts as long as the movement, and travels left↔right with it.
 
 **Chapter 0 — The problem.** (added by the user, Sept 29; no maths)
 Alex sends Sam "meet at 5"; it hops through computers; Eve copies it; locking needs a key they can't share; the padlock trick in four steps (Sam's padlock + key, key stays home → the open padlock travels, Eve's copy "can only lock" → Alex clicks it shut → the locked box travels, Eve's copy stays shut, Sam opens it); that is the browser padlock; today's padlocks rest on multiplying vs. going back (37 × 53 = 1,961); a quantum computer goes back fast and Eve's saved copies open; so: a new puzzle, about dots. Story in `scenes/chapter0-problem.ts`.

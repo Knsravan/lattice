@@ -1,5 +1,8 @@
 /** Small picture painters for the scroll-story chapters (people, envelope, padlock, key…). Pixels only. */
 import { palette, reducedMotion, clamp } from "../ui/dom.ts";
+import type { Vec } from "../core/index.ts";
+import { drawArrow } from "./draw2d.ts";
+import type { Viewport } from "./draw2d.ts";
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -174,5 +177,64 @@ export function wire(ctx: Ctx, a: [number, number], b: [number, number], alpha =
   ctx.globalAlpha *= alpha;
   ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]);
   ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * A walker hopping along a path of lattice points (one hop per `per` seconds, starting at `t0`), leaving arrows.
+ * Returns how many hops are complete and where the walker is. `onHop(k, from)` fires as each hop starts.
+ */
+export function drawWalker(
+  ctx: Ctx, vp: Viewport, path: Vec[], tt: number, t0: number, per: number, color: string,
+  opts: { alpha?: number; showWalker?: boolean; onHop?: (k: number, from: Vec) => void } = {},
+): { done: number; at: Vec } {
+  const a = opts.alpha ?? 1;
+  let at: Vec = path[0];
+  let done = 0;
+  let lift = 0;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  for (let k = 0; k < path.length - 1; k++) {
+    opts.onHop?.(k, path[k]);
+    const g = prog(tt, t0 + k * per, per * 0.8);
+    if (g <= 0) break;
+    const from = path[k], to = path[k + 1];
+    const cur: Vec = [lerp(from[0], to[0], g), lerp(from[1], to[1], g)];
+    drawArrow(ctx, vp, from, cur, color, { width: 2.6, alpha: 0.9 });
+    at = cur;
+    lift = Math.sin(Math.PI * g) * 10;
+    if (g >= 1) done++;
+  }
+  if (opts.showWalker !== false && tt > t0 - 0.3) {
+    const [x, y] = vp.toScreen(at);
+    ctx.fillStyle = palette.ink; ctx.strokeStyle = "#0b0d12"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y - lift, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+  return { done, at };
+}
+
+/** A red ✗ at a screen point. */
+export function cross(ctx: Ctx, x: number, y: number, size: number, color: string, alpha = 1) {
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.strokeStyle = color; ctx.lineWidth = 3.5; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(x - size, y - size); ctx.lineTo(x + size, y + size); ctx.moveTo(x + size, y - size); ctx.lineTo(x - size, y + size); ctx.stroke();
+  ctx.restore();
+}
+
+/** A rounded label chip (text on a dark pill) — readable over dots. */
+export function chip2(ctx: Ctx, text: string, x: number, y: number, s: number, color: string, alpha = 1, align: CanvasTextAlign = "center") {
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.font = `700 ${13 * s}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  const tw = ctx.measureText(text).width, pw = tw + 16 * s, ph = 24 * s;
+  const x0 = align === "left" ? x : align === "right" ? x - pw : x - pw / 2;
+  ctx.fillStyle = "rgba(11,13,18,.85)"; ctx.strokeStyle = color; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.roundRect(x0, y - ph / 2, pw, ph, ph / 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, x0 + pw / 2, y + 0.5);
   ctx.restore();
 }
