@@ -1,8 +1,13 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { rotationMatrix4, rotate4, applyMatrix4, project4to3, project4to3Ortho, tesseract, ZERO_ANGLES, norm } from "../src/core/index.ts";
+import { rotationMatrix4, rotate4, unrotate4, applyMatrix4, project4to3, project4to3Ortho, tesseract, ZERO_ANGLES, norm } from "../src/core/index.ts";
 
 describe("project4d", () => {
+  test("unrotate4 undoes rotate4", () => {
+    const a = { xy: 0.3, xz: 1.1, xw: -0.7, yz: 2.0, yw: 0.4, zw: -1.3 };
+    const v = [1, -2, 0.5, 3];
+    unrotate4(rotate4(v, a), a).forEach((x, i) => assert.ok(Math.abs(x - v[i]) < 1e-12));
+  });
   test("zero angles give the identity", () => {
     const v = [1, 2, 3, 4];
     assert.deepEqual(rotate4(v, ZERO_ANGLES), v);

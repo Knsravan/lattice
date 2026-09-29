@@ -9,3 +9,4 @@ export * from "./project4d.ts";
 export * from "./hash.ts";
 export * from "./kyber.ts";
 export * from "./lwe2d.ts";
+export * from "./attack.ts";

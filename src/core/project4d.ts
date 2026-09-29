@@ -72,6 +72,12 @@ export function rotate4(v: Vec, angles: Angles4): Vec {
   return applyMatrix4(rotationMatrix4(angles), v);
 }
 
+/** Undo rotate4 (a rotation's inverse is its transpose). */
+export function unrotate4(v: Vec, angles: Angles4): Vec {
+  const m = rotationMatrix4(angles);
+  return applyMatrix4(m[0].map((_, j) => m.map((row) => row[j])), v);
+}
+
 /**
  * Perspective projection from 4D to 3D: a "camera" sits at w = distance looking down the w axis.
  * Points with larger w appear bigger/closer; the scale factor is also returned for fading.
