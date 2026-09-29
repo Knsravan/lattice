@@ -50,11 +50,19 @@
 - Shared key shown as the first 16 hex digits. The message is XOR-sealed with the shared key (demo only, as the spec says).
 - Tested headless (desktop + 390 px): full flow recovers the bits, keys match, typed message opens; no errors except the deliberately blocked CDN.
 
+## Day 2 — Polish (pass 1)
+- Scene 1 now draws with `draw2d.ts` (253 → 165 lines); pixels match the old code (same sizes, colours, alphas).
+- "Nothing snaps" audit: Scene 1 "Reset arrows" glides back over 0.5 s and keeps the ball, re-solving it as the grid moves; Scenes 2–3 "Clear" fades the throws out over 0.3 s; Scene 4 chart re-run shrinks the old bars instead of blanking. `draw2d` helpers now multiply the current globalAlpha (was: overwrite) so a caller can fade a whole layer; identical output when the base alpha is 1.
+- Readouts wrap on phones (≤ 520 px) instead of ending in "…".
+- QA pass, headless Chromium, desktop + 390 px, all five scenes driven: no console errors, no horizontal scroll.
+- README updated for five shipped scenes.
+
 ## Skipped / deferred
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
 - Hero: put the slowly shearing lattice from the placeholder behind the title (polish week).
 - Scene 4: a "Grover vs Shor" one-paragraph panel explaining why quantum helps against factoring but not lattices.
+- Respect `prefers-reduced-motion` (skip the 4D spin and the drop-in animations).
 - Scene 4: let the reader pick how many grids per dimension, or a "run to 60D" button (LLL is fast enough now).
 - Scene 5: show real ML-KEM-768 key sizes next to the toy ones for scale.

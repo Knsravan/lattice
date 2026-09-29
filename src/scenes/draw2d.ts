@@ -138,8 +138,13 @@ export function drawRing(ctx: CanvasRenderingContext2D, vp: Viewport, at: Vec, c
   if (opts.label) {
     ctx.globalAlpha = base; // labels are always legible, even when the ring itself is hidden
     ctx.fillStyle = color; ctx.font = "12px system-ui, sans-serif";
-    ctx.textAlign = opts.labelLeft ? "right" : "left";
-    ctx.fillText(opts.label, opts.labelLeft ? x - 12 : x + 12, opts.labelBelow === false ? y - 12 : y + 22);
+    // keep the label on the canvas: flip sides if it would run off either edge
+    const tw = ctx.measureText(opts.label).width;
+    let left = opts.labelLeft ?? false;
+    if (!left && x + 12 + tw > vp.w - 4) left = true;
+    else if (left && x - 12 - tw < 4) left = false;
+    ctx.textAlign = left ? "right" : "left";
+    ctx.fillText(opts.label, left ? x - 12 : x + 12, opts.labelBelow === false ? y - 12 : y + 22);
   }
   ctx.restore();
 }
