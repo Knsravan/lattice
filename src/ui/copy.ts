@@ -17,6 +17,15 @@ export const site = {
  * Scroll-story chapters: each step is one or two short sentences; the picture changes as each step
  * scrolls into the middle of the screen. Alex sends, Sam receives, Eve snoops — in every chapter.
  */
+export const sound = {
+  group: "Sound",
+  voice: "Voice",
+  effects: "Sound effects",
+  on: "on",
+  off: "off",
+  voiceMissing: "The voice recordings haven’t been added yet.",
+};
+
 export const chapter0 = {
   kicker: "Chapter 0",
   title: "The problem",
@@ -26,7 +35,10 @@ export const chapter0 = {
     "Meet Eve. Eve runs one of those computers. Every message that passes through, she can read and quietly copy.",
     "So Alex locks the message before sending it. Now Eve only sees scrambled junk.",
     "But there’s a catch. To open the lock, Sam needs the key. If Alex sends the key, Eve copies the key too. Alex and Sam have never met. How can they share a key?",
-    "Here is the clever answer: a special padlock. Sam sends out an open padlock and keeps the only key. Alex snaps the padlock shut on the message. Eve sees everything, but she has no key.",
+    "Here is the clever answer. Sam gets a special padlock. It comes with just one key, and Sam keeps that key at home. The key never travels.",
+    "Sam sends the padlock, open, to Alex. Eve copies it on the way. That’s fine: this padlock can only lock things. It can never unlock anything.",
+    "Alex puts the message in a box and clicks Sam’s padlock shut. Click! Now nobody can open it without Sam’s key. Not even Alex.",
+    "The locked box travels to Sam. Eve copies it too, but she has no key, so her copy stays shut. Sam uses the key, and the box opens.",
     "That is what the little padlock next to a website’s address means. Your phone and the website just did this dance, in a blink.",
     "Today’s padlocks are built on a number puzzle. Multiplying two numbers is easy. Going backwards, finding which two numbers were multiplied, is hard. Real padlocks use numbers hundreds of digits long.",
     "But a big enough quantum computer can go backwards fast. When those machines arrive, today’s padlocks pop open. And Eve has been saving copies all along.",
@@ -39,6 +51,9 @@ export const chapter0 = {
     message: "meet at 5",
     scrambled: "k#8!q@z",
     noKey: "no key!",
+    stays: "stays with Sam",
+    onlyLocks: "can only lock ✓",
+    click: "click!",
     how: "?",
     url: "shop.example",
     multiply: "37 × 53",
@@ -62,7 +77,9 @@ export const chapter1 = {
     "Now add a second arrow, B, pointing a different way.",
     "Slide the whole row along B, again and again, up and down. The rows stack up into a grid.",
     "This grid of dots is called a lattice. The two arrows that build it are called its basis.",
-    "Every dot is a trip from the centre: some steps of A, then some steps of B. This dot is 3 steps of A, then 2 steps of B.",
+    "Every dot has an address. Start at the centre dot. Walk 3 steps along A, then 2 steps along B. You land exactly on a dot. Its address is (3, 2).",
+    "Steps can go backwards too. Walk 1 step back along A, then 2 steps along B. You land on the dot (−1, 2).",
+    "But no half steps are allowed. Half a step along A lands between the dots, on no dot at all. Every dot is a whole number of steps away.",
     "Now drop a ball anywhere between the dots. The question: which dot is closest to the ball?",
     "Measure from the ball to the dots around it. The shortest line wins.",
     "In a flat grid you can almost see the answer. Remember this question: “which dot is closest?” It is the puzzle behind the new padlock, and it gets very hard when the grid goes in hundreds of directions instead of two.",
@@ -72,7 +89,10 @@ export const chapter1 = {
     b: "B",
     lattice: "lattice",
     basis: "basis",
-    trip: "{a} × A  +  {b} × B",
+    start: "start",
+    counter: "A steps: {a}    B steps: {b}",
+    address: "({a}, {b})",
+    half: "½ step: no dot here",
     closest: "closest",
     aria: "Building a grid of dots from two arrows, then finding the dot closest to a ball",
   },

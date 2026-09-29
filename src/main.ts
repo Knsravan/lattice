@@ -1,6 +1,7 @@
 import { site, chapter0, chapter1, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
+import { mountSoundControls } from "./ui/sound.ts";
 import { mountChapter0 } from "./scenes/chapter0-problem.ts";
 import { mountChapter1 } from "./scenes/chapter1-grid.ts";
 import { mountScene1 } from "./scenes/scene1-grid.ts";
@@ -68,6 +69,9 @@ function build() {
       el("a", { href: "https://github.com/Knsravan/lattice", text: "source on GitHub" }),
     ),
   );
+
+  // voice + sound-effects switches, pinned in the corner
+  document.body.append(mountSoundControls());
 
   // nav dots
   const nav = el("nav", { class: "dots", "aria-label": "Scenes" });

@@ -27,6 +27,19 @@ npm run build     # tsc → dist/js, copies public/ → dist/
 npm run serve     # preview dist/ at http://localhost:5173
 ```
 
+## Voice narration
+
+The scroll stories can read every step aloud. The clips are recorded with [VoiceStudio](https://github.com/debpalash/VoiceStudio):
+
+```
+# with the VoiceStudio app open on this computer
+npm run voice                    # records new/changed steps into public/voice/
+npm run voice -- --list          # show VoiceStudio's voices
+npm run voice -- --voice <id>    # pick one
+```
+
+Commit `public/voice/` and deploy. Visitors turn Voice and Sound effects on with the switches in the corner (both start off).
+
 ## Layout
 
 - `src/core/` — pure math, no DOM: lattices, Gram–Schmidt, Babai, LLL (with animation trace), LWE, the Scene 4 attack, 4D projection, toy Kyber/ML-KEM, SHA-256.

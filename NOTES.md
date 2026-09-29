@@ -100,6 +100,14 @@
 - Scene 1 playground now labels arrows A and B (was b₁, b₂) to match the story; Scenes 2–5 renamed "Chapter 2–5" only.
 - Checked every step at 1280 × 860 and 390 × 844 via screenshots; no console errors.
 
+## Day 2 — Clearer padlock + addresses; voice and sound effects (user feedback)
+- Padlock step split into four, each playing once and stopping on its end picture (no more looping): (a) Sam's padlock + key, "stays with Sam"; (b) the OPEN padlock travels to Alex, Eve's copy says "can only lock ✓"; (c) Alex's box, the padlock clicks shut; (d) the locked box travels, Eve's copy "no key!", Sam's key opens it. The missing idea was said out loud: a padlock can only lock.
+- "Trip from the centre" → "every dot has an address": a walker hops 3 × A then 2 × B with a live step counter; the dot lights up "(3, 2)". Then backwards "(−1, 2)", then half a step → red ✗ "no dot here". Camera pulls back during the long walk (it ran off the edge).
+- Sound effects: Web Audio synthesis in `ui/sound.ts` (pop, blip, hop, tick, whoosh, snap, click, unlock, ding, buzz, nope, zap, crack, shimmer). Chapters fire them with `frame.cue(at, name[, period])` from the animation timeline, so they line up with what moves.
+- Voice: VoiceStudio (user's pick). Tried to run it in the sandbox: its OmniVoice model downloads from Hugging Face, which is blocked here (403), as are hf-mirror/modelscope and GitHub release downloads; no GPU either. So `scripts/voice.mjs` (`npm run voice`) records the clips against the user's own running VoiceStudio (its OpenAI-compatible /v1/audio/speech, as its bundled skill documents), writing public/voice/*.mp3 + manifest.json with each clip's text. Tested end-to-end against a stand-in server: all 24 clips, re-run skips unchanged steps, unreachable server gives a clear message, the page requests the right clip per step and stops when Voice is off.
+- `public/voice/manifest.json` ships as `{}` so there is no 404; the Voice switch is greyed out ("recordings haven't been added yet") until clips exist.
+- Both switches start OFF (browsers block sound before a click anyway); the choice is remembered in localStorage. On phones they shrink to two icons in the picture's top-right corner — at the bottom they covered long step text.
+
 ## Skipped / deferred
 - Nothing yet.
 

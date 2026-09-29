@@ -8,6 +8,7 @@
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.ts",
     "coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/core/**\" tests/*.test.ts",
-    "serve": "node scripts/serve.mjs"
+    "serve": "node scripts/serve.mjs",
+    "voice": "node scripts/voice.mjs"
   }
 }
