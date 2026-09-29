@@ -39,7 +39,7 @@ export function mountScene3(root: HTMLElement): () => void {
     el("button", { type: "button", class: "btn", text: copy.labels.send1, onClick: () => send(1) }),
     el("button", { type: "button", class: "btn", text: copy.labels.sendMany, onClick: () => sendMany(20) }),
     el("label", { for: "s3-wobble", class: "sliderlabel" }, copy.labels.wobble + " ", slider, sliderVal),
-    el("button", { type: "button", class: "btn", text: copy.labels.clear, onClick: () => { throws = []; queue = []; stats = { owner: [0, 0], eaves: [0, 0] }; } }),
+    el("button", { type: "button", class: "btn", text: copy.labels.clear, onClick: () => clear() }),
   );
   const stage = el("div", { class: "stage" }, canvas, readout);
   root.append(stage, controls, tally);
@@ -47,6 +47,7 @@ export function mountScene3(root: HTMLElement): () => void {
 
   // ---------- state ----------
   let throws: Throw[] = [];
+  let fading: { list: Throw[]; born: number } = { list: [], born: 0 }; // cleared throws fade out
   let queue: { bit: 0 | 1; at: number }[] = [];
   let stats: { owner: [number, number]; eaves: [number, number] } = { owner: [0, 0], eaves: [0, 0] }; // [right, total]
   let time = 0;
@@ -68,6 +69,12 @@ export function mountScene3(root: HTMLElement): () => void {
     if (throws.length > KEEP) throws.shift();
     stats.owner[1]++; if (owner.bit === bit) stats.owner[0]++;
     stats.eaves[1]++; if (eaves.bit === bit) stats.eaves[0]++;
+  }
+  function clear() {
+    fading = { list: throws, born: time };
+    throws = [];
+    queue = [];
+    stats = { owner: [0, 0], eaves: [0, 0] };
   }
   function sendMany(n: number) {
     for (let i = 0; i < n; i++) queue.push({ bit: rng() < 0.5 ? 0 : 1, at: time + i * 0.15 });
@@ -92,9 +99,15 @@ export function mountScene3(root: HTMLElement): () => void {
     drawArrow(ctx, vp, [0, 0], GOOD[1], palette.secret, { alpha: 0.9, width: 2 });
 
     const last = throws[throws.length - 1];
-    for (const t of throws) {
+    const fadeA = 1 - easeOut((time - fading.born) / 0.3);
+    if (fadeA <= 0) fading.list = [];
+    const fadingLast = fading.list[fading.list.length - 1];
+    const layers = [...fading.list.map((t) => [t, fadeA] as const), ...throws.map((t) => [t, 1] as const)];
+    for (const [t, alpha] of layers) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
       const age = time - t.born;
-      const isLast = t === last;
+      const isLast = t === last || t === fadingLast;
       const fade = isLast ? 1 : 0.45;
       const drop = easeOut(age / 0.35);
       const reach = easeOut((age - 0.3) / 0.4);
@@ -102,14 +115,14 @@ export function mountScene3(root: HTMLElement): () => void {
       // where the ball started (dot, or dot + half step) and how far it wobbled
       const [cx, cy] = vp.toScreen(t.sent.clean);
       ctx.save();
-      ctx.globalAlpha = 0.5 * fade;
+      ctx.globalAlpha *= 0.5 * fade;
       ctx.strokeStyle = palette.ball; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.arc(cx, cy, Math.max(1.5, t.mag * vp.unit), 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
       if (isLast) {
         // the safe circle: as long as the ball stays inside, the owner can read it
         ctx.save();
-        ctx.globalAlpha = 0.35; ctx.strokeStyle = palette.secret; ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
+        ctx.globalAlpha *= 0.35; ctx.strokeStyle = palette.secret; ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(cx, cy, SAFE * vp.unit, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
         // half step marker from the sender's dot
@@ -131,11 +144,12 @@ export function mountScene3(root: HTMLElement): () => void {
         }
       }
       // the ball, tagged with the bit that was sent
-      ctx.save(); ctx.globalAlpha = fade;
+      ctx.save(); ctx.globalAlpha *= fade;
       drawBall(ctx, vp, t.sent.ball, drop);
       const [bx, by] = vp.toScreen(t.sent.ball);
       ctx.fillStyle = "#0b0d12"; ctx.font = "700 9px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
       if (drop > 0.9) ctx.fillText(String(t.sent.bit), bx, by + 0.5);
+      ctx.restore();
       ctx.restore();
     }
 

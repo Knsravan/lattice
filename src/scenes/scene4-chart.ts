@@ -28,7 +28,9 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
   function reset(newDims: number[], newTrials: number) {
     dims = newDims;
     trials = newTrials;
-    cols = new Map(dims.map((d) => [d, { ok: 0, gaveUp: 0, n: 0, ratioSum: 0, ratioN: 0, shown: 0 }]));
+    // keep the old bar heights so a re-run shrinks them smoothly instead of blanking the chart
+    const old = cols;
+    cols = new Map(dims.map((d) => [d, { ok: 0, gaveUp: 0, n: 0, ratioSum: 0, ratioN: 0, shown: old.get(d)?.shown ?? 0 }]));
     revealed = 0;
   }
 
@@ -85,6 +87,11 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
       if (!done) {
         ctx.fillStyle = "rgba(138,148,166,.12)";
         ctx.fillRect(cx - colW / 2, T + barH - 3, colW, 3);
+        if (c.shown > 0.005) { // last run's bar, shrinking away
+          ctx.fillStyle = palette.attacker; ctx.globalAlpha = 0.35;
+          ctx.fillRect(cx - colW / 2, T + barH - c.shown * barH, colW, c.shown * barH);
+          ctx.globalAlpha = 1;
+        }
         continue;
       }
       if (c.gaveUp === c.n) {

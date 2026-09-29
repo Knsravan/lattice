@@ -1,7 +1,8 @@
-import { pointsInBox, closestVectorExact, determinant } from "../core/index.ts";
+import { closestVectorExact, determinant } from "../core/index.ts";
 import type { Basis, Vec } from "../core/index.ts";
-import { el, fitCanvas, runWhileVisible, approach, easeOut, palette } from "../ui/dom.ts";
+import { el, fitCanvas, runWhileVisible, easeOut, palette } from "../ui/dom.ts";
 import { scene1 as copy } from "../ui/copy.ts";
+import { makeViewport, visiblePoints, drawDots, drawCoords, drawCell, drawArrow, drawBall, drawDashedLine, drawRing, lerpBasis } from "./draw2d.ts";
 
 const DEFAULT_BASIS: Basis = [
   [1.5, 0.2],
@@ -26,7 +27,7 @@ export function mountScene1(root: HTMLElement): () => void {
     "div",
     { class: "controls" },
     el("label", { for: "s1-coords" }, coordsToggle, " " + copy.labels.coords),
-    el("button", { type: "button", class: "btn", text: copy.labels.reset, onClick: () => { basis = DEFAULT_BASIS.map((v) => v.slice()); ball = null; } }),
+    el("button", { type: "button", class: "btn", text: copy.labels.reset, onClick: () => { reset = { from: basis.map((v) => v.slice()), t: 0 }; } }),
   );
   const stage = el("div", { class: "stage" }, canvas, readout);
   root.append(stage, controls);
@@ -41,8 +42,7 @@ export function mountScene1(root: HTMLElement): () => void {
   let hover: 0 | 1 | null = null;
   let unit = 60; // px per world unit, recomputed on resize
   let W = 0, H = 0;
-  // smoothed highlight for the nearest dot
-  let glow = 0;
+  let reset: { from: Basis; t: number } | null = null;
 
   // ---------- coordinate helpers ----------
   const toScreen = (p: Vec): [number, number] => [W / 2 + p[0] * unit, H / 2 - p[1] * unit];
@@ -75,6 +75,7 @@ export function mountScene1(root: HTMLElement): () => void {
   canvas.addEventListener("pointermove", (e) => {
     const [x, y] = canvasPos(e);
     if (dragging !== null) {
+      reset = null; // grabbing an arrow cancels a reset in progress
       const p = toWorld(x, y);
       // keep arrows within a sane range so the grid never explodes
       const len = Math.hypot(p[0], p[1]);
@@ -112,129 +113,40 @@ export function mountScene1(root: HTMLElement): () => void {
   function draw(dt: number) {
     time += dt;
     const { w, h, dpr } = fitCanvas(canvas);
-    W = w; H = h;
-    unit = Math.min(w, h) / 9;
+    const vp = makeViewport(w, h, 9);
+    W = w; H = h; unit = vp.unit;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
+    // "Reset arrows" glides back instead of snapping; the ball is re-solved as the grid moves
+    if (reset) {
+      reset.t = Math.min(1, reset.t + dt / 0.5);
+      basis = lerpBasis(reset.from, DEFAULT_BASIS, easeOut(reset.t));
+      if (ball) ball = throwBall(ball.pos, ball.born);
+      if (reset.t >= 1) reset = null;
+    }
+
     const degenerate = isDegenerate();
-    const showCoords = coordsToggle.checked;
-
-    // fundamental cell
-    if (!degenerate) {
-      const o = toScreen([0, 0]);
-      const a = toScreen(basis[0]);
-      const b = toScreen(basis[1]);
-      const ab = toScreen([basis[0][0] + basis[1][0], basis[0][1] + basis[1][1]]);
-      ctx.beginPath();
-      ctx.moveTo(o[0], o[1]); ctx.lineTo(a[0], a[1]); ctx.lineTo(ab[0], ab[1]); ctx.lineTo(b[0], b[1]); ctx.closePath();
-      ctx.fillStyle = "rgba(61,220,151,0.07)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(61,220,151,0.25)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    // lattice points
-    const halfW = w / 2 / unit + 0.5;
-    const halfH = h / 2 / unit + 0.5;
-    let pts: { point: Vec; coeffs: number[] }[] = [];
-    if (!degenerate) pts = pointsInBox(basis, [halfW, halfH], MAX_POINTS);
-    const dense = pts.length > 700;
-    const r = dense ? 2 : 3.2;
-    ctx.fillStyle = palette.dot;
-    for (const { point } of pts) {
-      const [x, y] = toScreen(point);
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (showCoords && !dense) {
-      ctx.fillStyle = palette.muted;
-      ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, monospace";
-      ctx.textAlign = "left";
-      for (const { point, coeffs } of pts) {
-        const [x, y] = toScreen(point);
-        ctx.fillText(`${coeffs[0]},${coeffs[1]}`, x + 5, y - 5);
-      }
-    }
-    // origin
-    {
-      const [x, y] = toScreen([0, 0]);
-      ctx.fillStyle = palette.dotBright;
-      ctx.beginPath(); ctx.arc(x, y, r + 1.2, 0, Math.PI * 2); ctx.fill();
-    }
+    if (!degenerate) drawCell(ctx, vp, basis, palette.secret);
+    const pts = degenerate ? [] : visiblePoints(basis, vp, MAX_POINTS);
+    const r = drawDots(ctx, vp, pts);
+    if (coordsToggle.checked) drawCoords(ctx, vp, pts);
 
     // ball + nearest
-    const targetGlow = ball ? 1 : 0;
-    glow = approach(glow, targetGlow, 6, dt);
     if (ball) {
       const age = time - ball.born;
-      const drop = easeOut(age / 0.35); // ball lands
       const reach = easeOut((age - 0.25) / 0.45); // line grows toward the nearest dot
-      const [bx, by] = toScreen(ball.pos);
-      const [nx, ny] = toScreen(ball.nearest);
-
-      // line
-      if (reach > 0) {
-        ctx.strokeStyle = palette.ball;
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(bx, by);
-        ctx.lineTo(bx + (nx - bx) * reach, by + (ny - by) * reach);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      // nearest dot highlight
-      if (reach >= 1) {
-        const pulse = 0.5 + 0.5 * Math.sin((age - 0.7) * 5);
-        ctx.strokeStyle = palette.secret;
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(nx, ny, r + 4 + pulse * 2.5, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = palette.secret;
-        ctx.beginPath(); ctx.arc(nx, ny, r + 1, 0, Math.PI * 2); ctx.fill();
-        ctx.font = "12px system-ui, sans-serif";
-        ctx.textAlign = "left";
-        ctx.fillText(copy.labels.nearest, nx + 12, ny + 22);
-      }
-      // ball (drops in from above and scales)
-      const size = 6 * (0.4 + 0.6 * drop);
-      const lift = (1 - drop) * 18;
-      ctx.fillStyle = palette.ball;
-      ctx.shadowColor = palette.ball;
-      ctx.shadowBlur = 12 * drop;
-      ctx.beginPath(); ctx.arc(bx, by - lift, size, 0, Math.PI * 2); ctx.fill();
-      ctx.shadowBlur = 0;
+      drawDashedLine(ctx, vp, ball.pos, ball.nearest, reach, palette.ball);
+      if (reach >= 1) drawRing(ctx, vp, ball.nearest, palette.secret, { r, pulse: 0.5 + 0.5 * Math.sin((age - 0.7) * 5), label: copy.labels.nearest });
+      drawBall(ctx, vp, ball.pos, easeOut(age / 0.35));
     }
 
     // basis arrows
     for (const i of [0, 1] as const) {
-      const [ox, oy] = toScreen([0, 0]);
-      const [tx, ty] = toScreen(basis[i]);
-      const color = palette.secret;
-      const active = dragging === i || hover === i;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = active ? 3 : 2.2;
-      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(tx, ty); ctx.stroke();
-      // arrow head
-      const ang = Math.atan2(ty - oy, tx - ox);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(tx - 12 * Math.cos(ang - 0.4), ty - 12 * Math.sin(ang - 0.4));
-      ctx.lineTo(tx - 12 * Math.cos(ang + 0.4), ty - 12 * Math.sin(ang + 0.4));
-      ctx.closePath(); ctx.fill();
-      // handle
-      ctx.beginPath(); ctx.arc(tx, ty, active ? HANDLE_R : HANDLE_R - 3, 0, Math.PI * 2);
-      ctx.fillStyle = active ? "rgba(61,220,151,0.28)" : "rgba(61,220,151,0.14)";
-      ctx.fill();
-      ctx.strokeStyle = color; ctx.lineWidth = 1.2; ctx.stroke();
-      // label
-      ctx.fillStyle = palette.ink;
-      ctx.font = "600 14px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(i === 0 ? copy.labels.basis1 : copy.labels.basis2, tx + 16 * Math.cos(ang) , ty + 16 * Math.sin(ang) + 5);
+      drawArrow(ctx, vp, [0, 0], basis[i], palette.secret, {
+        handle: true, handleR: HANDLE_R, active: dragging === i || hover === i,
+        label: i === 0 ? copy.labels.basis1 : copy.labels.basis2,
+      });
     }
 
     // readout

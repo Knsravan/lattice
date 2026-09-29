@@ -92,6 +92,7 @@
   .secret { color: var(--secret); } .public { color: var(--attacker); } .ball { color: var(--ball); } .muted { color: var(--muted); } .ink { color: var(--ink); }
   .clock-canvas { display: block; width: 100%; max-width: 260px; height: 210px; }
   @keyframes kfade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (max-width: 520px) { .readout { white-space: normal; font-size: 13px; left: 8px; right: 8px; bottom: 8px; padding: 6px 10px; } }
   @media (max-width: 520px) { .krow { grid-template-columns: 1fr; gap: 2px; } }
   .placeholder { display: grid; place-items: center; aspect-ratio: 4/3; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
   .scene.soon .prose p { color: var(--muted); }

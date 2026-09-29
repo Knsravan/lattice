@@ -25,14 +25,16 @@ npm run serve     # preview dist/ at http://localhost:5173
 
 ## Layout
 
-- `src/core/` — pure math, no DOM: lattices, Gram–Schmidt, Babai, LLL (with animation trace), LWE, 4D projection, toy Kyber/ML-KEM, SHA-256.
-- `src/scenes/` — one file per scene (in progress).
+- `src/core/` — pure math, no DOM: lattices, Gram–Schmidt, Babai, LLL (with animation trace), LWE, the Scene 4 attack, 4D projection, toy Kyber/ML-KEM, SHA-256.
+- `src/scenes/` — one file per scene, plus `draw2d.ts` (shared 2-D drawing) and Scene 4's chart and worker.
+- `src/ui/copy.ts` — all narration text.
+- `src/types/three.d.ts` — minimal types for the parts of Three.js Scene 4 uses (Three.js itself loads from the CDN at runtime).
 - `public/` — static page shell.
 - `tests/` — mirrors `src/core`.
 
 ## Status
 
-Day 1 of a 22-day build (Sept 6 → 28, 2026). Core math done and tested; scenes in progress.
+All five scenes are live on GitHub Pages; polish in progress. Scene 4 needs Three.js from jsDelivr — if it can't load, only the 3D view is disabled and the rest of the page works.
 
 ## License
 
