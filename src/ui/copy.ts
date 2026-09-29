@@ -7,25 +7,88 @@ export const site = {
   title: "Lattice",
   tagline: "The math that is replacing the internet's locks.",
   intro: [
-    "Every time you buy something online, your phone scrambles your card number with a lock that only the shop can open.",
-    "The locks the internet uses today will pop open the moment quantum computers get big enough. So the world is switching to a new kind of lock, built on a puzzle almost nobody outside a few labs understands.",
-    "The puzzle is this: find the nearest dot in a grid. Sounds easy. Keep scrolling.",
+    "How your phone keeps secrets, why quantum computers put that in danger, and the puzzle about dots that will keep us safe.",
+    "Told step by step, with moving pictures. No maths needed. Just scroll.",
   ],
   scrollHint: "Scroll to begin",
 };
 
-export const scene1 = {
-  kicker: "Scene 1",
-  title: "The grid",
-  paragraphs: [
-    "This is a lattice: a grid of dots that goes on forever. Two arrows make the whole thing. Every dot is some whole number of the first arrow plus some whole number of the second.",
-    "Drag the tips of the arrows. The grid follows. Different arrows, different grid.",
-    "Now click anywhere between the dots. That's the ball. The lattice lights up the dot closest to it. Finding that dot is called the closest vector problem, and it is the puzzle the whole new lock is built on.",
+/**
+ * Scroll-story chapters: each step is one or two short sentences; the picture changes as each step
+ * scrolls into the middle of the screen. Alex sends, Sam receives, Eve snoops — in every chapter.
+ */
+export const chapter0 = {
+  kicker: "Chapter 0",
+  title: "The problem",
+  steps: [
+    "Meet Alex and Sam. Alex wants to send Sam a message: “meet at 5”.",
+    "The message doesn’t fly straight to Sam. It hops through lots of computers on the way: Wi-Fi boxes, routers, servers.",
+    "Meet Eve. Eve runs one of those computers. Every message that passes through, she can read and quietly copy.",
+    "So Alex locks the message before sending it. Now Eve only sees scrambled junk.",
+    "But there’s a catch. To open the lock, Sam needs the key. If Alex sends the key, Eve copies the key too. Alex and Sam have never met. How can they share a key?",
+    "Here is the clever answer: a special padlock. Sam sends out an open padlock and keeps the only key. Alex snaps the padlock shut on the message. Eve sees everything, but she has no key.",
+    "That is what the little padlock next to a website’s address means. Your phone and the website just did this dance, in a blink.",
+    "Today’s padlocks are built on a number puzzle. Multiplying two numbers is easy. Going backwards, finding which two numbers were multiplied, is hard. Real padlocks use numbers hundreds of digits long.",
+    "But a big enough quantum computer can go backwards fast. When those machines arrive, today’s padlocks pop open. And Eve has been saving copies all along.",
+    "So the world is switching to a new padlock, built on a different puzzle. Nobody knows how to crack it, not even with a quantum computer. It is a puzzle about dots.",
   ],
-  hint: "Drag the arrow tips · Click anywhere to throw a ball",
   labels: {
-    basis1: "b₁",
-    basis2: "b₂",
+    alex: "Alex",
+    sam: "Sam",
+    eve: "Eve",
+    message: "meet at 5",
+    scrambled: "k#8!q@z",
+    noKey: "no key!",
+    how: "?",
+    url: "shop.example",
+    multiply: "37 × 53",
+    product: "1,961",
+    easy: "easy: one quick sum",
+    hard: "hard: guess… guess… guess…",
+    tries: ["2 × ?", "3 × ?", "7 × ?", "11 × ?", "13 × ?", "17 × ?", "19 × ?", "23 × ?", "29 × ?", "31 × ?", "37 × 53 ✓"],
+    quantum: "quantum computer",
+    fast: "fast!",
+    dots: "a new puzzle",
+    aria: "Alex sends Sam a message across the internet while Eve listens",
+  },
+};
+
+export const chapter1 = {
+  kicker: "Chapter 1",
+  title: "A grid of dots",
+  steps: [
+    "Start with one arrow. Call it A.",
+    "Take a step along A. Then another, and another. Backwards too. Every stop leaves a dot. You get a row of dots.",
+    "Now add a second arrow, B, pointing a different way.",
+    "Slide the whole row along B, again and again, up and down. The rows stack up into a grid.",
+    "This grid of dots is called a lattice. The two arrows that build it are called its basis.",
+    "Every dot is a trip from the centre: some steps of A, then some steps of B. This dot is 3 steps of A, then 2 steps of B.",
+    "Now drop a ball anywhere between the dots. The question: which dot is closest to the ball?",
+    "Measure from the ball to the dots around it. The shortest line wins.",
+    "In a flat grid you can almost see the answer. Remember this question: “which dot is closest?” It is the puzzle behind the new padlock, and it gets very hard when the grid goes in hundreds of directions instead of two.",
+  ],
+  labels: {
+    a: "A",
+    b: "B",
+    lattice: "lattice",
+    basis: "basis",
+    trip: "{a} × A  +  {b} × B",
+    closest: "closest",
+    aria: "Building a grid of dots from two arrows, then finding the dot closest to a ball",
+  },
+};
+
+export const scene1 = {
+  kicker: "Chapter 1 · Try it yourself",
+  title: "Play with the grid",
+  paragraphs: [
+    "Drag the tips of arrows A and B. The whole grid changes shape.",
+    "Click anywhere to drop a ball. The closest dot lights up.",
+  ],
+  hint: "Drag the arrow tips · Click anywhere to drop a ball",
+  labels: {
+    basis1: "A",
+    basis2: "B",
     nearest: "nearest dot",
     coords: "Show coordinates",
     reset: "Reset arrows",
@@ -35,12 +98,12 @@ export const scene1 = {
   readout: {
     found: "The nearest dot lights up. Drag an arrow: the grid changes, and so can the answer.",
     // only shown when “Show coordinates” is on (the scene has no numbers otherwise)
-    coords: "Nearest dot = {c1}·b₁ {sign} {c2}·b₂  ·  {dist} away",
+    coords: "Closest dot = {c1} × A {sign} {c2} × B  ·  {dist} away",
   },
 };
 
 export const scene2 = {
-  kicker: "Scene 2",
+  kicker: "Chapter 2",
   title: "Good basis, bad basis",
   paragraphs: [
     "Here is the trick that turns the dot game into a lock. A pair of arrows that builds a grid is called a basis. The same grid can be built by many different bases. One basis makes “find the nearest dot” easy. Another makes it nearly impossible.",
@@ -73,7 +136,7 @@ export const scene2 = {
 };
 
 export const scene3 = {
-  kicker: "Scene 3",
+  kicker: "Chapter 3",
   title: "Add the wobble",
   paragraphs: [
     "Now we send a secret message through the grid: one bit, a 0 or a 1. The surprise is what keeps it secret. It is not the key alone. It is a small random shake we give the ball, called the wobble. Without the wobble, the public key is enough to read the message. With it, only the private key can.",
@@ -103,7 +166,7 @@ export const scene3 = {
 };
 
 export const scene4 = {
-  kicker: "Scene 4",
+  kicker: "Chapter 4",
   title: "Climb the dimensions",
   paragraphs: [
     "So far the grid was flat. Real locks hide their grid in hundreds of dimensions. We can't draw that, but we can climb a few steps and watch what happens to the attacker.",
@@ -159,7 +222,7 @@ export const scene4 = {
 };
 
 export const scene5 = {
-  kicker: "Scene 5",
+  kicker: "Chapter 5",
   title: "Kyber, for real",
   paragraphs: [
     "Everything so far was a picture. This is the real recipe, shrunk until every number fits on screen. It is called ML-KEM (you may know it as Kyber), and since 2024–2025 it is what your browser uses to lock the connection to many websites.",
