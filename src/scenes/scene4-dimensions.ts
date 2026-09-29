@@ -33,7 +33,15 @@ export function mountScene4(root: HTMLElement): () => void {
   const chartCanvas = el("canvas", { class: "chart-canvas", "aria-label": copy.chart.title });
   const chartStatus = el("div", { class: "chart-status", text: copy.chart.idle });
   const chartPanel = el("div", { class: "chart-panel" }, chartCanvas, chartStatus);
-  root.append(stage, controls, chartPanel);
+  const card = (c: { name: string; body: string; verdict: string }, verdictClass: string) =>
+    el("div", { class: "qcard" },
+      el("h4", { text: c.name }),
+      el("p", { text: c.body }),
+      el("p", { class: "qverdict " + verdictClass, text: c.verdict }));
+  const quantumPanel = el("div", { class: "kpanel qpanel" },
+    el("h3", { text: copy.quantum.title }),
+    el("div", { class: "qcards" }, card(copy.quantum.shor, "public"), card(copy.quantum.grover, "secret")));
+  root.append(stage, controls, chartPanel, quantumPanel);
 
   // ---------- chart (works without Three.js) ----------
   const chart = createAttackChart(chartCanvas);

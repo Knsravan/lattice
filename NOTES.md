@@ -80,9 +80,12 @@
 - Scene 5 "For scale" box under the three panels: toy vs ML-KEM-768, one pair of bars per row in the meaning colours (public key red, ciphertext orange, shared key green). Bars grow when the box first scrolls into view (IntersectionObserver); instant under reduced motion.
 - Copy notes the two honest differences: real ML-KEM sends a 32-byte seed instead of A, and compresses the ciphertext.
 
+## Day 2 — Grover vs Shor panel (promoted from Ideas by the user)
+- Scene 4, under the chart: two cards. Shor finds hidden repeating patterns → RSA / elliptic curves broken (red verdict). Grover only square-roots blind guessing (a million guesses → a thousand); grids have no pattern for Shor and Grover-style search trims the attack only a little → grids safe, just a bit bigger (green verdict). Text in `copy.ts` (`scene4.quantum`); the narration's single quantum paragraph is unchanged, as the spec asks.
+- Cards sit side by side on desktop, stacked on phones. No numbers or formulas beyond "a million → a thousand".
+
 ## Skipped / deferred
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
-- Scene 4: a "Grover vs Shor" one-paragraph panel explaining why quantum helps against factoring but not lattices.
 - Scene 4: let the reader pick how many grids per dimension, or a "run to 60D" button (LLL is fast enough now).

@@ -100,6 +100,14 @@
   .fadein { animation: kfade .45s ease-out both; }
   .kwait { color: var(--muted); font-size: 14px; margin: 4px 0; animation: kfade .45s ease-out both; }
   .secret { color: var(--secret); } .public { color: var(--attacker); } .ball { color: var(--ball); } .muted { color: var(--muted); } .ink { color: var(--ink); }
+  .qpanel h3 { margin: 0 0 10px; font-size: 16px; }
+  .qcards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .qcard { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .qcard h4 { margin: 0 0 6px; font-size: 14px; color: var(--ink); }
+  .qcard p { margin: 0 0 8px; font-size: 13px; line-height: 1.5; color: #c7cedb; }
+  .qcard .qverdict { margin: 0; font-weight: 600; }
+  .qcard .qverdict.public { color: var(--attacker); } .qcard .qverdict.secret { color: var(--secret); }
+  @media (max-width: 520px) { .qcards { grid-template-columns: 1fr; } }
   .kscale-intro, .kscale-note { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
   .kscale-note { margin: 12px 0 0; }
   .sbar-label { font-size: 13px; color: var(--ink); margin: 10px 0 4px; }
