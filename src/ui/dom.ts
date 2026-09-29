@@ -25,14 +25,29 @@ export const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode
   return n;
 };
 
-/** Smoothly move a number toward a target. Returns the new value. */
+const motionQuery = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
+
+/**
+ * True when the visitor asked their system for less motion. Read live, so flipping the setting applies at once.
+ * With it on, transitions below jump to their end (sequencing is kept), and continuous motion stops.
+ */
+export const reducedMotion = (): boolean => motionQuery?.matches ?? false;
+
+/** Smoothly move a number toward a target. Returns the new value (the target itself under reduced motion). */
 export const approach = (current: number, target: number, rate: number, dt: number): number =>
-  current + (target - current) * (1 - Math.exp(-rate * dt));
+  reducedMotion() ? target : current + (target - current) * (1 - Math.exp(-rate * dt));
 
 export const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, x));
 
-/** Ease-out cubic for one-shot animations. t in [0,1]. */
-export const easeOut = (t: number): number => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+/**
+ * Ease-out cubic for one-shot animations. t in [0,1].
+ * Under reduced motion it jumps: 0 before the animation starts, 1 as soon as it has.
+ */
+export const easeOut = (t: number): number =>
+  reducedMotion() ? (t > 0 ? 1 : 0) : 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+
+/** A 0..1 throb for "look here" rings; holds still under reduced motion. */
+export const pulse = (phase: number): number => (reducedMotion() ? 0.5 : 0.5 + 0.5 * Math.sin(phase));
 
 /** Set canvas backing size to CSS size × devicePixelRatio. Returns CSS size. */
 export function fitCanvas(canvas: HTMLCanvasElement): { w: number; h: number; dpr: number } {

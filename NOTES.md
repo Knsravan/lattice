@@ -69,11 +69,16 @@
 - Full-bleed needs a 100vw canvas; `body { overflow-x: clip }` stops the scrollbar-width overflow without breaking `position: sticky` (which `hidden` would).
 - QA: no horizontal scroll, sticky prose still sticks, no console errors (desktop + 390 px).
 
+## Day 2 — Reduced motion (promoted from Ideas by the user)
+- `reducedMotion()` in `ui/dom.ts` reads `prefers-reduced-motion` live. Under it `easeOut` jumps (0 before start, 1 after — so sequencing like "line after the ball lands" is kept), `approach` returns the target, and the new `pulse()` holds still. Every scene gets this for free through those helpers.
+- Continuous motion stops: the hero shows a still, already-sheared grid (t starts at 0.7 for everyone now); the 4D view stops spinning; Scene 4's highlight ring stops turning. Scene 5's "show it on the lattice" scrolls instantly. CSS: no smooth scroll, fades/transitions cut to 1 ms.
+- LLL attack still steps (one step per ~120 ms) — each step jumps instead of gliding, so the trace stays readable.
+- Tested with Playwright `reducedMotion: "reduce"` vs `"no-preference"`: hero and 4D frames identical 1.5 s / 1 s apart only under reduce; attack runs all 11 steps in both; no errors.
+
 ## Skipped / deferred
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
 - Scene 4: a "Grover vs Shor" one-paragraph panel explaining why quantum helps against factoring but not lattices.
-- Respect `prefers-reduced-motion` (skip the 4D spin and the drop-in animations).
 - Scene 4: let the reader pick how many grids per dimension, or a "run to 60D" button (LLL is fast enough now).
 - Scene 5: show real ML-KEM-768 key sizes next to the toy ones for scale.

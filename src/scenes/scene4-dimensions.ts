@@ -3,7 +3,7 @@ import {
 } from "../core/index.ts";
 import type { Basis, Vec, Angles4, LLLStep } from "../core/index.ts";
 import type * as T from "three";
-import { el, runWhileVisible, easeOut, palette } from "../ui/dom.ts";
+import { el, runWhileVisible, easeOut, reducedMotion, palette } from "../ui/dom.ts";
 import { scene4 as copy } from "../ui/copy.ts";
 import { createAttackChart } from "./scene4-chart.ts";
 import { startSweep } from "./scene4-sweep.ts";
@@ -159,7 +159,7 @@ export function mountScene4(root: HTMLElement): () => void {
       fade = Math.max(0, fade - dt / 0.25);
       if (fade === 0) { applyDim(pendingDim); pendingDim = null; }
     } else fade = Math.min(1, fade + dt / 0.35);
-    if (dim === 4) {
+    if (dim === 4 && !reducedMotion()) {
       angles = { ...angles, xw: angles.xw + dt * 0.35, yw: angles.yw + dt * 0.22, zw: angles.zw + dt * 0.08 };
       rot4 = rotationMatrix4(angles);
     }
@@ -341,7 +341,7 @@ export function mountScene4(root: HTMLElement): () => void {
         linePos.setXYZ(0, b[0], b[1], b[2]);
         linePos.setXYZ(1, b[0] + (d[0] - b[0]) * reach, b[1] + (d[1] - b[1]) * reach, b[2] + (d[2] - b[2]) * reach);
         linePos.needsUpdate = true;
-        ring.rotation.y += dt * 1.2;
+        if (!reducedMotion()) ring.rotation.y += dt * 1.2;
       }
       renderer.render(scene, camera);
     }
