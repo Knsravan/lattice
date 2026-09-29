@@ -45,6 +45,7 @@
 ## Day 2 (Sept 29) — Scene 5
 - New `scene` preset n=8, q=97, k=2, eta=1: every number ≤ 2 digits. Worst leftover wobble over 5000 keys is 13 of the 24 allowed, so it never fails on screen. `kyberKeygen` now also returns `e` so the panel can show t = A·s + e.
 - "Pushed half way round" is 49, not 48 (round(97/2)); copy says 49.
+- Deviation from the Stack line "Scenes 4–5 use Three.js": Scene 5 uses plain 2-D canvas only. Its spec asks for "show it on the lattice" with Scene 1–3 visuals, which are 2-D, and nothing in it needs 3-D. Left for the user to decide; the Stack section itself is unchanged.
 - Three panels (Make keys / Lock / Unlock), numbers fade in staggered. Unlock shows a 97-hour clock: the 8 values of v slide the short way round to v − s·u and cluster at 0 and at the far side. No index labels on the clock — they collided exactly because the values cluster.
 - "show it on the lattice" switches the 2D canvas above the panels to Scene 2/3 visuals (Scene 3's GOOD/BAD, now exported), driven by the real 8 bits of m: keys = green/red arrows + A·s wobbled to t; lock = 8 balls; unlock = the owner's reading of each ball.
 - Shared key shown as the first 16 hex digits. The message is XOR-sealed with the shared key (demo only, as the spec says).
