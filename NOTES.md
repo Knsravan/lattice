@@ -75,10 +75,14 @@
 - LLL attack still steps (one step per ~120 ms) — each step jumps instead of gliding, so the trace stays readable.
 - Tested with Playwright `reducedMotion: "reduce"` vs `"no-preference"`: hero and 4D frames identical 1.5 s / 1 s apart only under reduce; attack runs all 11 steps in both; no errors.
 
+## Day 2 — ML-KEM-768 sizes (promoted from Ideas by the user)
+- Core: `mlkemSizes()` computes FIPS 203 byte sizes from (k, du, dv): public key = 384k + 32, ciphertext = 32(du·k + dv). Tested against all three sets (512: 800/768, 768: 1184/1088, 1024: 1568/1568). `toyKemSizes()` counts exactly what Scene 5 shows at 7 bits per number: 42 B public key (A in full + t), 21 B ciphertext, 32 B shared key — the test cross-checks it against a real keygen/encaps.
+- Scene 5 "For scale" box under the three panels: toy vs ML-KEM-768, one pair of bars per row in the meaning colours (public key red, ciphertext orange, shared key green). Bars grow when the box first scrolls into view (IntersectionObserver); instant under reduced motion.
+- Copy notes the two honest differences: real ML-KEM sends a 32-byte seed instead of A, and compresses the ciphertext.
+
 ## Skipped / deferred
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
 - Scene 4: a "Grover vs Shor" one-paragraph panel explaining why quantum helps against factoring but not lattices.
 - Scene 4: let the reader pick how many grids per dimension, or a "run to 60D" button (LLL is fast enough now).
-- Scene 5: show real ML-KEM-768 key sizes next to the toy ones for scale.

@@ -183,6 +183,15 @@ export const scene5 = {
     zero: "0",
     one: "1",
   },
+  scale: {
+    title: "For scale",
+    intro: "The toy on this page next to ML-KEM-768, the size your browser uses.",
+    toy: "Toy",
+    real: "ML-KEM-768",
+    bytes: "bytes",
+    rows: { publicKey: "Public key", ciphertext: "Ciphertext", sharedKey: "Shared key" },
+    note: "Real ML-KEM sends a short seed instead of the whole jumble A, and squeezes the ciphertext. The shared key is the same size: 32 bytes.",
+  },
   lattice: {
     canvas: "The current step drawn on the lattice",
     lockedDot: "A·s",

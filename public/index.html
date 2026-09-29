@@ -100,6 +100,16 @@
   .fadein { animation: kfade .45s ease-out both; }
   .kwait { color: var(--muted); font-size: 14px; margin: 4px 0; animation: kfade .45s ease-out both; }
   .secret { color: var(--secret); } .public { color: var(--attacker); } .ball { color: var(--ball); } .muted { color: var(--muted); } .ink { color: var(--ink); }
+  .kscale-intro, .kscale-note { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+  .kscale-note { margin: 12px 0 0; }
+  .sbar-label { font-size: 13px; color: var(--ink); margin: 10px 0 4px; }
+  .sbar-row { display: grid; grid-template-columns: 92px 1fr 104px; gap: 10px; align-items: center; font-size: 12px; padding: 2px 0; }
+  .sbar-who { color: var(--muted); }
+  .sbar-track { height: 10px; border-radius: 5px; background: rgba(138,148,166,.08); overflow: hidden; }
+  .sbar { display: block; height: 100%; border-radius: 5px; background: currentColor; transform-origin: left; transform: scaleX(0); }
+  .kscale.shown .sbar { animation: kgrow .9s cubic-bezier(.2,.7,.2,1) both; transform: none; }
+  .sbar-num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  @keyframes kgrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .clock-canvas { display: block; width: 100%; max-width: 260px; height: 210px; }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
