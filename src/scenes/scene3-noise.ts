@@ -27,7 +27,7 @@ interface Throw {
 
 export function mountScene3(root: HTMLElement): () => void {
   // ---------- DOM ----------
-  const canvas = el("canvas", { class: "scene-canvas", "aria-label": "Sending a secret bit through the lattice with a wobble" });
+  const canvas = el("canvas", { class: "scene-canvas", "aria-label": copy.labels.canvas });
   const readout = el("div", { class: "readout", text: copy.hint });
   const slider = el("input", { type: "range", min: "0", max: String(MAX_WOBBLE), step: "0.01", value: String(DEFAULT_WOBBLE), id: "s3-wobble", "aria-label": copy.labels.wobble });
   const sliderVal = el("span", { class: "mono", text: DEFAULT_WOBBLE.toFixed(2) });

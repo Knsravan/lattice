@@ -25,11 +25,11 @@ export function mountScene4(root: HTMLElement): () => void {
   const readout = el("div", { class: "readout", text: copy.labels.loading });
   const stage = el("div", { class: "stage" }, readout);
   const dimButtons = copy.labels.dims.map((label, i) =>
-    el("button", { type: "button", class: "seg" + (i === 0 ? " active" : ""), text: label, onClick: () => setDim((i + 2) as Dim) }),
+    el("button", { type: "button", class: "seg" + (i === 0 ? " active" : ""), "aria-pressed": String(i === 0), text: label, onClick: () => setDim((i + 2) as Dim) }),
   );
   const runBtn = el("button", { type: "button", class: "btn", text: copy.labels.run, onClick: () => runAttack() });
   const resetBtn = el("button", { type: "button", class: "btn", text: copy.labels.reset, onClick: () => resetArrows() });
-  const controls = el("div", { class: "controls" }, el("div", { class: "segmented dims" }, ...dimButtons), runBtn, resetBtn);
+  const controls = el("div", { class: "controls" }, el("div", { class: "segmented dims", role: "group", "aria-label": copy.labels.dimsGroup }, ...dimButtons), runBtn, resetBtn);
   const chartCanvas = el("canvas", { class: "chart-canvas", "aria-label": copy.chart.title });
   const chartStatus = el("div", { class: "chart-status", text: copy.chart.idle });
   const chartPanel = el("div", { class: "chart-panel" }, chartCanvas, chartStatus);
@@ -79,7 +79,7 @@ export function mountScene4(root: HTMLElement): () => void {
   function setDim(d: Dim) {
     if (d === dim && pendingDim === null) return;
     pendingDim = d;
-    dimButtons.forEach((b, i) => b.classList.toggle("active", i + 2 === d));
+    dimButtons.forEach((b, i) => { b.classList.toggle("active", i + 2 === d); b.setAttribute("aria-pressed", String(i + 2 === d)); });
     attack = null;
     anim = null;
     ball = null;
@@ -199,7 +199,7 @@ export function mountScene4(root: HTMLElement): () => void {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.domElement.className = "scene-canvas";
-    renderer.domElement.setAttribute("aria-label", "A lattice in 2, 3 or 4 dimensions");
+    renderer.domElement.setAttribute("aria-label", copy.labels.canvas);
     stage.prepend(renderer.domElement);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 4 / 3, 0.1, 100);
@@ -253,7 +253,7 @@ export function mountScene4(root: HTMLElement): () => void {
 
     // ball, nearest-dot highlight, and the line between them
     const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 14), new THREE.MeshLambertMaterial({ color: palette.ball }));
-    const ring = new THREE.Mesh(new THREE.SphereGeometry(0.15, 20, 14), new THREE.MeshBasicMaterial({ color: palette.ink, wireframe: true }));
+    const ring = new THREE.Mesh(new THREE.SphereGeometry(0.15, 20, 14), new THREE.MeshBasicMaterial({ color: palette.secret, wireframe: true }));
     const lineGeo = new THREE.BufferGeometry();
     const linePos = new THREE.BufferAttribute(new Float32Array(6), 3);
     lineGeo.setAttribute("position", linePos);

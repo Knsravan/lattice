@@ -30,6 +30,12 @@ export const scene1 = {
     coords: "Show coordinates",
     reset: "Reset arrows",
     degenerate: "The arrows point the same way, so they only make a line. Pull one of them off the line.",
+    canvas: "Interactive 2-D lattice",
+  },
+  readout: {
+    found: "The nearest dot lights up. Drag an arrow: the grid changes, and so can the answer.",
+    // only shown when “Show coordinates” is on (the scene has no numbers otherwise)
+    coords: "Nearest dot = {c1}·b₁ {sign} {c2}·b₂  ·  {dist} away",
   },
 };
 
@@ -54,6 +60,10 @@ export const scene2 = {
     rightDot: "found it",
     wrongDot: "missed",
     realDot: "the real nearest dot",
+    basis1: "b₁",
+    basis2: "b₂",
+    canvas: "The same lattice with a good and a bad basis",
+    group: "Basis",
   },
   readout: {
     right: "Found the nearest dot, {dist} away.",
@@ -82,6 +92,7 @@ export const scene3 = {
     eaves: "Eavesdropper",
     reads: "reads",
     right: "right",
+    canvas: "Sending a secret bit through the lattice with a wobble",
   },
   readout: {
     result: "Sent {bit}  ·  Owner read {o}  ·  Eavesdropper read {e}",
@@ -107,6 +118,8 @@ export const scene4 = {
     run: "Run the attack",
     reset: "Reset arrows",
     loading: "Loading 3D…",
+    canvas: "A lattice in 2, 3 or 4 dimensions",
+    dimsGroup: "Dimensions",
     failed: "The 3D view could not load (it needs Three.js from the internet). The chart below still works.",
   },
   readout: {
@@ -171,6 +184,9 @@ export const scene5 = {
     one: "1",
   },
   lattice: {
+    canvas: "The current step drawn on the lattice",
+    lockedDot: "A·s",
+    lockedBall: "t = A·s + e",
     keygen: "Keys: the green arrows are the secret key, the red ones are the public key. Same grid.",
     encaps: "Lock: each bit is a ball. 0 sits on a dot, 1 is pushed half a step, then everything wobbles.",
     decaps: "Unlock: the owner rounds each ball with the green arrows and reads the leftover.",

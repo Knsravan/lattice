@@ -27,7 +27,7 @@ export function mountScene5(root: HTMLElement): () => void {
   let pictures: { sent: Sent; read: Read }[] = []; // one ball per bit of m, for the lattice picture
 
   // ---------- DOM ----------
-  const canvas = el("canvas", { class: "scene-canvas", "aria-label": "The current step drawn on the lattice" });
+  const canvas = el("canvas", { class: "scene-canvas", "aria-label": copy.lattice.canvas });
   const readout = el("div", { class: "readout", text: copy.lattice.keygen });
   const stage = el("div", { class: "stage short" }, canvas, readout);
   const input = el("input", { type: "text", class: "msg-input", maxlength: "40", value: "meet me at the lattice", placeholder: copy.labels.placeholder, "aria-label": copy.labels.message });
@@ -221,13 +221,13 @@ export function mountScene5(root: HTMLElement): () => void {
 
     if (mode === "keygen") {
       // t = a dot of the grid plus a wobble
-      drawRing(ctx, vp, keyDot, palette.attacker, { r, alpha: grow, label: "A·s", labelBelow: false });
+      drawRing(ctx, vp, keyDot, palette.attacker, { r, alpha: grow, label: copy.lattice.lockedDot, labelBelow: false });
       if (age > 0.5) drawDashedLine(ctx, vp, keyDot, keyBall, easeOut((age - 0.5) / 0.4), palette.attacker);
       if (age > 0.8) {
         drawBall(ctx, vp, keyBall, easeOut((age - 0.8) / 0.3), palette.attacker);
         const [bx, by] = vp.toScreen(keyBall);
         ctx.fillStyle = palette.attacker; ctx.font = "12px system-ui, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
-        ctx.fillText("t = A·s + e", bx + 12, by + 4);
+        ctx.fillText(copy.lattice.lockedBall, bx + 12, by + 4);
       }
       return;
     }

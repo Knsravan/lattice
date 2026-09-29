@@ -57,6 +57,13 @@
 - QA pass, headless Chromium, desktop + 390 px, all five scenes driven: no console errors, no horizontal scroll.
 - README updated for five shipped scenes.
 
+## Day 2 — Polish (pass 2): spec audit
+- Scene 1 broke "no numbers on screen except optional coordinates toggle": the readout always showed coefficients and distance. Now it says "The nearest dot lights up…" and shows the numbers only with “Show coordinates” on.
+- Narration rule: user-facing strings that lived in scene files (Scene 1 readout, canvas aria-labels, Scene 2 "b₁/b₂", Scene 5 "A·s" / "t = A·s + e") moved to `copy.ts`.
+- Colours: Scene 4's nearest-dot highlight was white; now green like the nearest dot in Scenes 1–3.
+- Accessibility: `aria-pressed` on the Good/Bad and 2D/3D/4D toggles, group labels, visible keyboard focus rings.
+- Inline SVG favicon (the page used to request /favicon.ico and get a 404).
+
 ## Skipped / deferred
 - Nothing yet.
 

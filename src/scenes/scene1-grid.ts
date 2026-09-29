@@ -20,7 +20,7 @@ interface Ball {
 
 export function mountScene1(root: HTMLElement): () => void {
   // ---------- DOM ----------
-  const canvas = el("canvas", { class: "scene-canvas", "aria-label": "Interactive 2-D lattice" });
+  const canvas = el("canvas", { class: "scene-canvas", "aria-label": copy.labels.canvas });
   const readout = el("div", { class: "readout", text: copy.hint });
   const coordsToggle = el("input", { type: "checkbox", id: "s1-coords" });
   const controls = el(
@@ -153,9 +153,10 @@ export function mountScene1(root: HTMLElement): () => void {
     if (degenerate) readout.textContent = copy.labels.degenerate;
     else if (ball) {
       const [c1, c2] = ball.coeffs;
-      const term = (c: number, name: string) => `${c < 0 ? "−" : ""}${Math.abs(c)}·${name}`;
       const dist = Math.hypot(ball.pos[0] - ball.nearest[0], ball.pos[1] - ball.nearest[1]);
-      readout.textContent = `Nearest dot = ${term(c1, "b₁")} ${c2 < 0 ? "−" : "+"} ${Math.abs(c2)}·b₂   ·   distance ${dist.toFixed(2)}`;
+      readout.textContent = !coordsToggle.checked ? copy.readout.found : copy.readout.coords
+        .replace("{c1}", (c1 < 0 ? "−" : "") + Math.abs(c1)).replace("{sign}", c2 < 0 ? "−" : "+")
+        .replace("{c2}", String(Math.abs(c2))).replace("{dist}", dist.toFixed(2));
     } else readout.textContent = copy.hint;
     readout.classList.toggle("warn", degenerate);
   }
