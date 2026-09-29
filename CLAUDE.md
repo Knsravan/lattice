@@ -51,7 +51,7 @@ lattice/
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart). Next: Scene 5.
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5. Next: polish.
 
 ### The five scenes (frozen scope)
 
@@ -71,7 +71,7 @@ Geometric LWE from `core/lwe2d.ts`: ball = dot + bit·halfStep + wobble; readers
 - A small side chart, the punchline: as dimension climbs, the attack stops *working*. Important nuance: LLL always finishes (it runs in ~1 s at n=40 in a browser), but the basis it finds stops being good enough — the shortest vector it returns gets longer relative to the true shortest one, and Babai stops recovering the planted secret. So plot **"did the attack recover the secret?"** (success rate over a few random LWE-style lattices per dimension, 2 → ~40) and, secondarily, LLL's shortest-vector length vs. the planted one. Cap each run at 2 s; plot "gave up" past the cap.
 - Narration teaches: why hundreds of dimensions defeat all known attacks, including quantum computers (one paragraph, no qubit simulation).
 
-**Scene 5 — Kyber, for real.**
+**Scene 5 — Kyber, for real.** (shipped, preset `scene`: n=8, q=97)
 Toy ML-KEM from `core/kyber.ts` with tiny parameters (n=8, q=97 or similar — pick values where every intermediate fits on screen). User types a short message. Show the three steps as panels: keygen (public key = bad basis + noise, secret = good basis), encapsulate (shared secret + ciphertext), decapsulate (recover shared secret). Each panel has a "show it on the lattice" link that draws the corresponding operation using Scene 1–3 visuals. Message is encrypted with the shared secret via XOR just for the demo. Narration teaches: this is the same trick as the grid, and it is what your browser started using in 2024–2025.
 
 ### Design rules

@@ -73,6 +73,26 @@
   .chart-panel { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px 12px; }
   .chart-canvas { display: block; width: 100%; height: 230px; }
   .chart-status { color: var(--muted); font-size: 13px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stage.short { aspect-ratio: 16 / 9; }
+  .msg-row { display: flex; gap: 10px; align-items: center; margin: 14px 0 4px; color: var(--muted); font-size: 14px; }
+  .msg-input { flex: 1; min-width: 0; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 15px; }
+  .msg-input:focus { outline: none; border-color: var(--ball); }
+  .kpanel { margin-top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .khead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .khead h3 { margin: 0; font-size: 16px; flex: 1 0 auto; }
+  .linklike { background: none; border: 0; padding: 0; color: var(--secret); font: inherit; font-size: 14px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .krow { display: grid; grid-template-columns: minmax(96px, 180px) 1fr; gap: 10px; align-items: center; padding: 2px 0; font-size: 13px; }
+  .klabel { color: var(--muted); }
+  .kcells { display: grid; grid-template-columns: repeat(8, minmax(0, 2.4em)); gap: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  .kc { text-align: right; animation: kfade .45s ease-out both; }
+  .ktext { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .ktext.wrap { word-break: break-all; }
+  .fadein { animation: kfade .45s ease-out both; }
+  .kwait { color: var(--muted); font-size: 14px; margin: 4px 0; animation: kfade .45s ease-out both; }
+  .secret { color: var(--secret); } .public { color: var(--attacker); } .ball { color: var(--ball); } .muted { color: var(--muted); } .ink { color: var(--ink); }
+  .clock-canvas { display: block; width: 100%; max-width: 260px; height: 210px; }
+  @keyframes kfade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (max-width: 520px) { .krow { grid-template-columns: 1fr; gap: 2px; } }
   .placeholder { display: grid; place-items: center; aspect-ratio: 4/3; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
   .scene.soon .prose p { color: var(--muted); }
   .scene.soon .kicker { color: var(--muted); }

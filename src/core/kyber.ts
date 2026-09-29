@@ -25,9 +25,11 @@ export interface KyberParams {
   eta: number; // noise width
 }
 
-export const KYBER_PRESETS: Record<"toy" | "demo" | "realShape", KyberParams> = {
+export const KYBER_PRESETS: Record<"toy" | "scene" | "demo" | "realShape", KyberParams> = {
   /** Tiny: everything visible, decryption can occasionally fail (noise is a big share of q). */
   toy: { n: 4, q: 17, k: 2, eta: 1 },
+  /** Scene 5: every number has at most two digits, and the noise (sd ≈ 3) never reaches q/4 ≈ 24. */
+  scene: { n: 8, q: 97, k: 2, eta: 1 },
   /** Small but reliable: comfortable margin between noise and q/4. */
   demo: { n: 8, q: 257, k: 2, eta: 1 },
   /** The exact shape of ML-KEM-512 (n=256, q=3329, k=2, eta=2 for encryption noise). */
@@ -89,7 +91,8 @@ const smallVec = (p: KyberParams, rng: Rng): PolyVec => Array.from({ length: p.k
 
 // ---------- PKE (the lattice part) ----------
 
-export function kyberKeygen(params: KyberParams, rng: Rng): { pk: KyberPublicKey; sk: KyberSecretKey } {
+/** Also returns the key's wobble `e` (t = A·s + e) so a scene can show it; real code throws it away. */
+export function kyberKeygen(params: KyberParams, rng: Rng): { pk: KyberPublicKey; sk: KyberSecretKey; e: PolyVec } {
   const { n, q, k } = params;
   const A: PolyMat = Array.from({ length: k }, () => Array.from({ length: k }, () => randomPoly(n, q, rng)));
   const s = smallVec(params, rng);
@@ -97,7 +100,7 @@ export function kyberKeygen(params: KyberParams, rng: Rng): { pk: KyberPublicKey
   const As = matVecMul(A, s, q);
   const t = As.map((p, i) => polyAdd(p, e[i], q));
   const pk = { A, t, params };
-  return { pk, sk: { s, params, pkHash: hashPublicKey(pk) } };
+  return { pk, sk: { s, params, pkHash: hashPublicKey(pk) }, e };
 }
 
 /** Encrypt an n-bit message polynomial (coefficients 0/1). */

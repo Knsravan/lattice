@@ -130,6 +130,49 @@ export const scene4 = {
   },
 };
 
-export const comingSoon = [
-  { kicker: "Scene 5", title: "Kyber, for real", blurb: "A toy ML-KEM running in your browser, every value on screen, encrypting a message you type." },
-];
+export const scene5 = {
+  kicker: "Scene 5",
+  title: "Kyber, for real",
+  paragraphs: [
+    "Everything so far was a picture. This is the real recipe, shrunk until every number fits on screen. It is called ML-KEM (you may know it as Kyber), and since 2024–2025 it is what your browser uses to lock the connection to many websites.",
+    "Two changes from the pictures. The numbers wrap around at 97, like a clock with 97 hours. And instead of one bit at a time, Kyber sends eight at once, packed in lists of eight numbers. The trick is the one you already know.",
+    "Step 1, make keys. The owner picks a secret s of tiny numbers (−1, 0 or 1), mixes it with a big public jumble A, and adds a wobble e. The result t is published with A. Getting s back from A and t means solving the nearest-dot puzzle in a grid of many dimensions.",
+    "Step 2, lock. The sender picks eight random bits: they become the shared key. Each 1 is pushed half way round the clock (49 of the 97 hours), and everything gets a fresh wobble. That is the ciphertext.",
+    "Step 3, unlock. The owner uses s to strip away the jumble. What is left is each bit plus a small wobble: near 0 o’clock means 0, near the far side of the clock means 1. Now both sides hold the same key, and the message locked with it opens. Type your own message in the box, and press “show it on the lattice” in any step to see it as dots and arrows.",
+    "Real ML-KEM uses lists of 256 numbers that wrap around at 3,329, in 512 to 1,024 dimensions. Same trick, bigger grid.",
+  ],
+  labels: {
+    message: "Your message",
+    placeholder: "Type a short message",
+    keygen: "1 · Make keys",
+    encaps: "2 · Lock",
+    decaps: "3 · Unlock",
+    keygenBtn: "Make new keys",
+    encapsBtn: "Lock a new key",
+    decapsBtn: "Unlock",
+    show: "show it on the lattice",
+    A: "A (public jumble)",
+    s: "s (secret)",
+    e: "e (wobble)",
+    t: "t = A·s + e (public)",
+    m: "8 random bits",
+    u: "u (ciphertext)",
+    v: "v (ciphertext)",
+    key: "shared key",
+    sealed: "locked message",
+    diff: "v − s·u (on the 97-hour clock)",
+    bits: "bits read",
+    opened: "unlocked message",
+    waitEncaps: "Press “Lock a new key”.",
+    waitDecaps: "Press “Unlock”.",
+    match: "same key as the sender ✓",
+    noMatch: "different key ✗",
+    zero: "0",
+    one: "1",
+  },
+  lattice: {
+    keygen: "Keys: the green arrows are the secret key, the red ones are the public key. Same grid.",
+    encaps: "Lock: each bit is a ball. 0 sits on a dot, 1 is pushed half a step, then everything wobbles.",
+    decaps: "Unlock: the owner rounds each ball with the green arrows and reads the leftover.",
+  },
+};
