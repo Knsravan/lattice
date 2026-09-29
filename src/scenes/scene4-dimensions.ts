@@ -15,8 +15,9 @@ const RADIUS: Record<Dim, number> = { 2: 4.2, 3: 3.0, 4: 2.4 }; // window of dot
 const DOT = 0.07;
 const STEP_S = 0.12; // one LLL step per ~100 ms
 const PROJ_DIST = 7; // 4D camera distance along w
-const SWEEP_DIMS = Array.from({ length: 20 }, (_, i) => 2 + 2 * i); // 2, 4, …, 40
-const SWEEP_TRIALS = 20;
+const GRID_CHOICES = [5, 20, 50]; // random grids per dimension
+const CLIMB_CHOICES = [40, 60]; // highest dimension on the chart
+const sweepDims = (top: number) => Array.from({ length: top / 2 }, (_, i) => 2 + 2 * i); // 2, 4, …, top
 const BUDGET_MS = 2000;
 const CAMERA: Record<Dim, [number, number, number]> = { 2: [0, 0, 11.5], 3: [-5, 3.2, 5.8], 4: [-5, 3.2, 5.8] };
 
@@ -32,7 +33,22 @@ export function mountScene4(root: HTMLElement): () => void {
   const controls = el("div", { class: "controls" }, el("div", { class: "segmented dims", role: "group", "aria-label": copy.labels.dimsGroup }, ...dimButtons), runBtn, resetBtn);
   const chartCanvas = el("canvas", { class: "chart-canvas", "aria-label": copy.chart.title });
   const chartStatus = el("div", { class: "chart-status", text: copy.chart.idle });
-  const chartPanel = el("div", { class: "chart-panel" }, chartCanvas, chartStatus);
+  let trials = 20, top = 40;
+  const choice = <T extends number>(label: string, values: T[], current: T, fmt: (v: T) => string, set: (v: T) => void) => {
+    const btns = values.map((v) => el("button", {
+      type: "button", class: "seg" + (v === current ? " active" : ""), "aria-pressed": String(v === current), text: fmt(v),
+      onClick: () => {
+        btns.forEach((b, i) => { b.classList.toggle("active", values[i] === v); b.setAttribute("aria-pressed", String(values[i] === v)); });
+        set(v);
+        sweep(); // a new setting re-runs the chart straight away
+      },
+    }));
+    return el("span", { class: "chart-choice" }, label, el("span", { class: "segmented dims", role: "group", "aria-label": label }, ...btns));
+  };
+  const chartControls = el("div", { class: "chart-controls" },
+    choice(copy.chart.grids, GRID_CHOICES, trials, String, (v) => { trials = v; }),
+    choice(copy.chart.climb, CLIMB_CHOICES, top, (v) => v + copy.chart.dimension, (v) => { top = v; }));
+  const chartPanel = el("div", { class: "chart-panel" }, chartCanvas, chartStatus, chartControls);
   const card = (c: { name: string; body: string; verdict: string }, verdictClass: string) =>
     el("div", { class: "qcard" },
       el("h4", { text: c.name }),
@@ -45,24 +61,25 @@ export function mountScene4(root: HTMLElement): () => void {
 
   // ---------- chart (works without Three.js) ----------
   const chart = createAttackChart(chartCanvas);
-  chart.reset(SWEEP_DIMS, SWEEP_TRIALS);
+  chart.reset(sweepDims(top), trials);
   let sweepSeed = 1;
   let cancelSweep: (() => void) | null = null;
   let slowest = 0;
   function sweep() {
     cancelSweep?.();
-    chart.reset(SWEEP_DIMS, SWEEP_TRIALS);
+    const dims = sweepDims(top), n = trials;
+    chart.reset(dims, n);
     slowest = 0;
-    let lastDim = SWEEP_DIMS[0];
+    let lastDim = dims[0];
     let fallback = false;
-    const status = () => { chartStatus.textContent = (fallback ? copy.chart.noWorker + " " : "") + copy.chart.running.replace("{trials}", String(SWEEP_TRIALS)).replace("{d}", String(lastDim)); };
+    const status = () => { chartStatus.textContent = (fallback ? copy.chart.noWorker + " " : "") + copy.chart.running.replace("{trials}", String(n)).replace("{d}", String(lastDim)); };
     status();
     cancelSweep = startSweep(
-      { dims: SWEEP_DIMS, trials: SWEEP_TRIALS, seed: sweepSeed++, budgetMs: BUDGET_MS },
+      { dims, trials: n, seed: sweepSeed++, budgetMs: BUDGET_MS },
       (m) => { chart.add(m.result); slowest = Math.max(slowest, m.ms); lastDim = m.result.dim; status(); },
       () => {
         cancelSweep = null;
-        chartStatus.textContent = copy.chart.done.replace("{trials}", String(SWEEP_TRIALS)).replace("{ms}", String(Math.max(1, Math.ceil(slowest))));
+        chartStatus.textContent = copy.chart.done.replace("{trials}", String(n)).replace("{ms}", String(Math.max(1, Math.ceil(slowest))));
       },
       () => { fallback = true; },
     );
