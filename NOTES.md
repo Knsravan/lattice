@@ -91,6 +91,15 @@
 - Chart adapts: x-axis ticks every 10 up to the top dimension, ratio scale 0.8–1.8 when climbing to 60 (0.8–1.3 at 40).
 - No core changes — same `plantedInstance` / `runAttack`, just different dims and trial counts.
 
+## Day 2 — Rebuild as a scroll story (user feedback: "not understandable for a 15-year-old")
+- User chose: add Chapter 0 (the problem first), named characters (Alex sends, Sam receives, Eve snoops), and roll out Chapters 0 + 1 first for review before touching 2–5.
+- `ui/story.ts`: sticky picture + one-or-two-sentence steps. The step crossing a trigger band becomes active and its animation clock restarts (replays on scroll-back). Band = middle of the screen on desktop; on phones the pinned picture covers the top half, so the band sits at ~72% where the text actually is (first try used the middle and the animated step was hidden under the picture).
+- `scenes/story-draw.ts`: painters (person, bubble, computer, envelope, padlock, key, browser bar, quantum chip) + `prog()`/`loop()` timing that jump to the end under reduced motion.
+- Chapter 0 (10 steps, no maths): message hops through computers → Eve copies → lock it → but the key? → padlock dance (Sam's open padlock out, locked box back, Eve holds a locked copy) → browser padlock → 37 × 53 = 1,961 easy vs. guessing backwards → quantum chip goes back fast, padlock breaks, Eve's saved copies open → dots.
+- Chapter 1 (9 steps): arrow A → a walker leaves a row of dots → arrow B → rows slide out along B → "lattice"/"basis" with a ripple → a trip 3 × A + 2 × B (camera glides to follow it, it ran off the tall picture otherwise) → ball → measure lines to the 5 nearest dots (new `core.nearbyPoints`, tested) → zoom out. Same arrows as the playground that follows.
+- Scene 1 playground now labels arrows A and B (was b₁, b₂) to match the story; Scenes 2–5 renamed "Chapter 2–5" only.
+- Checked every step at 1280 × 860 and 390 × 844 via screenshots; no console errors.
+
 ## Skipped / deferred
 - Nothing yet.
 

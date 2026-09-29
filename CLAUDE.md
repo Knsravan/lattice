@@ -36,7 +36,7 @@ lattice/
       vec.ts                # vector/matrix helpers: dot, combine, determinant, inverse, coordinates
       rng.ts                # seeded PRNG (mulberry32), randInt, centred-binomial noise
       lattice.ts            # Gram–Schmidt, points in a ball/box, same-lattice test, skewing a basis
-      cvp.ts                # closest vector: Babai nearest-plane and rounding (any dim); exact via LLL + search (dim ≤ 4)
+      cvp.ts                # closest vector: Babai nearest-plane and rounding (any dim); exact via LLL + search (dim ≤ 4); nearbyPoints
       lll.ts                # LLL with incremental Gram–Schmidt; optional step trace (for animation) and time budget
       attack.ts             # Scene 4: LWE-style q-ary lattices, LLL + Babai attack, Kannan embedding, showcase bases
       lwe2d.ts              # Scene 3: geometric LWE in 2D (encode = dot + bit·halfStep + wobble, decode)
@@ -46,7 +46,10 @@ lattice/
       project4d.ts          # 4D -> 3D projection (perspective + rotation in 6 planes), unrotate
     scenes/                 # draw only; all math comes from core
       draw2d.ts             # shared 2-D canvas drawing (viewport, dots, arrows, ball, rings)
-      scene1-grid.ts
+      story-draw.ts         # story picture painters: people, envelope, padlock, key, browser bar, chip; prog/loop timing
+      chapter0-problem.ts   # Chapter 0 story (no maths)
+      chapter1-grid.ts      # Chapter 1 story (the grid, the question)
+      scene1-grid.ts        # Chapter 1 "Try it yourself" playground
       scene2-basis.ts
       scene3-noise.ts
       scene4-dimensions.ts  # Three.js view (loaded from the CDN on demand), LLL animation
@@ -58,6 +61,7 @@ lattice/
       copy.ts               # ALL narration and on-screen text
       dom.ts                # el/$, canvas sizing, run-while-visible, easing, reduced-motion check, palette
       hero.ts               # shearing lattice behind the title
+      story.ts              # scroll-story engine: sticky picture, steps, active-step clock
     types/
       three.d.ts            # minimal types for the parts of Three.js Scene 4 uses
     main.ts                 # builds the page from copy.ts, mounts hero + scenes, nav dots
@@ -70,9 +74,19 @@ lattice/
 
 `src/core` is the heart. It must be importable from Node with no browser globals so tests run headless. Every function in `core` has a test. Coverage of `core` is at 100% lines; keep it above 90%.
 
-**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5, then polish (spec audit, animated resets/clears, phone fixes, a11y). The user then promoted every item in NOTES.md "Ideas": hero shearing lattice, prefers-reduced-motion, ML-KEM-768 sizes (Scene 5), Grover vs Shor panel and chart settings — grids per dimension, climb to 60D (Scene 4). All deployed; 70 tests, 100% line coverage of `core`. Open: confirm 60 fps on a real 2020 laptop and the Three.js CDN on the live site. Next: nothing scheduled — new work goes through NOTES.md "Ideas".
+**Status:** Day 1 (Sept 6) — core math complete and tested. Scenes 1, 2 and 3 shipped the same day. Day 2 (Sept 29) — Scene 4 shipped (`core/attack.ts` + worker-driven chart), then Scene 5, then polish (spec audit, animated resets/clears, phone fixes, a11y). The user then promoted every item in NOTES.md "Ideas": hero shearing lattice, prefers-reduced-motion, ML-KEM-768 sizes (Scene 5), Grover vs Shor panel and chart settings — grids per dimension, climb to 60D (Scene 4). All deployed; 70 tests, 100% line coverage of `core`. Open: confirm 60 fps on a real 2020 laptop and the Three.js CDN on the live site. Then the user found the site hard to follow for a 15-year-old and chose a rebuild as a scroll story (see "Format" below): Chapter 0 (new) and Chapter 1 done, 71 tests. Next: user reviews Chapters 0–1; then Chapters 2–5 in the same format.
 
-### The five scenes (frozen scope)
+### Format: a scroll story (user decision, Sept 29)
+Each chapter is told as a scroll story: the picture stays pinned while short text steps (one or two sentences each) scroll past, and the picture animates to match the step in view (`src/ui/story.ts`). The story starts from a problem the reader already knows and adds one idea per step. The same three people run through every chapter: **Alex** sends, **Sam** receives, **Eve** snoops. Interactive playgrounds come after a chapter's story as "Try it yourself".
+
+Rollout: Chapter 0 and Chapter 1 are rebuilt in this format; Chapters 2–5 keep the older scene layout until the user has reviewed 0–1.
+
+**Chapter 0 — The problem.** (added by the user, Sept 29; no maths)
+Alex sends Sam "meet at 5"; it hops through computers; Eve copies it; locking needs a key they can't share; the padlock trick (Sam sends open padlocks, keeps the key); that is the browser padlock; today's padlocks rest on multiplying vs. going back (37 × 53 = 1,961); a quantum computer goes back fast and Eve's saved copies open; so: a new puzzle, about dots. Story in `scenes/chapter0-problem.ts`.
+
+**Chapter 1** is Scene 1 below, told as a story first (`scenes/chapter1-grid.ts`: arrow A → row of dots → arrow B → rows stack into a grid → "lattice", "basis" → a trip of 3 × A + 2 × B → drop a ball → measure → the question), then the Scene 1 playground as "Try it yourself".
+
+### The five scenes (frozen scope, plus Chapter 0 above)
 
 **Scene 1 — The grid.**
 A 2D lattice of dots on canvas. Two draggable arrows from the origin are the basis vectors b1, b2. Dragging reshapes the grid live. Click anywhere to "throw a ball": the nearest lattice point lights up with a line to it. Narration teaches: lattice, basis, closest vector. No numbers on screen except optional coordinates toggle.

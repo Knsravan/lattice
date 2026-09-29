@@ -1,6 +1,8 @@
-import { site, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
+import { site, chapter0, chapter1, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
+import { mountChapter0 } from "./scenes/chapter0-problem.ts";
+import { mountChapter1 } from "./scenes/chapter1-grid.ts";
 import { mountScene1 } from "./scenes/scene1-grid.ts";
 import { mountScene2 } from "./scenes/scene2-basis.ts";
 import { mountScene3 } from "./scenes/scene3-noise.ts";
@@ -18,12 +20,21 @@ function build() {
     el("h1", { text: site.title }),
     el("p", { class: "tagline", text: site.tagline }),
     ...site.intro.map((t) => el("p", { class: "intro", text: t })),
-    el("a", { class: "scroll-hint", href: "#scene-1", text: site.scrollHint + " ↓" }),
+    el("a", { class: "scroll-hint", href: "#chapter-0", text: site.scrollHint + " ↓" }),
   );
   app.append(hero);
   mountHero(hero);
 
-  // scene 1
+  // chapter 0: the problem (scroll story)
+  const c0 = chapter("chapter-0", chapter0.kicker, chapter0.title);
+  app.append(c0.section);
+  mountChapter0(c0.body);
+
+  // chapter 1: the grid (scroll story), then "try it yourself"
+  const c1 = chapter("chapter-1", chapter1.kicker, chapter1.title);
+  app.append(c1.section);
+  mountChapter1(c1.body);
+
   const s1 = section("scene-1", scene1.kicker, scene1.title, scene1.paragraphs);
   app.append(s1.section);
   mountScene1(s1.stage);
@@ -60,8 +71,8 @@ function build() {
 
   // nav dots
   const nav = el("nav", { class: "dots", "aria-label": "Scenes" });
-  const ids = ["scene-1", "scene-2", "scene-3", "scene-4", "scene-5"];
-  const links = ids.map((id, i) => el("a", { href: `#${id}`, title: `Scene ${i + 1}`, "aria-label": `Scene ${i + 1}` }));
+  const ids = ["chapter-0", "chapter-1", "scene-2", "scene-3", "scene-4", "scene-5"];
+  const links = ids.map((id, i) => el("a", { href: `#${id}`, title: `Chapter ${i}`, "aria-label": `Chapter ${i}` }));
   nav.append(...links);
   document.body.append(nav);
   const io = new IntersectionObserver(
@@ -74,6 +85,18 @@ function build() {
     { threshold: 0.4 },
   );
   for (const id of ids) io.observe($(`#${id}`));
+}
+
+/** A scroll-story chapter: a heading, then the story (sticky picture + steps) mounts into `body`. */
+function chapter(id: string, kicker: string, title: string) {
+  const body = el("div", { class: "chapter-body" });
+  const sectionEl = el(
+    "section",
+    { id, class: "chapter" },
+    el("header", { class: "chapter-head" }, el("div", { class: "kicker", text: kicker }), el("h2", { text: title })),
+    body,
+  );
+  return { section: sectionEl, body };
 }
 
 function section(id: string, kicker: string, title: string, paragraphs: string[]) {

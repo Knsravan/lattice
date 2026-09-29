@@ -2,7 +2,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import {
   lll, isLLLReduced, babaiNearestPlane, babaiRounding, closestVectorExact, skewBasis, sameLattice,
-  volume, mulberry32, norm, sub, combine, identityBasis, pointsInBall,
+  volume, mulberry32, norm, sub, combine, identityBasis, pointsInBall, nearbyPoints,
 } from "../src/core/index.ts";
 import type { Basis, Vec } from "../src/core/index.ts";
 
@@ -133,6 +133,24 @@ describe("cvp", () => {
       const truth = bruteCvp(lll(bad).reduced, target, 6);
       assert.ok(Math.abs(res.distance - norm(sub(target, truth))) < 1e-7, `case ${i}`);
       assert.deepEqual(combine(bad, res.coeffs), res.point);
+    }
+  });
+  test("nearbyPoints: sorted by distance, first one is the exact closest, all are lattice points", () => {
+    const rng = mulberry32(12);
+    const b = [[1.5, 0.2], [0.45, 1.25]];
+    for (let i = 0; i < 40; i++) {
+      const target = [rng() * 8 - 4, rng() * 6 - 3];
+      const near = nearbyPoints(b, target, 6);
+      assert.equal(near.length, 6);
+      assert.ok(Math.abs(near[0].distance - closestVectorExact(b, target).distance) < 1e-9);
+      for (let k = 1; k < near.length; k++) assert.ok(near[k].distance >= near[k - 1].distance);
+      for (const r of near) {
+        const p = combine(b, r.coeffs);
+        assert.ok(norm(sub(p, r.point)) < 1e-9);
+        assert.ok(Math.abs(r.distance - norm(sub(target, r.point))) < 1e-9);
+      }
+      // no duplicates
+      assert.equal(new Set(near.map((r) => r.coeffs.join(","))).size, 6);
     }
   });
   test("closest lattice point to a lattice point is itself", () => {

@@ -67,3 +67,26 @@ export function closestVectorExact(basis: Basis, target: Vec, window = 3): CvpRe
   const origCoeffs = coordinates(basis, best.point).map((x) => Math.round(x) + 0); // +0 normalises -0
   return { coeffs: origCoeffs, point: combine(basis, origCoeffs), distance: best.distance };
 }
+
+/**
+ * The `count` lattice points closest to `target`, nearest first (for "measure to the dots around the ball").
+ * Enumerates a small coefficient window around Babai's answer in an LLL-reduced basis; intended for dim ≤ 3.
+ */
+export function nearbyPoints(basis: Basis, target: Vec, count: number, window = 3): CvpResult[] {
+  const { reduced } = lll(basis);
+  const n = reduced.length;
+  const centre = babaiNearestPlane(reduced, target).coeffs;
+  const found: CvpResult[] = [];
+  const c = centre.slice();
+  const rec = (d: number) => {
+    if (d === n) {
+      const point = combine(reduced, c);
+      found.push({ coeffs: [], point, distance: Math.sqrt(norm2(sub(target, point))) });
+      return;
+    }
+    for (let k = centre[d] - window; k <= centre[d] + window; k++) { c[d] = k; rec(d + 1); }
+  };
+  rec(0);
+  found.sort((a, b) => a.distance - b.distance);
+  return found.slice(0, count).map((r) => ({ ...r, coeffs: coordinates(basis, r.point).map((x) => Math.round(x) + 0) }));
+}
