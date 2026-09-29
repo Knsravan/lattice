@@ -84,8 +84,13 @@
 - Scene 4, under the chart: two cards. Shor finds hidden repeating patterns → RSA / elliptic curves broken (red verdict). Grover only square-roots blind guessing (a million guesses → a thousand); grids have no pattern for Shor and Grover-style search trims the attack only a little → grids safe, just a bit bigger (green verdict). Text in `copy.ts` (`scene4.quantum`); the narration's single quantum paragraph is unchanged, as the spec asks.
 - Cards sit side by side on desktop, stacked on phones. No numbers or formulas beyond "a million → a thousand".
 
+## Day 2 — Chart settings (promoted from Ideas by the user)
+- Under the Scene 4 chart: "Grids per dimension" 5 / 20 / 50 (default 20) and "Climb to" 40D / 60D (default 40). Picking either re-runs the chart at once (the 3D attack is untouched).
+- Measured in Node before adding 60D: slowest single attack at n = 60 ≈ 130 ms (cap is 2 s); 20 grids × 2…60 ≈ 13.5 s total, 50 grids ≈ 35 s — all in the worker, chart fills in as it goes. Success is 0/20 from 44D up; the shortest-arrow ratio keeps climbing to ≈ 1.66 at 60D.
+- Chart adapts: x-axis ticks every 10 up to the top dimension, ratio scale 0.8–1.8 when climbing to 60 (0.8–1.3 at 40).
+- No core changes — same `plantedInstance` / `runAttack`, just different dims and trial counts.
+
 ## Skipped / deferred
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
-- Scene 4: let the reader pick how many grids per dimension, or a "run to 60D" button (LLL is fast enough now).

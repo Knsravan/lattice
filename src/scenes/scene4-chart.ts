@@ -13,7 +13,6 @@ interface Column {
   shown: number; // animated bar height 0..1
 }
 
-const RATIO_MAX = 1.3;
 
 export function createAttackChart(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d")!;
@@ -25,7 +24,9 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
 
   const complete = (d: number) => { const c = cols.get(d)!; return c.n >= trials; };
 
+  let maxDim = 40;
   function reset(newDims: number[], newTrials: number) {
+    maxDim = newDims[newDims.length - 1];
     dims = newDims;
     trials = newTrials;
     // keep the old bar heights so a re-run shrinks them smoothly instead of blanking the chart
@@ -59,7 +60,6 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
     const barH = (h - T - B - gap) * 0.62;
     const lineTop = T + barH + gap + 12;
     const lineH = h - B - lineTop;
-    const maxDim = 40;
     const x = (d: number) => L + ((d - 1) / (maxDim - 1 + 3)) * plotW;
     const colW = Math.max(3, (plotW / (maxDim + 3)) * 1.5);
 
@@ -106,7 +106,8 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
     // ratio line (secondary)
     ctx.fillStyle = palette.muted; ctx.textAlign = "left";
     ctx.fillText(copy.chart.ratio, L, lineTop - 4);
-    const yr = (r: number) => lineTop + lineH - ((Math.min(r, RATIO_MAX) - 0.8) / (RATIO_MAX - 0.8)) * lineH;
+    const ratioMax = maxDim > 40 ? 1.8 : 1.3; // the ratio keeps climbing past 40D; give it room
+    const yr = (r: number) => lineTop + lineH - ((Math.min(r, ratioMax) - 0.8) / (ratioMax - 0.8)) * lineH;
     ctx.save();
     ctx.setLineDash([3, 4]); ctx.strokeStyle = "rgba(61,220,151,.5)";
     ctx.beginPath(); ctx.moveTo(L, yr(1)); ctx.lineTo(w - R, yr(1)); ctx.stroke();
@@ -124,7 +125,8 @@ export function createAttackChart(canvas: HTMLCanvasElement) {
     ctx.stroke();
     // x axis
     ctx.fillStyle = palette.muted; ctx.textAlign = "center";
-    for (const d of [2, 10, 20, 30, 40]) ctx.fillText(d + copy.chart.dimension, x(d), h - 8);
+    const ticks = [2, ...Array.from({ length: Math.floor(maxDim / 10) }, (_, k) => 10 * (k + 1))];
+    for (const d of ticks) ctx.fillText(d + copy.chart.dimension, x(d), h - 8);
     ctx.textAlign = "right";
     ctx.fillStyle = palette.secret;
     ctx.fillText(copy.chart.kyber, w - R, T + 14);
