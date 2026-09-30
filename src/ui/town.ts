@@ -37,6 +37,7 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
     await Promise.all([import("three"), addon("objects/Sky.js"), addon("geometries/RoundedBoxGeometry.js"), addon("postprocessing/EffectComposer.js"),
       addon("postprocessing/RenderPass.js"), addon("postprocessing/UnrealBloomPass.js"), addon("postprocessing/OutputPass.js"),
       addon("loaders/GLTFLoader.js"), addon("loaders/EXRLoader.js"), addon("libs/meshopt_decoder.module.js")]);
+  const GTAOPass: Any = await addon("postprocessing/GTAOPass.js").then((m) => m.GTAOPass, () => null); // optional
 
   const lite = matchMedia("(max-width: 820px), (pointer: coarse)").matches; // phones: no shadows, no bloom, a smaller town
   const BASE = new URL("town/web/", document.baseURI).href;
@@ -65,7 +66,7 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
   sun.castShadow = !lite; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = .6;
   Object.assign(sun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 1, far: 900 });
   scene.add(sun, sun.target);
-  const hemi = new THREE.HemisphereLight(0xcfe2ff, 0x5b5140, 1.1); scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(0xcfe2ff, 0x5a5a44, 1.1); scene.add(hemi);
 
   // ================= real textures =================
   const texLoader = new THREE.TextureLoader();
@@ -83,12 +84,20 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
     steel: new THREE.MeshStandardMaterial({ color: 0x8e6b52, roughness: .6, metalness: .6 }),
     glass: new THREE.MeshPhysicalMaterial({ color: 0x9fb8cc, roughness: .05, metalness: .1, transparent: true, opacity: .35 }),
     window: new THREE.MeshStandardMaterial({ color: 0x31465c, roughness: .1, metalness: .6, emissive: 0xffcf8a, emissiveIntensity: 0 }),
+    windowOff: new THREE.MeshStandardMaterial({ color: 0x2a3644, roughness: .1, metalness: .6 }),
     trunk: new THREE.MeshStandardMaterial({ color: 0x5a4332, roughness: 1 }),
-    leaves: new THREE.MeshStandardMaterial({ color: 0x4f7a3a, roughness: .9 }),
+    leaves: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .9 }), // each tree has its own shade (instance colour)
     gold: new THREE.MeshStandardMaterial({ color: COL.gold, metalness: 1, roughness: .22 }),
+    // flat roofs are tar and gravel, darker than the walls: pale roofs made the town look like a white model from above
+    roofTop: pbr("concrete", { color: new THREE.Color(.13, .13, .14) }), // (linear: about 40% grey on screen)
+    lot: pbr("concrete", { color: new THREE.Color(.62, .61, .6) }),
+    render: pbr("concrete", { color: new THREE.Color(1.05, 1, .92) }), // painted house walls
+    shopfront: new THREE.MeshStandardMaterial({ color: 0x1c232b, roughness: .15, metalness: .6, emissive: 0xffc27a, emissiveIntensity: 0 }),
+    road: new THREE.MeshStandardMaterial({ color: 0x3b3d40, roughness: .95 }),
+    hedge: new THREE.MeshStandardMaterial({ color: 0x3f5a2e, roughness: 1 }),
   };
   M.concrete.color = new THREE.Color(0xc8c8c8);
-  M.grass.color = new THREE.Color(.62, .66, .55); // the photo's green is very saturated from above
+  M.grass.color = new THREE.Color(.6, .6, .5); // the photo's green is very saturated from above
   /** Facades: [texture set, metres one texture tile covers across, metres it covers up]. Night lights come from the -lit map. */
   const FACADES: [string, number, number][] = [["facade-1", 12, 12], ["facade-2", 15, 21], ["facade-3", 18, 22], ["facade-4", 24, 27]];
   // (photos are darker than the lit look we want by day, so their colour is lifted a little)
@@ -105,7 +114,14 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
     g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
 
   // ================= the ground: fields, main road, downtown grid =================
-  { const ground = new THREE.Mesh(uvScale(new THREE.PlaneGeometry(8000, 8000), 1000, 1000), M.grass); ground.rotation.x = -Math.PI / 2; add(shadowed(ground, false)); }
+  { // grass that varies over tens of metres (lusher, drier, mown), so the photo's repeat doesn't show from above
+    const geo = uvScale(new THREE.PlaneGeometry(2800, 2800, 280, 280), 350, 350), pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+    const wave = (x: number, z: number) => Math.sin(x * .013 + Math.sin(z * .009) * 2) + Math.sin(z * .017 + x * .004) * .8 + Math.sin((x + z) * .041) * .35;
+    for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = -pos.getY(i), n = wave(x, z) / 2.15;
+      col.set([.92 + n * .1 + (n > .45 ? .12 : 0), .95 + n * .06, .82 - n * .12], i * 3); }
+    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const mat = M.grass.clone(); mat.vertexColors = true; M.ground = mat;
+    const ground = new THREE.Mesh(geo, mat); ground.rotation.x = -Math.PI / 2; add(shadowed(ground, false)); }
   const dashes: Any[] = [];
   function road(x1: number, z1: number, x2: number, z2: number, w = 12) {
     const len = Math.hypot(x2 - x1, z2 - z1), ang = -Math.atan2(z2 - z1, x2 - x1);
@@ -119,33 +135,51 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
       add(shadowed(pv, false), (x1 + x2) / 2 + n.x, .15, (z1 + z2) / 2 + n.z);
     }
   }
-  road(-230, 0, 230, 0, 14);
+  road(-1300, 0, 1300, 0, 14); // the main road runs out of town both ways
+  // downtown stands on pavement, not lawn
+  { const lot = new THREE.Mesh(uvScale(new THREE.PlaneGeometry(190, 190), 24, 24), M.lot); lot.rotation.x = -Math.PI / 2; add(shadowed(lot, false), 0, .03, -106); }
   const GX = [-75, -45, -15, 15, 45, 75], GZ = [-30, -60, -90, -120, -150, -180];
   for (const x of GX) road(x, -18, x, -195, 10);
   for (const z of GZ) road(-90, z, 90, z, 10);
 
   // ================= buildings with photographed facades =================
+  const th0 = (style: number) => FACADES[style][2];
+  const parapet = [M.concrete, M.concrete, M.roofTop, M.concrete, M.concrete, M.concrete];
   function building(x: number, z: number, w: number, d: number, h: number, style: number) {
     const [, tw, th] = FACADES[style];
     const geo = new THREE.BoxGeometry(w, h, d), uv = geo.attributes.uv;
     for (let face = 0; face < 6; face++) { const span = face < 2 ? d : w; for (let k = 0; k < 4; k++) { const i = face * 4 + k; uv.setXY(i, uv.getX(i) * span / tw, uv.getY(i) * h / th); } }
-    const b = new THREE.Mesh(geo, [facadeMats[style], facadeMats[style], M.concrete, M.concrete, facadeMats[style], facadeMats[style]]);
+    const b = new THREE.Mesh(geo, [facadeMats[style], facadeMats[style], M.roofTop, M.roofTop, facadeMats[style], facadeMats[style]]);
     add(shadowed(b), x, h / 2, z);
-    add(shadowed(new THREE.Mesh(new THREE.BoxGeometry(w + .5, .9, d + .5), M.concrete)), x, h + .1, z); // parapet
+    add(shadowed(new THREE.Mesh(new THREE.BoxGeometry(w + .5, .9, d + .5), parapet)), x, h + .1, z); // parapet (concrete rim, gravel roof)
+    // the street floor: shop windows, lit in the evening, under a thin canopy
+    if (h > 9) { add(new THREE.Mesh(new THREE.BoxGeometry(w + .12, 3.6, d + .12), M.shopfront), x, 1.9, z);
+      add(shadowed(new THREE.Mesh(new THREE.BoxGeometry(w + 1.6, .25, d + 1.6), M.dark)), x, 4, z); }
+    // tall towers step back near the top
+    if (h > 34 && rnd() < .7) { const th = 6 + rnd() * 10, g2 = new THREE.BoxGeometry(w * .68, th, d * .68), uv2 = g2.attributes.uv;
+      for (let face = 0; face < 6; face++) { const span = (face < 2 ? d : w) * .68; for (let k = 0; k < 4; k++) { const i = face * 4 + k; uv2.setXY(i, uv2.getX(i) * span / tw, uv2.getY(i) * th / th0(style)); } }
+      add(shadowed(new THREE.Mesh(g2, [facadeMats[style], facadeMats[style], M.roofTop, M.roofTop, facadeMats[style], facadeMats[style]])), x, h + th / 2, z);
+      add(shadowed(new THREE.Mesh(new THREE.BoxGeometry(w * .68 + .4, .7, d * .68 + .4), parapet)), x, h + th + .1, z); }
     if (rnd() < .6) add(shadowed(new THREE.Mesh(new THREE.BoxGeometry(w * .3, 2, d * .25), M.dark)), x + w * .15, h + 1, z - d * .2);
     if (rnd() < .4) add(shadowed(new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 2.6, 12), M.metal)), x - w * .25, h + 1.3, z + d * .2);
     return b;
   }
   seed = 17;
+  const parks: [number, number][] = [];
   for (let i = 0; i < GX.length - 1; i++) for (let j = 0; j < GZ.length - 1; j++) {
     const cx = (GX[i] + GX[i + 1]) / 2, cz = (GZ[j] + GZ[j + 1]) / 2, dist = Math.hypot(cx, cz + 105);
     const tall = 10 + (1 - dist / 110) * 40 + rnd() * 16;
+    if ((i === 4 && j === 0) || (i === 0 && j === 4)) { // a small park: lawn, paths, trees (added with the trees)
+      const lawn = new THREE.Mesh(uvScale(new THREE.PlaneGeometry(19, 19), 2.5, 2.5), M.grass); lawn.rotation.x = -Math.PI / 2; add(shadowed(lawn, false), cx, .06, cz);
+      parks.push([cx, cz]); rnd(); rnd(); continue; }
     if (rnd() < .5) building(cx, cz, 17, 17, tall, Math.floor(rnd() * 4));
     else { building(cx - 4.5, cz, 8, 17, tall * (.6 + rnd() * .5), Math.floor(rnd() * 4)); building(cx + 4.5, cz - 3, 8, 11, tall * (.5 + rnd() * .6), Math.floor(rnd() * 4)); }
   }
   for (let i = 0; i < 16; i++) { const x = -200 + i * 26 + rnd() * 6;
     if (Math.abs(x + 20) < 16 || Math.abs(x - 50) < 20 || Math.abs(x + 150) < 20 || Math.abs(x - 160) < 26 || Math.abs(x + 110) < 8) continue;
-    building(x, 44 + rnd() * 8, 12 + rnd() * 6, 12, 7 + rnd() * 12, Math.floor(rnd() * 4)); }
+    const bz = 44 + rnd() * 8, bw = 12 + rnd() * 6;
+    const lot = new THREE.Mesh(uvScale(new THREE.PlaneGeometry(bw + 8, 30), 3, 4), M.lot); lot.rotation.x = -Math.PI / 2; add(shadowed(lot, false), x, .04, bz - 8);
+    building(x, bz, bw, 12, 7 + rnd() * 12, Math.floor(rnd() * 4)); }
 
   // ================= houses (Alex, Sam, neighbours): brick walls, tiled roofs =================
   function house(x: number, z: number, rot = 0, s = 1) {
@@ -184,49 +218,118 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
   building(50, -26, 34, 18, 10, 1);
   for (let k = 0; k < 6; k++) add(new THREE.Mesh(new THREE.BoxGeometry(2.4, .25, .2), glowMat(COL.secret, 3)), 38 + k * 4.6, 6, -16.9);
 
-  // ================= the wider town: suburbs and hills =================
+  // ================= the wider town: suburbs on their own streets, then farmland, then hills =================
+  const treeSpots: [number, number, number][] = []; // x, z, kind (0 leafy, 1 conifer)
   {
     seed = 83;
-    const spots: [number, number, number][] = [];
-    for (let i = 0; i < (lite ? 700 : 1800); i++) { const a = rnd() * Math.PI * 2, r = 250 + Math.pow(rnd(), .7) * 900, x = Math.cos(a) * r, z = Math.sin(a) * r - 80;
-      if (Math.abs(z - SITE.z) < 70 && Math.abs(x) < 110) continue; spots.push([x, z, rnd()]); }
-    const body = new THREE.InstancedMesh(uvScale(new THREE.BoxGeometry(1, 1, 1), 3, 2), M.bricks, spots.length);
-    const roofI = new THREE.InstancedMesh(new THREE.ConeGeometry(.78, .5, 4).rotateY(Math.PI / 4), M.roofTiles, spots.length);
-    const winI = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), M.window, spots.length);
-    spots.forEach(([x, z, k], i) => { const w = 8 + k * 6, d = 7 + k * 4, h = 4 + k * 3.5, rot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.round(rnd() * 3) * Math.PI / 2 + (rnd() - .5) * .2, 0));
-      body.setMatrixAt(i, new THREE.Matrix4().compose(V(x, h / 2, z), rot, V(w, h, d)));
-      body.setColorAt(i, new THREE.Color().setHSL(.05 + rnd() * .06, .1 + rnd() * .15, .75 + rnd() * .25));
-      roofI.setMatrixAt(i, new THREE.Matrix4().compose(V(x, h + 1.5, z), rot, V(w * .92, 6, d * 1.1)));
-      winI.setMatrixAt(i, new THREE.Matrix4().compose(V(x, h * .55, z).add(V(0, 0, d / 2 + .05).applyQuaternion(rot)), rot, V(w * .6, Math.min(2, h * .3), 1))); });
-    for (const m of [body, roofI, winI]) { m.frustumCulled = false; shadowed(m, !lite, true); scene.add(m); }
-    const hills = new THREE.Mesh(new THREE.RingGeometry(1300, 3800, 160, 12), new THREE.MeshStandardMaterial({ color: 0x4b6a3f, roughness: 1 }));
+    const CELL = 64, ROW = lite ? 2 : 3;
+    const homes: { x: number; z: number; rot: number; w: number; d: number; h: number; brick: boolean }[] = [];
+    const streets = new Map<string, [number, number, number]>(); // centre x, centre z, horizontal?
+    // the story's own places stay clear: downtown, the main street with Alex's and Sam's houses, the square, the building site
+    const KEEP: [number, number, number, number][] = [[-100, 100, -205, -8], [-250, 250, -45, 70], [SQ.x - 45, SQ.x + 45, SQ.z - 45, SQ.z + 45], [100, 250, -60, -8], [-120, 120, SITE.z - 70, SITE.z + 60]];
+    const inTown = (x: number, z: number) => KEEP.some(([a, b, c, d]) => x + CELL / 2 > a && x - CELL / 2 < b && z + CELL / 2 > c && z - CELL / 2 < d);
+    for (let gx = -13; gx < 13; gx++) for (let gz = -13; gz < 11; gz++) {
+      const x0 = gx * CELL, z0 = gz * CELL, cx = x0 + CELL / 2, cz = z0 + CELL / 2, r = Math.hypot(cx, cz + 80);
+      if (r > (lite ? 620 : 800) || inTown(cx, cz)) continue;
+      if (rnd() < .07) { for (let k = 0; k < 5; k++) treeSpots.push([x0 + 8 + rnd() * 48, z0 + 8 + rnd() * 48, rnd() < .3 ? 1 : 0]); continue; } // a little park
+      for (const [sx, sz, hz] of [[cx, z0, 1], [cx, z0 + CELL, 1], [x0, cz, 0], [x0 + CELL, cz, 0]]) if (!(hz && sz === 0)) streets.set(`${sx},${sz},${hz}`, [sx, sz, hz]);
+      for (const side of [-1, 1]) for (let n = 0; n < ROW; n++) {
+        if (rnd() < .1 || (side < 0 && z0 === 0) || (side > 0 && z0 + CELL === 0)) continue; // (gardens, not front doors, back onto the main road)
+        const w = 9 + rnd() * 3.5, d = 8 + rnd() * 2.5;
+        homes.push({ x: x0 + (n + .5) * CELL / ROW + (rnd() - .5) * 3, z: cz + side * (CELL / 2 - 4 - d / 2 - 5), rot: side > 0 ? 0 : Math.PI, w, d, h: 4.6 + rnd() * 2.2, brick: rnd() < .45 });
+      }
+      for (let k = 0; k < 2; k++) if (rnd() < .8) treeSpots.push([x0 + 6 + rnd() * 52, cz + (rnd() - .5) * 8, rnd() < .25 ? 1 : 0]); // back gardens
+    }
+    // the streets: one plain strip per block side (the main road already has its own)
+    const st = new THREE.InstancedMesh(new THREE.PlaneGeometry(CELL + 7, 7).rotateX(-Math.PI / 2), M.road, streets.size);
+    [...streets.values()].forEach(([x, z, hz], i) => st.setMatrixAt(i, new THREE.Matrix4().compose(V(x, .04, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, hz ? 0 : Math.PI / 2, 0)), V(1, 1, 1))));
+    shadowed(st, false, true); st.frustumCulled = false; scene.add(st);
+    // the houses: brick or painted walls, gable roofs in tile, slate or clay colours, windows front and back, a hedge along the street
+    const roofGeo = (() => { const sh = new THREE.Shape(); sh.moveTo(-.5, 0); sh.lineTo(0, 1); sh.lineTo(.5, 0); sh.lineTo(-.5, 0);
+      const g = new THREE.ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false }); g.translate(0, 0, -.5); g.rotateY(Math.PI / 2); return uvScale(g, 2.2, 2.2); })();
+    const bricks = homes.filter((h) => h.brick), painted = homes.filter((h) => !h.brick);
+    const bodyB = new THREE.InstancedMesh(uvScale(new THREE.BoxGeometry(1, 1, 1), 3, 2), M.bricks, bricks.length);
+    const bodyP = new THREE.InstancedMesh(uvScale(new THREE.BoxGeometry(1, 1, 1), 2, 1.5), M.render, painted.length);
+    const roofI = new THREE.InstancedMesh(roofGeo, M.roofTiles, homes.length);
+    // two windows on each side; in the evening only some rooms are lit
+    const litIdx: number[] = [], darkIdx: number[] = []; for (let i = 0; i < homes.length * 4; i++) (rnd() < .45 ? litIdx : darkIdx).push(i);
+    const winLit = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), M.window, litIdx.length);
+    const winDark = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), M.windowOff, darkIdx.length);
+    const slot = new Map<number, [Any, number]>(); litIdx.forEach((n, j) => slot.set(n, [winLit, j])); darkIdx.forEach((n, j) => slot.set(n, [winDark, j]));
+    const hedgeI = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), M.hedge, homes.length);
+    const roofTints = [new THREE.Color(1, 1, 1), new THREE.Color(1.15, .72, .58), new THREE.Color(.62, .64, .68), new THREE.Color(.85, .7, .56)];
+    const wallTints = [new THREE.Color(1, 1, 1), new THREE.Color(1, .95, .85), new THREE.Color(.92, .94, .96), new THREE.Color(1, .9, .78)];
+    let nb = 0, np = 0;
+    homes.forEach((o, i) => { const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, o.rot, 0)), at = V(o.x, o.h / 2, o.z);
+      const body = new THREE.Matrix4().compose(at, q, V(o.w, o.h, o.d));
+      if (o.brick) bodyB.setMatrixAt(nb++, body); else { bodyP.setColorAt(np, wallTints[Math.floor(rnd() * 4)]); bodyP.setMatrixAt(np++, body); }
+      roofI.setMatrixAt(i, new THREE.Matrix4().compose(V(o.x, o.h, o.z), q, V(o.w + .8, 2.6 + rnd() * 1.4, o.d + 1)));
+      roofI.setColorAt(i, roofTints[Math.floor(rnd() * 4)]);
+      let wn = i * 4;
+      for (const f of [1, -1]) for (const side of [-1, 1]) { const [im, j] = slot.get(wn++)!;
+        im.setMatrixAt(j, new THREE.Matrix4().compose(V(o.x, o.h * .55, o.z).add(V(side * o.w * .24, 0, f * (o.d / 2 + .05)).applyQuaternion(q)),
+          q.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, f > 0 ? 0 : Math.PI, 0))), V(Math.min(2.2, o.w * .2), Math.min(1.5, o.h * .28), 1))); }
+      hedgeI.setMatrixAt(i, new THREE.Matrix4().compose(V(o.x, .6, o.z).add(V(0, 0, o.d / 2 + 4).applyQuaternion(q)), q, V(o.w + 3, 1.2, .9))); });
+    for (const m of [bodyB, bodyP, roofI, hedgeI]) { m.frustumCulled = false; shadowed(m, !lite, true); scene.add(m); }
+    for (const m of [winLit, winDark]) { m.frustumCulled = false; scene.add(m); }
+
+    // farmland between the suburbs and the hills: fields in furrows, crops and stubble, with hedgerows of trees
+    const fieldTex = (base: string, line: string, gap: number) => { const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d")!;
+      g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 1400; i++) { g.fillStyle = `rgba(${rnd() < .5 ? "255,255,255" : "0,0,0"},${.03 + rnd() * .05})`; g.fillRect(rnd() * 256, rnd() * 256, 2 + rnd() * 6, 2 + rnd() * 6); }
+      g.strokeStyle = line; g.lineWidth = gap * .4; for (let y = 0; y < 256; y += gap) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); }
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; };
+    const fieldMats = [["#b9a660", "rgba(120,95,40,.35)", 6], ["#7b6448", "rgba(60,45,30,.45)", 5], ["#8fa35a", "rgba(70,95,40,.4)", 7], ["#6f8a48", "rgba(50,70,30,.3)", 9], ["#c8b77a", "rgba(150,120,70,.3)", 8]]
+      .map(([b, l, g]) => new THREE.MeshStandardMaterial({ map: fieldTex(b as string, l as string, g as number), roughness: 1 }));
+    const fieldSpots: Any[][] = fieldMats.map(() => []);
+    for (let gx = -11; gx < 11; gx++) for (let gz = -12; gz < 10; gz++) {
+      const w = 118, x = gx * w + w / 2, z = gz * w + w / 2 - 80, r = Math.hypot(x, z + 80);
+      if (r < (lite ? 680 : 860) || r > 1330 || Math.abs(z) < 70) continue;
+      const ang = Math.round(rnd()) * Math.PI / 2 + (rnd() - .5) * .08, sx = w - 8 - rnd() * 14, sz = w - 8 - rnd() * 14;
+      fieldSpots[Math.floor(rnd() * fieldMats.length)].push(new THREE.Matrix4().compose(V(x, .06, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, ang)), V(sx, sz, 1)));
+      for (let k = 0; k < 7; k++) if (rnd() < .6) treeSpots.push([x - w / 2 + k * w / 7 + rnd() * 6, z - w / 2 + (rnd() - .5) * 3, rnd() < .35 ? 1 : 0]); // a hedgerow
+    }
+    fieldMats.forEach((m, i) => { const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), m, fieldSpots[i].length); fieldSpots[i].forEach((mx: Any, j: number) => im.setMatrixAt(j, mx));
+      im.receiveShadow = true; im.frustumCulled = false; scene.add(im); });
+    // woods on the way to the hills
+    for (let i = 0; i < (lite ? 250 : 700); i++) { const a = rnd() * Math.PI * 2, r = 1150 + rnd() * 200, cl = V(Math.cos(a) * r, 0, Math.sin(a) * r - 80);
+      for (let k = 0; k < 3; k++) treeSpots.push([cl.x + (rnd() - .5) * 26, cl.z + (rnd() - .5) * 26, rnd() < .5 ? 1 : 0]); }
+
+    const hills = new THREE.Mesh(new THREE.RingGeometry(1300, 3800, 160, 12), new THREE.MeshStandardMaterial({ color: 0x4f6b43, roughness: 1 }));
     const hp = hills.geometry.attributes.position;
     for (let i = 0; i < hp.count; i++) { const x = hp.getX(i), y = hp.getY(i), r = Math.hypot(x, y), a = Math.atan2(y, x);
       hp.setZ(i, Math.max(0, (r - 1350) / 2450) * (140 + 110 * Math.sin(a * 5) + 70 * Math.sin(a * 13 + 1) + 40 * Math.sin(a * 29))); }
     hills.geometry.computeVertexNormals(); hills.rotation.x = -Math.PI / 2; hills.position.y = -.5; scene.add(hills);
   }
 
-  // ================= trees (built here: Poly Haven's real trees are hundreds of MB) =================
+  // ================= trees (built here: Poly Haven's real trees are hundreds of MB): leafy trees and conifers =================
   seed = 41;
-  const treeSpots: [number, number][] = [];
-  for (let i = 0; i < (lite ? 300 : 900); i++) { const a = rnd() * Math.PI * 2, r = 240 + rnd() * 700; treeSpots.push([Math.cos(a) * r, Math.sin(a) * r - 80]); }
-  for (let x = -225; x <= 225; x += 12) { if (rnd() < .75) treeSpots.push([x + rnd() * 4, 11.5 + rnd() * 2]); if (rnd() < .5) treeSpots.push([x + rnd() * 4, -12 - rnd() * 2]); }
-  { const trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(.25, .35, 4, 6), M.trunk, treeSpots.length);
-    const leafGeo = new THREE.IcosahedronGeometry(2.3, 1); // 80 faces: thousands of trees stay cheap { const p = leafGeo.attributes.position; for (let i = 0; i < p.count; i++) { const v = V(p.getX(i), p.getY(i), p.getZ(i)); v.multiplyScalar(1 + (Math.sin(v.x * 3.1) + Math.sin(v.y * 2.7 + v.z)) * .08); p.setXYZ(i, v.x, v.y, v.z); } leafGeo.computeVertexNormals(); }
-    const leafI = new THREE.InstancedMesh(leafGeo, M.leaves, treeSpots.length * 2);
-    treeSpots.forEach(([x, z], i) => { const s = .8 + rnd() * .5;
-      trunkI.setMatrixAt(i, new THREE.Matrix4().compose(V(x, 2 * s, z), new THREE.Quaternion(), V(s, s, s)));
-      leafI.setMatrixAt(i * 2, new THREE.Matrix4().compose(V(x, 5 * s, z), new THREE.Quaternion(), V(s, s * 1.1, s)));
-      leafI.setMatrixAt(i * 2 + 1, new THREE.Matrix4().compose(V(x + .8 * s, 6.4 * s, z + .5), new THREE.Quaternion(), V(s * .7, s * .8, s * .7)));
-      leafI.setColorAt(i * 2, new THREE.Color().setHSL(.25 + rnd() * .06, .45, .3 + rnd() * .08)); leafI.setColorAt(i * 2 + 1, new THREE.Color().setHSL(.25 + rnd() * .06, .45, .34)); });
-    trunkI.frustumCulled = leafI.frustumCulled = false; shadowed(trunkI); shadowed(leafI); scene.add(trunkI, leafI);
+  for (let x = -225; x <= 225; x += 12) { if (rnd() < .75) treeSpots.push([x + rnd() * 4, 11.5 + rnd() * 2, 0]); if (rnd() < .5) treeSpots.push([x + rnd() * 4, -12 - rnd() * 2, 0]); }
+  for (const [px, pz] of parks) for (let k = 0; k < 5; k++) treeSpots.push([px + (rnd() - .5) * 14, pz + (rnd() - .5) * 14, 0]);
+  { const bump = (geo: Any, amt: number) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const v = V(p.getX(i), p.getY(i), p.getZ(i));
+      v.multiplyScalar(1 + (Math.sin(v.x * 3.1) + Math.sin(v.y * 2.7 + v.z * 1.3) + Math.sin(v.z * 3.7)) * amt); p.setXYZ(i, v.x, v.y, v.z); } geo.computeVertexNormals(); return geo; };
+    const leafy = treeSpots.filter((s) => s[2] === 0), firs = treeSpots.filter((s) => s[2] === 1);
+    const trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(.22, .38, 4, 6), M.trunk, treeSpots.length);
+    const leafI = new THREE.InstancedMesh(bump(new THREE.SphereGeometry(2.3, 9, 6), .08), M.leaves, leafy.length * 3); // ~90 faces each: thousands stay cheap
+    const firI = new THREE.InstancedMesh(bump(new THREE.ConeGeometry(2.2, 7, 7, 3), .05), M.leaves, firs.length);
+    const Y = V(0, 1, 0), qa = new THREE.Quaternion(), tilt = new THREE.Quaternion(), col = new THREE.Color();
+    const turn = () => qa.setFromAxisAngle(Y, rnd() * 6.28).multiply(tilt.setFromEuler(new THREE.Euler((rnd() - .5) * .12, 0, (rnd() - .5) * .12)));
+    let n = 0;
+    treeSpots.forEach(([x, z], i) => trunkI.setMatrixAt(i, new THREE.Matrix4().compose(V(x, 1.8, z), turn(), V(1, .9 + rnd() * .3, 1))));
+    leafy.forEach(([x, z]) => { const s = .75 + rnd() * .6, h = 4.4 * s, hue = .21 + rnd() * .07, sat = .36 + rnd() * .16, lig = .15 + rnd() * .08;
+      for (const [dx, dy, dz, k] of [[0, 0, 0, 1], [.9, 1.2, .4, .72], [-.7, .9, -.6, .68]] as const) {
+        leafI.setMatrixAt(n, new THREE.Matrix4().compose(V(x + dx * s, h + dy * s, z + dz * s), turn(), V(s * k * (.9 + rnd() * .2), s * k * (.85 + rnd() * .25), s * k)));
+        leafI.setColorAt(n++, col.setHSL(hue + (rnd() - .5) * .02, sat, lig + (rnd() - .5) * .04)); } });
+    firs.forEach(([x, z], i) => { const s = .8 + rnd() * .6; firI.setMatrixAt(i, new THREE.Matrix4().compose(V(x, 2.2 + 3.5 * s, z), turn(), V(s, s * (1 + rnd() * .3), s)));
+      firI.setColorAt(i, col.setHSL(.3 + rnd() * .05, .32 + rnd() * .1, .1 + rnd() * .05)); });
+    for (const m of [trunkI, leafI, firI]) { m.frustumCulled = false; shadowed(m); scene.add(m); }
     const dashI = new THREE.InstancedMesh(new THREE.PlaneGeometry(3, .35), M.white, dashes.length); dashes.forEach((m, i) => dashI.setMatrixAt(i, m)); dashI.frustumCulled = false; scene.add(dashI); }
 
   // street-lamp spots, benches, bins, hydrants, shrubs (filled with the real models when they arrive)
   const lampSpots: [number, number, number][] = [];
   for (let x = -222; x <= 222; x += 24) lampSpots.push([x, 9.4, Math.PI], [x + 12, -9.4, 0]);
   for (const x of GX) for (let z = -30; z >= -190; z -= 30) lampSpots.push([x + 6.4, z + 15, -Math.PI / 2]);
-  const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(14, 14), new THREE.MeshBasicMaterial({ map: lampPool, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }), lampSpots.length);
+  const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(11, 11), new THREE.MeshBasicMaterial({ map: lampPool, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }), lampSpots.length);
   const flat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
   lampSpots.forEach(([x, z], i) => pools.setMatrixAt(i, new THREE.Matrix4().compose(V(x, .12, z - Math.sign(z || 1) * 3), flat, V(1, 1, 1))));
   pools.frustumCulled = false; scene.add(pools);
@@ -314,9 +417,9 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
     frameI.setMatrixAt(n, new THREE.Matrix4().compose(mid, new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), bm.b.clone().sub(bm.a).normalize()), V(1, 1, len))); });
   shadowed(frameI); frameI.frustumCulled = false; frameI.count = 0; scene.add(frameI);
   M.steel.emissive = new THREE.Color(0xff9a4a); nightGlows.push([M.steel, .12]); // work lights catch the steel at night
-  { const flood = new THREE.PointLight(0xffc98a, 0, 140, 1.4); flood.position.set(SITE.x, 60, SITE.z + 40); scene.add(flood);
-    const flood2 = new THREE.PointLight(0xffc98a, 0, 140, 1.4); flood2.position.set(SITE.x + 30, 30, SITE.z - 40); scene.add(flood2);
-    nightGlows.push([{ set emissiveIntensity(v: number) { flood.intensity = v; flood2.intensity = v; } }, 1400]); }
+  { const flood = new THREE.PointLight(0xffe6c8, 0, 140, 1.4); flood.position.set(SITE.x, 60, SITE.z + 40); scene.add(flood);
+    const flood2 = new THREE.PointLight(0xffe6c8, 0, 140, 1.4); flood2.position.set(SITE.x + 30, 30, SITE.z - 40); scene.add(flood2);
+    nightGlows.push([{ set emissiveIntensity(v: number) { flood.intensity = v; flood2.intensity = v; } }, 520]); }
   { const crane = new THREE.Group(); crane.position.set(SITE.x - 34, 0, SITE.z + 8); scene.add(crane);
     const yellow = new THREE.MeshStandardMaterial({ color: 0xe0b02a, roughness: .6, metalness: .3 });
     const mast = new THREE.Mesh(new THREE.BoxGeometry(2, 70, 2), yellow); mast.position.y = 35; crane.add(shadowed(mast));
@@ -325,7 +428,7 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
   const lab = new THREE.Group(); lab.position.set(SITE.x + 50, 0, SITE.z + 10); scene.add(lab);
   const qc = new THREE.Group(); qc.position.y = 12; lab.add(qc);
   { const glass = new THREE.Mesh(new THREE.BoxGeometry(18, 14, 18), M.glass); glass.position.y = 7; lab.add(glass);
-    const top = new THREE.Mesh(new THREE.BoxGeometry(18.4, .6, 18.4), M.metal); top.position.y = 14; lab.add(shadowed(top));
+    const top = new THREE.Mesh(new THREE.BoxGeometry(18.4, .6, 18.4), M.roofTop); top.position.y = 14; lab.add(shadowed(top));
     for (let i = 0; i < 5; i++) { const d = new THREE.Mesh(new THREE.CylinderGeometry(3.4 - i * .55, 3.4 - i * .55, .25, 40), M.gold); d.position.y = -i * 1.8; qc.add(shadowed(d)); }
     for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const c = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 7, 6), M.gold); c.position.set(Math.cos(a) * 1.6, -3.6, Math.sin(a) * 1.6); qc.add(c); } }
   const beamsQ = [0, 1, 2].map(() => add(new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, 1, 10), new THREE.MeshBasicMaterial({ color: COL.gold, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }))));
@@ -420,16 +523,34 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
   // ================= post-processing =================
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
+  // ambient occlusion: the soft shade where walls meet the street, under eaves and trees; it grounds everything
+  let ao: Any = null;
+  if (!lite && GTAOPass) {
+    ao = new GTAOPass(scene, camera, innerWidth, innerHeight);
+    ao.updateGtaoMaterial({ radius: 5, distanceExponent: 1.6, thickness: 4, scale: 1.1, samples: 12, distanceFallOff: 1 });
+    ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, rings: 2, samples: 12 });
+    ao.blendIntensity = .9; composer.addPass(ao);
+  }
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), .2, .35, .9); bloom.enabled = !lite; composer.addPass(bloom);
   composer.addPass(new OutputPass());
+  /** If this computer can't keep a smooth frame rate, give up the costliest looks one at a time: AO, then sharpness, then bloom. */
+  const downgrades = [() => { if (ao) ao.enabled = false; }, () => { renderer.setPixelRatio(1); composer.setPixelRatio(1); },
+    () => { bloom.enabled = false; }, () => { sun.shadow.mapSize.set(1024, 1024); sun.shadow.map?.dispose(); sun.shadow.map = null; }];
+  let slowFrames = 0, sampled = 0, level = 0;
 
   // ================= day (light theme) / night (dark theme) =================
   let wantNight = currentTheme() === "dark" ? 1 : 0, night = wantNight;
   const onTheme = () => { wantNight = currentTheme() === "dark" ? 1 : 0; };
   addEventListener("themechange", onTheme);
-  const sunDir = V(0, 1, 0), cDay = new THREE.Color(0xa9c0da), cNight = new THREE.Color(0x0a0f1c);
+  const sunDir = V(0, 1, 0), cDay = new THREE.Color(0xb7c8da), cNight = new THREE.Color(0x0b1020);
+  // stars, far behind everything (the sky shader only has a sun)
+  const stars = (() => { const n = 1600, p = new Float32Array(n * 3); seed = 97;
+    for (let i = 0; i < n; i++) { const a = rnd() * Math.PI * 2, e = Math.asin(.08 + rnd() * .92); p.set([Math.cos(a) * Math.cos(e) * 4000, Math.sin(e) * 4000, Math.sin(a) * Math.cos(e) * 4000], i * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(p, 3));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xdfe6ff, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+    pts.frustumCulled = false; scene.add(pts); return pts; })();
   function applyTime() {
-    const elev = THREE.MathUtils.lerp(38, -7, night), az = THREE.MathUtils.lerp(215, 240, night);
+    const elev = THREE.MathUtils.lerp(31, -7, night), az = THREE.MathUtils.lerp(215, 240, night);
     sunDir.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - elev), THREE.MathUtils.degToRad(az));
     skyU.sunPosition.value.copy(sunDir);
     const dir = sunDir.clone().lerp(V(-.4, .8, .45).normalize(), smooth(night * 1.2)).normalize(); // the sun by day, a cool moon by night
@@ -439,8 +560,9 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
     scene.fog.color.copy(cDay).lerp(cNight, night);
     bloom.strength = THREE.MathUtils.lerp(.1, .5, night); bloom.threshold = THREE.MathUtils.lerp(.92, .7, night);
     const lit = smooth((night - .3) / .5);
-    facadeMats.forEach((m) => { m.emissiveIntensity = lit * .9; });
-    M.window.emissiveIntensity = lit * .5; pools.material.opacity = lit * .38;
+    facadeMats.forEach((m) => { m.emissiveIntensity = lit * .5; }); // offices half dark at night, not a lit checkerboard
+    M.window.emissiveIntensity = lit * .45; M.shopfront.emissiveIntensity = lit * .3; pools.material.opacity = lit * .2;
+    stars.material.opacity = smooth((night - .5) / .4) * .9;
     nightGlows.forEach(([m, k]) => { m.emissiveIntensity = lit * k; });
     if (Math.abs(envNight - night) > .08) { envNight = night;
       const real = night > .5 ? envs.night : envs.day;
@@ -568,6 +690,9 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
       camera.updateProjectionMatrix(); renderer.setSize(w, h, false); composer.setSize(w, h);
     }
     composer.render();
+    // watch the frame rate for a while after load and after each downgrade (not while the tab is hidden or reduced motion holds)
+    if (!still && level < downgrades.length && frames > 150) { sampled++; if (dt > 1 / 45) slowFrames++; // (not the first frames: shaders compile, textures upload)
+      if (sampled >= 90) { if (slowFrames > 45) downgrades[level++](); sampled = slowFrames = 0; } }
   };
   document.body.prepend(canvas);
   raf = requestAnimationFrame(frame);
