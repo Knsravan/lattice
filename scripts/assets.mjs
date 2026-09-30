@@ -23,23 +23,23 @@ const POLYHAVEN = (process.env.POLYHAVEN_API || "https://api.polyhaven.com").rep
 const OUT = new URL("../public/town/", import.meta.url);
 
 /** Texture slots: what the town needs, the ambientCG search that finds it, and how many different ones to keep. */
-const TEXTURES = [
-  { slot: "facade", q: "Facade", count: 4 },
-  { slot: "bricks", q: "Bricks", count: 1 },
-  { slot: "roof", q: "RoofingTiles", count: 1 },
-  { slot: "asphalt", q: "Asphalt", count: 1 },
-  { slot: "paving", q: "PavingStones", count: 1 },
-  { slot: "grass", q: "Grass", count: 1 },
-  { slot: "concrete", q: "Concrete", count: 1 },
+const TEXTURES = [ // q = the words ambientCG's search needs; prefix = how its asset ids for that kind begin
+  { slot: "facade", q: "facade", prefix: "Facade", count: 4 },
+  { slot: "bricks", q: "bricks", prefix: "Bricks", count: 1 },
+  { slot: "roof", q: "roofing tiles", prefix: "RoofingTiles", count: 1 },
+  { slot: "asphalt", q: "asphalt", prefix: "Asphalt", count: 1 },
+  { slot: "paving", q: "paving stones", prefix: "PavingStones", count: 1 },
+  { slot: "grass", q: "grass", prefix: "Grass", count: 1 },
+  { slot: "concrete", q: "concrete", prefix: "Concrete", count: 1 },
 ];
-/** Model slots: Poly Haven models whose name, tags or categories match, smallest first. */
+/** Model slots: Poly Haven models whose id or name (not tags: those also match bark, trunks and workshop benches) fits. */
 const MODELS = [
-  { slot: "tree", match: /\btree\b/i, count: 2 },
-  { slot: "shrub", match: /\b(shrub|bush)\b/i, count: 1 },
-  { slot: "bench", match: /\bbench\b/i, count: 1 },
-  { slot: "lamp", match: /\bstreet ?(light|lamp)\b|\blamp ?post\b/i, count: 1 },
+  { slot: "tree", match: /\btree\b/i, not: /debris|trunk|stump|log|bark|branch|root|dead|fallen/i, count: 2 },
+  { slot: "shrub", match: /\b(shrub|bush|hedge)\b/i, not: /pot|potted|botany|indoor|vase/i, count: 1 },
+  { slot: "bench", match: /\bbench\b/i, not: /vice|vise|work|tool|lab/i, count: 1 },
+  { slot: "lamp", match: /\bstreet[ _]?(light|lamp)\b|\blamp[ _]?post\b/i, count: 1 },
   { slot: "hydrant", match: /\bhydrant\b/i, count: 1 },
-  { slot: "bin", match: /\b(trash|garbage|rubbish|litter|waste) ?(can|bin)\b/i, count: 1 },
+  { slot: "bin", match: /\b(trash|garbage|rubbish|litter|waste)[ _]?(can|bin)\b/i, count: 1 },
 ];
 const KEEP_MAPS = { Color: "color", NormalGL: "normal", Roughness: "roughness", AmbientOcclusion: "ao" }; // ambientCG map names → ours
 const MAX_MODEL_BYTES = 12e6; // skip very heavy scans; the town repeats these many times
@@ -87,9 +87,9 @@ function downloadsIn(node, out = []) {
 async function textures(plan, manifest) {
   for (const t of TEXTURES) {
     if (only.length && !only.includes(t.slot)) continue;
-    const list = await get(`${AMBIENTCG}/api/v2/full_json?type=Material&q=${encodeURIComponent(t.q)}&limit=${t.count * 3}&sort=Popular&include=downloadData`);
+    const list = await get(`${AMBIENTCG}/api/v2/full_json?type=Material&q=${encodeURIComponent(t.q)}&limit=${t.count * 4}&sort=Popular&include=downloadData`);
     const ids = (list.foundAssets || []).map((a) => ({ id: a.assetId, dl: downloadsIn(a).find((d) => d.attribute === "1K-JPG") }))
-      .filter((a) => a.id && a.id.toLowerCase().startsWith(t.q.toLowerCase())).slice(0, t.count);
+      .filter((a) => a.id && a.id.toLowerCase().startsWith(t.prefix.toLowerCase())).slice(0, t.count);
     if (!ids.length) { console.log(`  ! ${t.slot}: ambientCG found nothing for "${t.q}"`); continue; }
     for (const [k, a] of ids.entries()) {
       const dir = new URL(`textures/${t.slot}${t.count > 1 ? `-${k + 1}` : ""}/`, OUT), key = dir.pathname.split("/public/town/")[1].replace(/\/$/, "");
@@ -98,6 +98,7 @@ async function textures(plan, manifest) {
       plan.push(`${key}  ←  ambientCG ${a.id} (1K)`);
       if (flag("dry-run")) continue;
       const files = unzip(await get(link, "bin"));
+      await rm(dir, { recursive: true, force: true }); // a --force re-download never leaves old maps behind
       await mkdir(dir, { recursive: true });
       const saved = [];
       for (const [name, data] of files) {
@@ -115,7 +116,7 @@ async function models(plan, manifest) {
   const all = Object.entries(await get(`${POLYHAVEN}/assets?t=models`));
   for (const m of MODELS) {
     if (only.length && !only.includes(m.slot)) continue;
-    const hits = all.filter(([id, a]) => m.match.test([id, a.name, ...(a.tags || []), ...(a.categories || [])].join(" ")));
+    const hits = all.filter(([id, a]) => { const words = `${id.replace(/_/g, " ")} ${a.name || ""}`; return m.match.test(words) && !(m.not && m.not.test(words)); });
     if (!hits.length) { console.log(`  ! ${m.slot}: Poly Haven has no model matching ${m.match}`); continue; }
     let kept = 0;
     for (const [id, a] of hits) {
@@ -131,6 +132,7 @@ async function models(plan, manifest) {
       kept++;
       plan.push(`models/${key}  ←  Poly Haven ${id} "${a.name}" (${(bytes / 1e6).toFixed(1)} MB)`);
       if (flag("dry-run")) continue;
+      await rm(dir, { recursive: true, force: true }); // a --force re-download never mixes two models' files
       await mkdir(dir, { recursive: true });
       for (const [path, f] of inc) { const to = new URL(path, dir); await mkdir(new URL(".", to), { recursive: true }); await writeFile(to, await get(f.url, "bin")); }
       // the .gltf names its files relative to itself, so it keeps working after the rename to model.gltf
@@ -138,6 +140,7 @@ async function models(plan, manifest) {
       manifest.models[key] = { source: `Poly Haven ${id}`, name: a.name, url: `https://polyhaven.com/a/${id}`, license: "CC0" };
       console.log(`  ✓ models/${key}  ${a.name}`);
     }
+    if (!flag("dry-run")) for (let k = kept + 1; k <= m.count; k++) { await rm(new URL(`models/${m.slot}-${k}/`, OUT), { recursive: true, force: true }); delete manifest.models[`${m.slot}-${k}`]; }
   }
 }
 
