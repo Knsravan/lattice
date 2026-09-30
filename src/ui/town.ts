@@ -541,12 +541,12 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
       keyA.position.set(SQ.x - 20 + k * 18, 28 + Math.sin(k * Math.PI) * 6, SQ.z + 14); keyA.rotation.y = t;
       keyB.position.set(SQ.x + 20 - k * 18, 28 + Math.sin(k * Math.PI) * 6, SQ.z + 14); keyB.rotation.y = -t + Math.PI; }
 
-    // ambient life: rotors, traffic
+    // ambient life: rotors, traffic (k runs backwards for cars with a negative speed, so the position alone moves them the right way)
     for (const d of [courier, hopper, eveDrone, lostDrone]) d.userData.rotors.forEach((r: Any) => { r.rotation.y += dt * 40; });
     for (const tr of traffic) { tr.k = (tr.k + tr.speed * dt * 4 + 1) % 1;
-      if (tr.path === "main") { const x = -225 + tr.k * 450; tr.c.position.set(tr.speed > 0 ? x : -x, 0, tr.speed > 0 ? 3.2 : -3.2); tr.c.rotation.y = tr.speed > 0 ? 0 : Math.PI; }
-      else if (tr.path === "ns") { const z = -20 - tr.k * 170; tr.c.position.set(tr.lane! + (tr.speed > 0 ? 2.4 : -2.4), 0, tr.speed > 0 ? z : -210 - z); tr.c.rotation.y = tr.speed > 0 ? Math.PI / 2 : -Math.PI / 2; }
-      else { const x = -85 + tr.k * 170; tr.c.position.set(tr.speed > 0 ? x : -x, 0, tr.lane! + (tr.speed > 0 ? 2.4 : -2.4)); tr.c.rotation.y = tr.speed > 0 ? 0 : Math.PI; } }
+      if (tr.path === "main") { const x = -225 + tr.k * 450; tr.c.position.set(x, 0, tr.speed > 0 ? 3.2 : -3.2); tr.c.rotation.y = tr.speed > 0 ? 0 : Math.PI; }
+      else if (tr.path === "ns") { const z = -20 - tr.k * 170; tr.c.position.set(tr.lane! + (tr.speed > 0 ? 2.4 : -2.4), 0, z); tr.c.rotation.y = tr.speed > 0 ? Math.PI / 2 : -Math.PI / 2; }
+      else { const x = -85 + tr.k * 170; tr.c.position.set(x, 0, tr.lane! + (tr.speed > 0 ? 2.4 : -2.4)); tr.c.rotation.y = tr.speed > 0 ? 0 : Math.PI; } }
 
     // camera: the shot of the section in the middle of the screen, blending into the next one around the boundary
     let k = 0; for (let i = 0; i < tops.length; i++) if (mid >= tops[i]) k = i;
