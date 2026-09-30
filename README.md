@@ -29,16 +29,18 @@ npm run serve     # preview dist/ at http://localhost:5173
 
 ## Voice narration
 
-The scroll stories can read every step aloud. The clips are recorded with [VoiceStudio](https://github.com/debpalash/VoiceStudio):
+The scroll stories can read every step aloud. The clips are recorded with [Voicebox](https://github.com/jamiepine/voicebox), in its "BNP Brand Voice" profile:
 
 ```
-# with the VoiceStudio app open on this computer
-npm run voice                    # records new/changed steps into public/voice/
-npm run voice -- --list          # show VoiceStudio's voices
-npm run voice -- --voice <id>    # pick one
-npm run voice -- --samples       # one sentence in 9 voices → voice-samples/index.html, to compare
-npm run voice -- --force --design "female, young adult, british accent" --seed 7   # record with a designed voice
+# with the Voicebox app open on this computer
+npm run voice                     # records new/changed steps into public/voice/
+npm run voice -- --only c0-s0     # record one step (to test, or redo a clip)
+npm run voice -- --list           # show your Voicebox voice profiles
+npm run voice -- --voice "<name>" # use another profile
+npm run voice -- --force          # re-record everything
 ```
+
+Voicebox makes WAV files; if `ffmpeg` is installed, each clip is saved as a small MP3 instead.
 
 Commit `public/voice/` and deploy. Visitors turn Voice and Sound effects on with the switches in the corner (both start off).
 
