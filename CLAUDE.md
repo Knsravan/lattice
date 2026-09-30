@@ -1,5 +1,7 @@
 # Lattice — Project Spec
 
+**Name.** The project and site are called **Lattice**. The user's conference paper about it is titled **"Beyond the Lock: An Interactive Explanation of Lattice-Based Post-Quantum Cryptography"** (user decision, Sept 30): use that title only when writing about the paper, not on the site.
+
 Hard deadline: **September 28, 2026**. Scope is frozen: the five scenes below, nothing more.
 
 
