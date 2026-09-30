@@ -54,13 +54,13 @@ npm run assets -- --dry-run     # just list what it would download
 npm run assets -- --only facade --force   # redo one set
 ```
 
-Commit `public/town/` and deploy. `public/town/assets.json` records where each file came from.
+The originals land in `public/town/textures` and `public/town/models` (not committed); the site uses the web-sized copies in `public/town/web/`, made from them with gltf-transform and sharp. `public/town/assets.json` records where each file came from.
 
 ## Layout
 
 - `src/core/` — pure math, no DOM: lattices, Gram–Schmidt, Babai, LLL (with animation trace), LWE, the Scene 4 attack, 4D projection, toy Kyber/ML-KEM, SHA-256.
 - `src/scenes/` — one file per scene, plus `draw2d.ts` (shared 2-D drawing) and Scene 4's chart and worker.
-- `src/ui/` — `copy.ts` (all narration text), `dom.ts` (DOM helpers, animation easing, reduced-motion check), `hero.ts` (flat title lattice, the fallback), `backdrop.ts` (the page-wide 3D backdrop of light ribbons), `smooth.ts` (glide scrolling), `reveal.ts` (scroll reveal effects, progress line).
+- `src/ui/` — `copy.ts` (all narration text), `dom.ts` (DOM helpers, animation easing, reduced-motion check), `hero.ts` (flat title lattice, the fallback), `town.ts` (the 3D town behind the page), `theme.ts` (light = day, dark = night), `smooth.ts` (glide scrolling), `reveal.ts` (scroll reveal effects, progress line).
 - `src/types/three.d.ts` — minimal types for the parts of Three.js Scene 4 uses (Three.js itself loads from the CDN at runtime).
 - `public/` — static page shell.
 - `tests/` — mirrors `src/core`.

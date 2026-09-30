@@ -11,6 +11,8 @@ export const site = {
     "Told step by step, with moving pictures. No maths needed. Just scroll.",
   ],
   scrollHint: "Scroll to begin",
+  /** Credits for the 3D town's real assets (the car's licence, CC BY 4.0, asks for this line). */
+  townCredits: "3D town: car “Car Concept” by Eric Chadwick (CC BY 4.0) and lantern from the Khronos glTF Sample Assets; textures from ambientCG and props and skies from Poly Haven (CC0).",
 };
 
 /**
@@ -24,6 +26,13 @@ export const sound = {
   on: "on",
   off: "off",
   voiceMissing: "The voice recordings haven’t been added yet.",
+};
+
+/** The Day/Night switch (light theme = the town by day, dark theme = the town at night). */
+export const theme = {
+  group: "Time of day",
+  day: "Day",
+  night: "Night",
 };
 
 export const chapter0 = {

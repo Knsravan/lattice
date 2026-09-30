@@ -1,4 +1,5 @@
 {
+  "note": "The site uses the web-sized copies in public/town/web/ (WebP textures, meshopt-compressed .glb). npm run assets downloads the originals into public/town/textures and public/town/models (git-ignored); they are shrunk for the web with gltf-transform and sharp outside the project (see NOTES.md).",
   "textures": {
     "textures/facade-1": {
       "source": "ambientCG Facade001",
@@ -136,6 +137,27 @@
       "source": "Poly Haven metal_trash_can",
       "name": "Metal Trash Can",
       "url": "https://polyhaven.com/a/metal_trash_can",
+      "license": "CC0"
+    },
+    "car": {
+      "source": "Khronos glTF Sample Assets: Car Concept",
+      "artist": "Eric Chadwick",
+      "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept",
+      "license": "CC BY 4.0"
+    },
+    "lantern": {
+      "source": "Khronos glTF Sample Assets: Lantern",
+      "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Lantern",
+      "license": "CC0"
+    }
+  },
+  "skies": {
+    "sky-day": {
+      "source": "Poly Haven Potsdamer Platz, via pmndrs/assets (city.exr)",
+      "license": "CC0"
+    },
+    "sky-night": {
+      "source": "Poly Haven Dikhololo Night, via pmndrs/assets (night.exr)",
       "license": "CC0"
     }
   }
