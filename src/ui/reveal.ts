@@ -4,7 +4,7 @@ import { el } from "./dom.ts";
  * Scroll effects for the page's own elements, and the thin progress line that stands in for the hidden scrollbar.
  *
  * Elements appear as they come into view, each in its own way (the look lives in index.html, [data-reveal]):
- * headings rise word by word, the story pictures and playgrounds zoom up out of a blur, story steps slide in
+ * headings rise letter by letter, the story pictures and playgrounds zoom up, story steps slide in
  * from the side, paragraphs rise one after another. Each appears once and then stays.
  * Under reduced motion the CSS turns every transition into an instant change.
  */
@@ -15,11 +15,14 @@ export function mountReveal(root: HTMLElement): () => void {
       if (stagger) n.style.setProperty("--i", String(i));
     });
 
-  // headings: one span per word, so they can rise in turn
+  // headings: letter by letter (each word kept whole so it never breaks across lines)
   root.querySelectorAll<HTMLElement>(".hero h1, .chapter-head h2, .scene h2").forEach((h) => {
-    const words = (h.textContent ?? "").split(/(\s+)/);
-    h.setAttribute("aria-label", h.textContent ?? "");
-    h.replaceChildren(...words.map((w, i) => (/^\s+$/.test(w) ? w : el("span", { class: "word", "aria-hidden": "true", style: `--w:${i / 2}` }, w))));
+    const text = h.textContent ?? "";
+    h.setAttribute("aria-label", text);
+    let n = 0;
+    const parts = text.split(/(\s+)/).map((w) => (/^\s+$/.test(w) || !w ? w
+      : el("span", { class: "word", "aria-hidden": "true" }, ...[...w].map((ch) => el("span", { class: "char", style: `--c:${n++}` }, ch)))));
+    h.replaceChildren(...parts);
     h.dataset.reveal = "words";
   });
   root.querySelectorAll<HTMLElement>(".hero-text").forEach((c) => { c.dataset.reveal = "rise"; c.style.setProperty("--i", "2"); });

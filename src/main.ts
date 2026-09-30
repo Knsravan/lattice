@@ -2,7 +2,8 @@ import { theme as themeCopy, site, chapter0, chapter1, chapter2, chapter3, chapt
 import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
 import { mountSoundControls } from "./ui/sound.ts";
-import { mountTown } from "./ui/town.ts";
+import { mountSignal } from "./ui/signal.ts";
+import { mountGlass } from "./ui/glass.ts";
 import { initTheme, mountThemeSwitch } from "./ui/theme.ts";
 import { mountSmoothScroll } from "./ui/smooth.ts";
 import { mountReveal } from "./ui/reveal.ts";
@@ -20,29 +21,30 @@ import { mountScene5 } from "./scenes/scene5-kyber.ts";
 
 /** Builds the page from copy.ts and mounts each scene into its section. */
 function build() {
-  initTheme(); // light = the town by day, dark = at night; set before anything draws
+  initTheme(); // light = a bright studio, dark = a dark one; set before anything draws
   const app = $("#app");
 
-  // hero (the 3D town is behind it; the flat shearing lattice is the fallback)
+  // hero: the title and its words on the left, the glass crystal (the 3D stage) on the right; the flat shearing lattice is the fallback
   const hero = el(
     "header",
     { class: "hero" },
-    el("h1", { text: site.title }),
-    // the words sit together on one panel over the town
-    el("div", { class: "hero-text" },
-      el("p", { class: "tagline", text: site.tagline }),
-      ...site.intro.map((t) => el("p", { class: "intro", text: t })),
-      el("a", { class: "scroll-hint", href: "#chapter-0", text: site.scrollHint + " ↓" })),
+    el("div", { class: "hero-main" },
+      el("h1", { text: site.title }),
+      el("div", { class: "hero-text" },
+        el("p", { class: "tagline", text: site.tagline }),
+        ...site.intro.map((t) => el("p", { class: "intro", text: t })),
+        el("a", { class: "scroll-hint", href: "#chapter-0", text: site.scrollHint + " ↓" }))),
+    el("div", { class: "slot", "data-slot": "key", "aria-hidden": "true" }),
   );
   app.append(hero);
 
   // chapter 0: the problem (scroll story)
-  const c0 = chapter("chapter-0", chapter0.kicker, chapter0.title);
+  const c0 = chapter("chapter-0", chapter0.kicker, chapter0.title, "fibre");
   app.append(c0.section);
   mountChapter0(c0.body);
 
   // chapter 1: the grid (scroll story), then "try it yourself"
-  const c1 = chapter("chapter-1", chapter1.kicker, chapter1.title);
+  const c1 = chapter("chapter-1", chapter1.kicker, chapter1.title, "lattice");
   app.append(c1.section);
   mountChapter1(c1.body);
 
@@ -51,7 +53,7 @@ function build() {
   mountScene1(s1.stage);
 
   // chapter 2: the story, then "try it yourself"
-  const c2 = chapter("chapter-2", chapter2.kicker, chapter2.title);
+  const c2 = chapter("chapter-2", chapter2.kicker, chapter2.title, "shear");
   app.append(c2.section);
   mountChapter2(c2.body);
 
@@ -60,7 +62,7 @@ function build() {
   mountScene2(s2.stage);
 
   // chapter 3: the story, then "try it yourself"
-  const c3 = chapter("chapter-3", chapter3.kicker, chapter3.title);
+  const c3 = chapter("chapter-3", chapter3.kicker, chapter3.title, "drop");
   app.append(c3.section);
   mountChapter3(c3.body);
 
@@ -69,7 +71,7 @@ function build() {
   mountScene3(s3.stage);
 
   // chapter 4: the story, then "try it yourself"
-  const c4 = chapter("chapter-4", chapter4.kicker, chapter4.title);
+  const c4 = chapter("chapter-4", chapter4.kicker, chapter4.title, "quantum");
   app.append(c4.section);
   mountChapter4(c4.body);
 
@@ -78,7 +80,7 @@ function build() {
   mountScene4(s4.stage);
 
   // chapter 5: the story, then "try it yourself"
-  const c5 = chapter("chapter-5", chapter5.kicker, chapter5.title);
+  const c5 = chapter("chapter-5", chapter5.kicker, chapter5.title, "shield");
   app.append(c5.section);
   mountChapter5(c5.body);
 
@@ -92,15 +94,14 @@ function build() {
     {},
     el("span", { text: "Lattice · built in September 2026 · " }),
     el("a", { href: "https://github.com/Knsravan/lattice", text: "source on GitHub" }),
-    el("p", { class: "credits", text: site.townCredits }),
   );
   app.append(footer);
 
-  // the page's own scroll feel: glide scrolling, elements that appear as they come into view, the 3D town
+  // the page's own scroll feel: glide scrolling, elements that appear as they come into view, liquid glass, the 3D stage
   mountSmoothScroll();
   mountReveal(app);
-  const chapters = [0, 1, 2, 3, 4, 5].map((i) => $(`#chapter-${i}`));
-  mountTown([hero, ...chapters, footer], chapters).catch(() => mountHero(hero)); // no WebGL or no CDN: the flat shearing lattice instead
+  mountGlass();
+  mountSignal([...app.querySelectorAll<HTMLElement>("[data-slot]")]).catch(() => mountHero(hero)); // no WebGL or no CDN: the flat shearing lattice instead
 
   // voice + sound-effects switches, pinned in the corner
   const controls = mountSoundControls();
@@ -125,13 +126,15 @@ function build() {
   for (const id of ids) io.observe($(`#${id}`));
 }
 
-/** A scroll-story chapter: a heading, then the story (sticky picture + steps) mounts into `body`. */
-function chapter(id: string, kicker: string, title: string) {
+/** A scroll-story chapter: its heading beside its piece of the 3D stage (`piece`), then the story (sticky picture + steps) mounts into `body`. */
+function chapter(id: string, kicker: string, title: string, piece: string) {
   const body = el("div", { class: "chapter-body" });
   const sectionEl = el(
     "section",
-    { id, class: "chapter" },
-    el("header", { class: "chapter-head" }, el("div", { class: "kicker", text: kicker }), el("h2", { text: title })),
+    { id, class: Number(id.slice(-1)) % 2 ? "chapter flip" : "chapter" }, // the piece swaps sides from chapter to chapter
+    el("div", { class: "chapter-open" },
+      el("header", { class: "chapter-head" }, el("div", { class: "kicker", text: kicker }), el("h2", { text: title })),
+      el("div", { class: "slot", "data-slot": piece, "aria-hidden": "true" })),
     body,
   );
   return { section: sectionEl, body };
