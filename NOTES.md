@@ -122,3 +122,10 @@
 - Nothing yet.
 
 ## Ideas (not in scope unless promoted)
+
+## Day 3 — Voice engine: Voicebox (user decision, Sept 30)
+- The user installed VoiceStudio on their Windows laptop (CPU only, no NVIDIA card), made an "Education" profile, then chose to drop VoiceStudio for Voicebox (jamiepine/voicebox) with their "BNP Brand Voice" profile.
+- `scripts/voice.mjs` now talks to Voicebox's own REST API (read from its source): `GET /profiles` (profile found by name or id), `POST /generate` {profile_id, text, language, seed, engine}, then the `/generate/{id}/status` event stream until completed/failed, then `GET /audio/{id}` (WAV). A profile's own engine (preset/designed voices) is sent explicitly, because the request's engine defaults to "qwen". Fixed seed 7.
+- Voicebox only returns WAV (~10× larger than MP3). If ffmpeg is on the user's PATH each clip is converted to 64 kbps mono MP3; otherwise the WAV is kept (the page plays either). The VoiceStudio-only `--samples`/`--design` modes were removed; `--only c0-s0,…` added to test or redo single clips.
+- Tested against a stand-in Voicebox server: list, one step, all 57, re-run skips all, unknown profile and closed app give clear messages, MP3 path (fake ffmpeg) replaces the WAV and updates the manifest.
+
