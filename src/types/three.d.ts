@@ -50,7 +50,13 @@ declare module "three" {
     needsUpdate: boolean;
     setXYZ(i: number, x: number, y: number, z: number): this;
   }
-  export class BufferGeometry { setAttribute(name: string, a: BufferAttribute): this; dispose(): void }
+  export class BufferGeometry { setAttribute(name: string, a: BufferAttribute): this; setIndex(index: number[]): this; dispose(): void }
+  export const DoubleSide: number;
+  export class ShaderMaterial extends Material {
+    constructor(p: { uniforms: Record<string, { value: unknown }>; vertexShader: string; fragmentShader: string;
+      transparent?: boolean; depthWrite?: boolean; blending?: number; side?: number });
+    uniforms: Record<string, { value: unknown }>;
+  }
   export class Texture { dispose(): void }
   export class CanvasTexture extends Texture { constructor(canvas: HTMLCanvasElement) }
   export const AdditiveBlending: number;
