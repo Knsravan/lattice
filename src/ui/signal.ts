@@ -1,12 +1,11 @@
 import { reducedMotion, clamp } from "./dom.ts";
-import { currentTheme } from "./theme.ts";
 
 /**
  * The 3D stage behind the page (user decision, Sept 30; it replaced the 3D town): one realistic piece of glass or metal
  * per chapter, standing for the chapter's idea without telling its story, plus one thread of light through the page.
  *
  *   title   a faceted glass crystal holding the message's amber light
- *   ch. 0   a bundle of optical fibre, light racing through it (the internet)
+ *   ch. 0   a fibre-optic cable: a steel collar, bare fibres fanning out with light at every tip and racing along them (the internet)
  *   ch. 1   a sculpture of glass rods and steel joints (a lattice)
  *   ch. 2   the same sculpture leaning as you read (a crooked basis builds the same grid)
  *   ch. 3   a drop of liquid glass that trembles more as you read on (the shake)
@@ -15,7 +14,7 @@ import { currentTheme } from "./theme.ts";
  *
  * Each piece is held by an element on the page ([data-slot]) and moves with it as you scroll, like the rest of the page;
  * the camera never moves. Fine optical fibres run the whole length of the page behind everything, carrying pulses of
- * light from piece to piece. Night = a dark studio, day = a bright one (listens for "themechange").
+ * light from piece to piece, in a dark studio (the site has one theme: dark, user decision Sept 30).
  *
  * Three.js loads from the CDN like Scene 4 and is typed loosely here. If it can't load, the promise rejects and the page
  * keeps the flat hero lattice. Decorative only (aria-hidden). If the frame rate stays low it drops bloom, then sharpness.
@@ -60,16 +59,29 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     const halo = new THREE.Mesh(new THREE.TorusGeometry(1.95, .012, 8, 160), steel); halo.rotation.x = 1.2; g.add(halo);
     g.userData.tick = ((t, p) => { gem.rotation.set(t * .15 + p * 2, t * .22, 0); core.rotation.y = -t; halo.rotation.z = t * .1; }) as Tick;
     pieces.key = g; }
-  { // chapter 0: a bundle of optical fibre, light racing through it
-    const g = new THREE.Group(), strands: Any[][] = [], fibre = glass(0xdfe9ff, { thickness: .2 });
-    for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, r = .15 + (i % 3) * .12, pts: Any[] = [];
-      for (let k = 0; k <= 30; k++) { const s = k / 30 - .5, tw = s * 3.2 + a; pts.push(V(s * 5, Math.cos(tw) * r + Math.sin(s * 3) * .6, Math.sin(tw) * r)); }
-      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), lite ? 50 : 90, .028, 6), fibre)); strands.push(pts); }
+  { // chapter 0: a fibre-optic cable: a dark jacket, a steel collar, bare glass fibres fanning out, light at every tip and racing along them
+    const g = new THREE.Group(), strands: Any[][] = [], fibre = glass(0xdfe9ff, { thickness: .2 }), N = lite ? 22 : 34, X0 = -1.05, X1 = 1.75;
+    const rubber = new THREE.MeshStandardMaterial({ color: 0x15181f, roughness: .55, metalness: .1 });
+    const brushed = new THREE.MeshStandardMaterial({ color: 0x9aa3ad, metalness: 1, roughness: .38, envMapIntensity: .8 });
+    // the cable comes in from the left and ends in a closed steel collar
+    const jacket = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .8, 32), rubber); jacket.rotation.z = Math.PI / 2; jacket.position.x = X0 - .7; g.add(jacket);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .34, 40), brushed); collar.rotation.z = Math.PI / 2; collar.position.x = X0 - .17; g.add(collar);
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(.3, .035, 10, 40), brushed); lip.rotation.y = Math.PI / 2; lip.position.x = X0; g.add(lip);
+    // the fibres leave the collar packed tight and open into a loose fan
+    const tips: Any[] = [];
+    for (let i = 0; i < N; i++) { const a = i * 2.399963, r0 = .05 + .19 * Math.sqrt((i + .5) / N), pts: Any[] = [];
+      for (let k = 0; k <= 24; k++) { const u = k / 24, spread = 1 + u * u * 3.4, x = X0 + u * (X1 - X0 - (i % 5) * .08), wav = Math.sin(u * 5 + i) * .05 * u;
+        pts.push(V(x, Math.cos(a) * r0 * spread + wav - u * u * .15, Math.sin(a) * r0 * spread)); }
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), lite ? 30 : 48, .014, 5), fibre)); strands.push(pts);
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), glow(i % 5 === 0 ? C.secret : i % 3 === 0 ? new THREE.Color(0x7fb4ff) : C.ball, 3));
+      tip.position.copy(pts[pts.length - 1]); g.add(tip); tips.push(tip); }
     const pulses: [Any, Any[], number][] = [];
-    for (let i = 0; i < 14; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(.05, 10, 8), glow(i % 4 ? C.ball : C.secret, 6)); g.add(m); pulses.push([m, strands[(i * 7) % strands.length], i / 14]); }
-    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, .5, 40, 1, true), steel); sleeve.rotation.z = Math.PI / 2; sleeve.position.x = -2.1; g.add(sleeve);
-    g.userData.tick = ((t) => { for (const [m, pts, o] of pulses) { const u = (t * .22 + o) % 1, f = u * (pts.length - 1), i = Math.floor(f);
-      m.position.lerpVectors(pts[i], pts[Math.min(i + 1, pts.length - 1)], f - i); } g.rotation.set(.25, Math.sin(t * .2) * .25 - .3, 0); }) as Tick;
+    for (let i = 0; i < 12; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(.028, 8, 6), glow(i % 4 ? C.ball : C.secret, 5)); g.add(m); pulses.push([m, strands[(i * 7) % strands.length], i / 12]); }
+    g.position.x = .1; g.scale.setScalar(.86); // the whole cable fits its slot, clear of the heading
+    g.userData.tick = ((t) => {
+      for (const [m, pts, o] of pulses) { const u = (t * .3 + o) % 1, f = u * (pts.length - 1), i = Math.floor(f); m.position.lerpVectors(pts[i], pts[Math.min(i + 1, pts.length - 1)], f - i); m.visible = u > .04; }
+      tips.forEach((tp, i) => { tp.material.emissiveIntensity = 2 + 1.6 * Math.sin(t * 2.2 + i * 1.7); });
+      g.rotation.set(.2, Math.sin(t * .2) * .3 - .35, 0); }) as Tick;
     pieces.fibre = g; }
   /** A sculpture of glass rods and steel joints: every rod one step along an arrow. shape(M) places it through a 3×3 matrix. */
   const rodLattice = (n = 3, s = .8): Any => {
@@ -131,14 +143,13 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
 
   // ---------- the thread: optical fibres the whole length of the page, weaving past every piece ----------
   const threadMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    uniforms: { uTime: { value: 0 }, uDark: { value: 1 }, uA: { value: C.ball }, uB: { value: new THREE.Color(0x7fb4ff) } },
+    uniforms: { uTime: { value: 0 }, uA: { value: C.ball }, uB: { value: new THREE.Color(0x7fb4ff) } },
     vertexShader: "attribute float aSeed; varying vec2 vUv; varying float vSeed; void main() { vUv = uv; vSeed = aSeed; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-    fragmentShader: `uniform float uTime, uDark; uniform vec3 uA, uB; varying vec2 vUv; varying float vSeed;
+    fragmentShader: `uniform float uTime; uniform vec3 uA, uB; varying vec2 vUv; varying float vSeed;
       void main() { float x = vUv.x * 60.0 - uTime * (0.6 + vSeed * 0.5) + vSeed * 17.0;
         float pulse = pow(max(0.0, 1.0 - fract(x) * 3.0), 3.0) * step(0.55, fract(floor(x) * 0.618 + vSeed));
         vec3 pc = mix(uA, uB, step(0.5, fract(vSeed * 7.0)));
-        if (uDark > 0.5) gl_FragColor = vec4(uB * 0.18 + pc * pulse * 1.6, 0.35 + pulse * 0.65);
-        else gl_FragColor = vec4(mix(vec3(0.55, 0.6, 0.7), pc * 0.75, pulse), 0.28 + pulse * 0.7); }` });
+        gl_FragColor = vec4(uB * 0.18 + pc * pulse * 1.6, 0.35 + pulse * 0.65); }` });
   const threads = new THREE.Group(); scene.add(threads);
   let unit = 1; // world units per CSS pixel on the plane the pieces sit on
   function buildThreads() {
@@ -160,13 +171,9 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   const composer = new EffectComposer(renderer); composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), .5, .5, .86); composer.addPass(bloom); composer.addPass(new OutputPass());
 
-  // ---------- day and night: a bright studio or a dark one ----------
-  const onTheme = () => { const dark = currentTheme() === "dark";
-    scene.background = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || (dark ? "#05070d" : "#e9edf3"));
-    renderer.toneMappingExposure = dark ? 1 : 1.05;
-    threadMat.uniforms.uDark.value = dark ? 1 : 0; threadMat.blending = dark ? THREE.AdditiveBlending : THREE.NormalBlending; threadMat.needsUpdate = true;
-    bloom.strength = dark ? .5 : .2; bloom.threshold = dark ? .86 : .95; key.intensity = dark ? 1.6 : 2.6; rim.intensity = dark ? 40 : 10; };
-  addEventListener("themechange", onTheme); onTheme();
+  // ---------- the dark studio ----------
+  scene.background = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#05070d");
+  bloom.strength = .5; bloom.threshold = .86; key.intensity = 1.6; rim.intensity = 40;
 
   // ---------- layout: each piece sits in its slot; the page moves, the camera doesn't ----------
   let W = 0, H = 0, mx = 0, my = 0, pageH = 0, rebuild = 0;
@@ -200,5 +207,5 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   document.body.prepend(canvas);
   raf = requestAnimationFrame(frame);
   requestAnimationFrame(() => canvas.classList.add("on"));
-  return () => { cancelAnimationFrame(raf); ro.disconnect(); removeEventListener("themechange", onTheme); removeEventListener("pointermove", onPointer); renderer.dispose(); canvas.remove(); };
+  return () => { cancelAnimationFrame(raf); ro.disconnect(); removeEventListener("pointermove", onPointer); renderer.dispose(); canvas.remove(); };
 }

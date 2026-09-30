@@ -26,12 +26,6 @@ export const sound = {
   voiceMissing: "The voice recordings haven’t been added yet.",
 };
 
-/** The Day/Night switch (light theme = a bright studio, dark theme = a dark one). */
-export const theme = {
-  group: "Time of day",
-  day: "Day",
-  night: "Night",
-};
 
 export const chapter0 = {
   kicker: "Chapter 0",

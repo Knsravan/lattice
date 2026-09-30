@@ -48,7 +48,7 @@ Commit `public/voice/` and deploy. Visitors turn Voice and Sound effects on with
 
 - `src/core/` — pure math, no DOM: lattices, Gram–Schmidt, Babai, LLL (with animation trace), LWE, the Scene 4 attack, 4D projection, toy Kyber/ML-KEM, SHA-256.
 - `src/scenes/` — one file per scene, plus `draw2d.ts` (shared 2-D drawing) and Scene 4's chart and worker.
-- `src/ui/` — `copy.ts` (all narration text), `dom.ts` (DOM helpers, animation easing, reduced-motion check), `hero.ts` (flat title lattice, the fallback), `signal.ts` (the 3D stage: a glass or metal piece per chapter and a thread of light through the page), `glass.ts` (liquid-glass behaviour), `theme.ts` (light and dark studio), `smooth.ts` (glide scrolling), `reveal.ts` (scroll reveal effects, progress line).
+- `src/ui/` — `copy.ts` (all narration text), `dom.ts` (DOM helpers, animation easing, reduced-motion check), `hero.ts` (flat title lattice, the fallback), `signal.ts` (the 3D stage: a glass or metal piece per chapter and a thread of light through the page), `glass.ts` (liquid-glass behaviour), `smooth.ts` (glide scrolling), `reveal.ts` (scroll reveal effects, progress line).
 - `src/types/three.d.ts` — minimal types for the parts of Three.js Scene 4 uses (Three.js itself loads from the CDN at runtime).
 - `public/` — static page shell.
 - `tests/` — mirrors `src/core`.

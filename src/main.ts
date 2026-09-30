@@ -1,10 +1,9 @@
-import { theme as themeCopy, site, chapter0, chapter1, chapter2, chapter3, chapter4, chapter5, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
+import { site, chapter0, chapter1, chapter2, chapter3, chapter4, chapter5, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
 import { mountSoundControls } from "./ui/sound.ts";
 import { mountSignal } from "./ui/signal.ts";
 import { mountGlass } from "./ui/glass.ts";
-import { initTheme, mountThemeSwitch } from "./ui/theme.ts";
 import { mountSmoothScroll } from "./ui/smooth.ts";
 import { mountReveal } from "./ui/reveal.ts";
 import { mountChapter0 } from "./scenes/chapter0-problem.ts";
@@ -21,7 +20,6 @@ import { mountScene5 } from "./scenes/scene5-kyber.ts";
 
 /** Builds the page from copy.ts and mounts each scene into its section. */
 function build() {
-  initTheme(); // light = a bright studio, dark = a dark one; set before anything draws
   const app = $("#app");
 
   // hero: the title and its words on the left, the glass crystal (the 3D stage) on the right; the flat shearing lattice is the fallback
@@ -105,7 +103,6 @@ function build() {
 
   // voice + sound-effects switches, pinned in the corner
   const controls = mountSoundControls();
-  controls.prepend(mountThemeSwitch(themeCopy));
   document.body.append(controls);
 
   // nav dots
