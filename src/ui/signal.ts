@@ -18,7 +18,8 @@ import { reducedMotion, clamp } from "./dom.ts";
  * light from piece to piece, in a dark studio (the site has one theme: dark, user decision Sept 30).
  *
  * Three.js loads from the CDN like Scene 4 and is typed loosely here. If it can't load, the promise rejects and the page
- * keeps the flat hero lattice. Decorative only (aria-hidden). If the frame rate stays low it drops bloom, then sharpness.
+ * keeps the flat hero lattice. Decorative only (aria-hidden). If the frame rate stays low it lowers sharpness, and drops the
+ * glow (bloom) only as a last resort.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Any = any;
@@ -188,7 +189,8 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   const ro = new ResizeObserver(() => { clearTimeout(rebuild); rebuild = window.setTimeout(resize, 250); }); ro.observe(document.body); resize();
 
   let raf = 0, t = 0, last = performance.now(), slow = 0, sampled = 0, level = 0, frames = 0;
-  const downgrades = [() => { bloom.enabled = false; }, () => { renderer.setPixelRatio(1); composer.setPixelRatio(1); }];
+  // (user decision: keep the glow; sharpness goes first, then fewer pixels still, and the glow only as a last resort)
+  const downgrades = [() => { renderer.setPixelRatio(1); composer.setPixelRatio(1); }, () => { renderer.setPixelRatio(.75); composer.setPixelRatio(.75); }, () => { bloom.enabled = false; }];
   const frame = (now: number) => {
     raf = requestAnimationFrame(frame);
     const dt = clamp((now - last) / 1000, 0, .05); last = now; // (a frame's timestamp can be a little earlier than the last one)
