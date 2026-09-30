@@ -69,8 +69,8 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     geo.setAttribute("aSeed", new THREE.BufferAttribute(new Float32Array(n).fill(seed), 1)); geo.setAttribute("aCol", new THREE.BufferAttribute(rgb, 3));
     return new THREE.Mesh(geo, flowMat); };
   /** Glass rods and steel joints on an nx × ny × nz grid, `s` apart, centred (the lattice material used throughout). */
-  const rodGrid = (nx: number, ny: number, nz: number, s: number): Any => {
-    const g = new THREE.Group(), rodG = new THREE.CylinderGeometry(.03, .03, s, 10), jointG = new THREE.SphereGeometry(.065, 16, 12), rm = glass(0xe8f1ff, { thickness: .3 }), up = V(0, 1, 0);
+  const rodGrid = (nx: number, ny: number, nz: number, s: number, rm: Any = glass(0xe8f1ff, { thickness: .3 }), rodR = .03, jointR = .065): Any => {
+    const g = new THREE.Group(), rodG = new THREE.CylinderGeometry(rodR, rodR, s, 10), jointG = new THREE.SphereGeometry(jointR, 16, 12), up = V(0, 1, 0);
     const P = (i: number, j: number, k: number) => V(i - (nx - 1) / 2, j - (ny - 1) / 2, k - (nz - 1) / 2).multiplyScalar(s);
     for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) for (let k = 0; k < nz; k++) {
       const jm = new THREE.Mesh(jointG, steel); jm.position.copy(P(i, j, k)); g.add(jm);
@@ -79,18 +79,28 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
         r.position.copy(a).add(b).multiplyScalar(.5); r.quaternion.setFromUnitVectors(up, b.clone().sub(a).normalize()); g.add(r); } }
     return g; };
 
-  { // title: a clear glass padlock with a lattice of rods and joints inside, the message's amber light at its heart; the shackle lifts and clicks shut
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new RoundedBoxGeometry(2.3, 1.75, .85, 6, .22), glass(0xffffff, { thickness: 1.8, iridescence: .5, envMapIntensity: .8 })); body.position.y = -.35; g.add(body);
-    const inner = rodGrid(4, 3, 2, .5); inner.position.y = -.35; g.add(inner);
-    const core = new THREE.Mesh(new THREE.OctahedronGeometry(.16, 0), glow(C.ball, 2.2)); core.position.y = -.35; g.add(core);
-    const shackle = new THREE.Mesh(new THREE.TorusGeometry(.68, .1, 18, 48, Math.PI), steel); shackle.position.y = .52; g.add(shackle);
-    const legs = [-.68, .68].map((x) => { const l = new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, .5, 18), steel); l.position.set(x, .3, 0); g.add(l); return l; });
-    const hole = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .05, 20), glow(C.ball, 1.2)); hole.rotation.x = Math.PI / 2; hole.position.set(0, -.75, .43); g.add(hole);
-    g.userData.tick = ((t) => { const cyc = reducedMotion() ? 0 : (t % 6) / 6; // shut, lift, hold open, click shut
-      const lift = cyc < .45 ? 0 : cyc < .6 ? (cyc - .45) / .15 : cyc < .85 ? 1 : 1 - (cyc - .85) / .15, e = lift * lift * (3 - 2 * lift) * .45;
-      shackle.position.y = .52 + e; legs[0].position.y = .3 + e; legs[1].position.y = .3 + e * .35; shackle.rotation.y = e * .9;
-      core.rotation.y = -t; g.rotation.set(.12, Math.sin(t * .3) * .45 - .2, 0); }) as Tick;
+  { // title: a clear glass padlock with a lattice of steel rods inside, the message's amber light at its heart.
+    // The shackle works like a real one: it lifts straight up, then swings round its long left leg; the short right leg leaves its hole.
+    const g = new THREE.Group(), top = .525; // the body's top face
+    // thin, gently refracting glass, so the lattice inside reads clearly (thick glass copied every joint two or three times)
+    const body = new THREE.Mesh(new RoundedBoxGeometry(2.3, 1.75, .85, 6, .22), glass(0xffffff, { thickness: .35, ior: 1.2, iridescence: .3, envMapIntensity: .6, roughness: .08 }));
+    body.position.y = -.35; g.add(body);
+    const brushed = new THREE.MeshStandardMaterial({ color: 0xb9c0ca, metalness: 1, roughness: .32, emissive: 0x2a3140, emissiveIntensity: .6 });
+    const inner = rodGrid(4, 3, 1, .5, brushed, .028, .05); inner.position.y = -.35; g.add(inner); // one flat lattice, face-on
+    const core = new THREE.Mesh(new THREE.OctahedronGeometry(.14, 0), glow(C.ball, 2)); core.position.set(0, -.35, .12); g.add(core);
+    const hole = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, .04, 20), glow(C.ball, 1.1)); hole.rotation.x = Math.PI / 2; hole.position.set(0, -.95, .43); g.add(hole);
+    // the shackle: arc and both legs as one piece, pivoting on the long left leg
+    const sh = new THREE.Group(); g.add(sh);
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(.68, .1, 18, 48, Math.PI), steel); arc.position.set(.68, .95, 0); sh.add(arc);
+    const longLeg = new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, .8, 18), steel); longLeg.position.set(0, .55, 0); sh.add(longLeg);    // reaches deep into the body
+    const shortLeg = new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, .5, 18), steel); shortLeg.position.set(1.36, .7, 0); sh.add(shortLeg); // tip just inside the top
+    const collars = [-.68, .68].map((x) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(.15, .15, .06, 24), steel); c.position.set(x, top + .01, 0); g.add(c); return c; }); // the two holes
+    void collars;
+    const step = (x: number, a: number, b: number) => { const u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
+    g.userData.tick = ((t) => { const c = reducedMotion() ? 0 : (t % 7) / 7; // shut → lift → swing open → hold → swing back → drop (click)
+      const lift = step(c, .4, .5) - step(c, .9, .97), swing = step(c, .5, .62) - step(c, .78, .88);
+      sh.position.set(-.68, lift * .32, 0); sh.rotation.y = swing * 1.35;
+      core.rotation.y = -t; g.rotation.set(.1, Math.sin(t * .3) * .4 - .15, 0); }) as Tick;
     pieces.key = g; }
   { // chapter 0: the internet as a glass globe; arcs of light hop between glowing points on it, and one arc is red: a copy being taken
     const g = new THREE.Group(), R = 1.35, blue = new THREE.Color(0x7fb4ff);
