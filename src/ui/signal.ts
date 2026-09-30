@@ -5,14 +5,15 @@ import { reducedMotion, clamp } from "./dom.ts";
  * per chapter, standing for the chapter's idea without telling its story, plus one thread of light through the page.
  *
  *   title   a faceted glass crystal holding the message's amber light
- *   ch. 0   a fibre-optic cable: a steel collar, bare fibres fanning out with light at every tip and racing along them (the internet)
+ *   ch. 0   a stream of optical fibres leaving the right edge of the chapter's heading card and running off the right of the
+ *           screen, light flowing along them left to right, nonstop (the internet)
  *   ch. 1   a sculpture of glass rods and steel joints (a lattice)
  *   ch. 2   the same sculpture leaning as you read (a crooked basis builds the same grid)
  *   ch. 3   a drop of liquid glass that trembles more as you read on (the shake)
  *   ch. 4   the gold chandelier of a quantum computer, rings pulsing from its chip (fading as you read)
  *   ch. 5   glass plates closing around the light into one sealed sphere, seams turning green (the lock)
  *
- * Each piece is held by an element on the page ([data-slot]) and moves with it as you scroll, like the rest of the page;
+ * Each piece is held by an element on the page ([data-slot]; chapter 0's stream by its heading card) and moves with it as you scroll, like the rest of the page;
  * the camera never moves. Fine optical fibres run the whole length of the page behind everything, carrying pulses of
  * light from piece to piece, in a dark studio (the site has one theme: dark, user decision Sept 30).
  *
@@ -59,30 +60,6 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     const halo = new THREE.Mesh(new THREE.TorusGeometry(1.95, .012, 8, 160), steel); halo.rotation.x = 1.2; g.add(halo);
     g.userData.tick = ((t, p) => { gem.rotation.set(t * .15 + p * 2, t * .22, 0); core.rotation.y = -t; halo.rotation.z = t * .1; }) as Tick;
     pieces.key = g; }
-  { // chapter 0: a fibre-optic cable: a dark jacket, a steel collar, bare glass fibres fanning out, light at every tip and racing along them
-    const g = new THREE.Group(), strands: Any[][] = [], fibre = glass(0xdfe9ff, { thickness: .2 }), N = lite ? 22 : 34, X0 = -1.05, X1 = 1.75;
-    const rubber = new THREE.MeshStandardMaterial({ color: 0x15181f, roughness: .55, metalness: .1 });
-    const brushed = new THREE.MeshStandardMaterial({ color: 0x9aa3ad, metalness: 1, roughness: .38, envMapIntensity: .8 });
-    // the cable comes in from the left and ends in a closed steel collar
-    const jacket = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .8, 32), rubber); jacket.rotation.z = Math.PI / 2; jacket.position.x = X0 - .7; g.add(jacket);
-    const collar = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .34, 40), brushed); collar.rotation.z = Math.PI / 2; collar.position.x = X0 - .17; g.add(collar);
-    const lip = new THREE.Mesh(new THREE.TorusGeometry(.3, .035, 10, 40), brushed); lip.rotation.y = Math.PI / 2; lip.position.x = X0; g.add(lip);
-    // the fibres leave the collar packed tight and open into a loose fan
-    const tips: Any[] = [];
-    for (let i = 0; i < N; i++) { const a = i * 2.399963, r0 = .05 + .19 * Math.sqrt((i + .5) / N), pts: Any[] = [];
-      for (let k = 0; k <= 24; k++) { const u = k / 24, spread = 1 + u * u * 3.4, x = X0 + u * (X1 - X0 - (i % 5) * .08), wav = Math.sin(u * 5 + i) * .05 * u;
-        pts.push(V(x, Math.cos(a) * r0 * spread + wav - u * u * .15, Math.sin(a) * r0 * spread)); }
-      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), lite ? 30 : 48, .014, 5), fibre)); strands.push(pts);
-      const tip = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), glow(i % 5 === 0 ? C.secret : i % 3 === 0 ? new THREE.Color(0x7fb4ff) : C.ball, 3));
-      tip.position.copy(pts[pts.length - 1]); g.add(tip); tips.push(tip); }
-    const pulses: [Any, Any[], number][] = [];
-    for (let i = 0; i < 12; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(.028, 8, 6), glow(i % 4 ? C.ball : C.secret, 5)); g.add(m); pulses.push([m, strands[(i * 7) % strands.length], i / 12]); }
-    g.position.x = .1; g.scale.setScalar(.86); // the whole cable fits its slot, clear of the heading
-    g.userData.tick = ((t) => {
-      for (const [m, pts, o] of pulses) { const u = (t * .3 + o) % 1, f = u * (pts.length - 1), i = Math.floor(f); m.position.lerpVectors(pts[i], pts[Math.min(i + 1, pts.length - 1)], f - i); m.visible = u > .04; }
-      tips.forEach((tp, i) => { tp.material.emissiveIntensity = 2 + 1.6 * Math.sin(t * 2.2 + i * 1.7); });
-      g.rotation.set(.2, Math.sin(t * .2) * .3 - .35, 0); }) as Tick;
-    pieces.fibre = g; }
   /** A sculpture of glass rods and steel joints: every rod one step along an arrow. shape(M) places it through a 3×3 matrix. */
   const rodLattice = (n = 3, s = .8): Any => {
     const g = new THREE.Group(), rodG = new THREE.CylinderGeometry(.035, .035, s, 10), jointG = new THREE.SphereGeometry(.075, 16, 12), rm = glass(0xe8f1ff, { thickness: .3 });
@@ -141,6 +118,31 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   const holders: Record<string, Any> = {};
   for (const [k, g] of Object.entries(pieces)) { const h = new THREE.Group(); h.add(g); h.visible = false; scene.add(h); holders[k] = h; }
 
+  // ---------- chapter 0: the fibre stream, from the heading card's right edge to past the right of the screen ----------
+  const streamMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uTime: { value: 0 } },
+    vertexShader: `attribute float aSeed; attribute vec3 aCol; varying vec2 vUv; varying float vSeed; varying vec3 vCol;
+      void main() { vUv = uv; vSeed = aSeed; vCol = aCol; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform float uTime; varying vec2 vUv; varying float vSeed; varying vec3 vCol;
+      void main() { float x = vUv.x * 7.0 - uTime * (0.55 + vSeed * 0.35) + vSeed * 11.0; // pulses travel from the card outward
+        float pulse = pow(max(0.0, 1.0 - fract(x) * 4.0), 2.5) * step(0.35, fract(floor(x) * 0.618 + vSeed * 3.1));
+        float glassLine = 0.16 + 0.1 * sin(vUv.y * 6.283), fadeIn = smoothstep(0.0, 0.012, vUv.x);
+        gl_FragColor = vec4((vec3(0.62, 0.68, 0.78) * glassLine + vCol * pulse * 2.2) * fadeIn, (0.3 + pulse) * fadeIn); }` });
+  const stream = new THREE.Group(); scene.add(stream);
+  const streamSlot = slots.find((s) => s.dataset.slot === "fibre"), streamCard = streamSlot?.closest(".chapter-open")?.querySelector<HTMLElement>(".chapter-head") ?? null;
+  function buildStream() {
+    stream.traverse((o: Any) => o.geometry?.dispose()); stream.clear();
+    if (!streamCard) return;
+    const r = streamCard.getBoundingClientRect(), len = (innerWidth - r.right) * unit + 3, band = Math.min(innerHeight * unit * .75, 7), start = r.height * unit * .32;
+    const N = lite ? 26 : 46, cols = [C.ball, C.secret, new THREE.Color(0x7fb4ff)];
+    for (let i = 0; i < N; i++) {
+      const lane = i / (N - 1) - .5, y0 = lane * start, pts: Any[] = [];
+      for (let k = 0; k <= 40; k++) { const u = k / 40, e = 1 - Math.pow(1 - Math.min(1, u * 1.6), 3); // open out quickly, then run level
+        pts.push(V(u * len, y0 * (1 - e) + lane * band * e + Math.sin(u * 4 + i) * .25 * e, -e * (i % 4) * .6)); }
+      const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), lite ? 120 : 220, .016 + (i % 3) * .006, 5), n = geo.attributes.position.count;
+      const c = cols[i % 7 === 0 ? 1 : i % 3 === 0 ? 2 : 0], rgb = new Float32Array(n * 3); for (let j = 0; j < n; j++) rgb.set([c.r, c.g, c.b], j * 3);
+      geo.setAttribute("aSeed", new THREE.BufferAttribute(new Float32Array(n).fill((i * .37) % 1), 1)); geo.setAttribute("aCol", new THREE.BufferAttribute(rgb, 3));
+      stream.add(new THREE.Mesh(geo, streamMat)); } }
+
   // ---------- the thread: optical fibres the whole length of the page, weaving past every piece ----------
   const threadMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: { uTime: { value: 0 }, uA: { value: C.ball }, uB: { value: new THREE.Color(0x7fb4ff) } },
@@ -155,7 +157,8 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   function buildThreads() {
     threads.children.forEach((m: Any) => m.geometry.dispose()); threads.clear();
     const pageH = document.documentElement.scrollHeight, n = lite ? 5 : 9, half = innerHeight * unit;
-    const anchors = slots.map((s) => { const r = s.getBoundingClientRect(); return [(r.left + r.width / 2 - innerWidth / 2) * unit, -(r.top + scrollY + r.height / 2) * unit]; });
+    const anchors = slots.map((s) => s.getBoundingClientRect()).filter((r) => r.width > 0) // (a slot hidden on this screen isn't on the thread's path)
+      .map((r) => [(r.left + r.width / 2 - innerWidth / 2) * unit, -(r.top + scrollY + r.height / 2) * unit]);
     for (let i = 0; i < n; i++) {
       const pts = [V(anchors[0][0] + (i - n / 2) * .4, half, -2 - i * .3)];
       // one loose ribbon: it passes just behind each piece, fanned out a little, and drifts across the page between them
@@ -180,7 +183,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   const onPointer = (e: PointerEvent) => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; };
   addEventListener("pointermove", onPointer, { passive: true });
   const resize = () => { W = innerWidth; H = innerHeight; renderer.setSize(W, H, false); composer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix();
-    unit = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / H; buildThreads(); pageH = document.documentElement.scrollHeight; };
+    unit = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / H; buildThreads(); buildStream(); pageH = document.documentElement.scrollHeight; };
   // the page keeps growing while scenes and fonts load: rebuild the thread once it settles
   const ro = new ResizeObserver(() => { clearTimeout(rebuild); rebuild = window.setTimeout(resize, 250); }); ro.observe(document.body); resize();
 
@@ -193,6 +196,10 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     if (++frames % 60 === 0 && Math.abs(document.documentElement.scrollHeight - pageH) > 40) { pageH = document.documentElement.scrollHeight; buildThreads(); }
     threadMat.uniforms.uTime.value = t * 1.2;
     threads.position.y = (scrollY + H / 2) * unit;
+    streamMat.uniforms.uTime.value = t;
+    if (streamCard) { const r = streamCard.getBoundingClientRect(); stream.visible = r.bottom > -H * .5 && r.top < H * 1.5;
+      // the fibres start exactly at the card's right edge, halfway down it
+      stream.position.set((r.right - W / 2) * unit, -(r.top + r.height / 2 - H / 2) * unit, 0); stream.rotation.set(my * .06, mx * .08, 0); }
     for (const s of slots) { const name = s.dataset.slot!, g = pieces[name], h = holders[name]; if (!g) continue;
       const r = s.getBoundingClientRect(), on = r.width > 0 && r.bottom > -H * .3 && r.top < H * 1.3;
       h.visible = on; if (!on) continue;
