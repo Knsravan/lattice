@@ -60,7 +60,8 @@ async function speak(profile, text, key) {
   const gen = await json("/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ profile_id: profile.id, text, language: "en", seed: 7, ...(engine ? { engine } : {}) }),
+    // effects_chain: [] = the clean voice; without it Voicebox adds the profile's saved effects (e.g. Echo Chamber)
+    body: JSON.stringify({ profile_id: profile.id, text, language: "en", seed: 7, effects_chain: [], ...(engine ? { engine } : {}) }),
   });
   // /generate/{id}/status is a stream of "data: {...}" lines that ends when the clip is completed or failed
   let status = gen.status, error = gen.error;
