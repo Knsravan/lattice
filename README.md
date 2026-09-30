@@ -53,6 +53,7 @@ set PEXELS_API_KEY=your-key                  # Windows (macOS/Linux: export PEXE
 npm run footage -- --dry-run                 # show which clips it would use; writes footage-candidates.html
 npm run footage                              # download and prepare all 14 clips into public/footage/
 npm run footage -- --pick grid-day=1234567   # swap one clip (ids are in footage-candidates.html)
+npm run footage -- --pick grid-day=1234567,shake-night=7654321   # swap several at once
 npm run footage -- --only grid --force       # redo one chapter
 ```
 

@@ -5,6 +5,7 @@
 //   npm run footage                       # search, download and prepare every clip that isn't there yet
 //   npm run footage -- --dry-run          # only show which clips it would use
 //   npm run footage -- --pick grid-day=1234567   # use a different Pexels video (id from footage-candidates.html)
+//   npm run footage -- --pick grid-day=1234567,shake-night=7654321   # several at once
 //   npm run footage -- --only grid --force       # redo one chapter's clips
 //
 // Every run also writes footage-candidates.html (not committed): thumbnails of the best matches for each slot,
@@ -31,7 +32,9 @@ const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
 const opt = (n, d) => { const i = args.indexOf(`--${n}`); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
 const only = opt("only", "").split(",").map((s) => s.trim()).filter(Boolean);
-const picks = Object.fromEntries(args.flatMap((a, i) => (a === "--pick" && args[i + 1] ? [args[i + 1].split("=")] : [])));
+// --pick grid-day=123 (repeatable), or several at once: --pick title-night=456,grid-day=123
+const picks = Object.fromEntries(args.flatMap((a, i) => (a === "--pick" && args[i + 1] ? args[i + 1].split(",") : []))
+  .map((p) => p.trim()).filter(Boolean).map((p) => p.split("=").map((x) => x.trim())));
 const KEY = opt("key", process.env.PEXELS_API_KEY || "");
 const API = (process.env.PEXELS_API || "https://api.pexels.com").replace(/\/$/, "");
 const FFMPEG = process.env.FFMPEG || "ffmpeg";
@@ -69,6 +72,11 @@ function prepare(input, output) {
 }
 
 async function main() {
+  const slotKeys = SLOTS.flatMap((s) => [`${s.slot}-day`, `${s.slot}-night`]);
+  for (const [k, id] of Object.entries(picks)) {
+    if (!slotKeys.includes(k)) throw new Error(`--pick: "${k}" isn't a clip name. Use one of: ${slotKeys.join(", ")}`);
+    if (!/^\d+$/.test(id ?? "")) throw new Error(`--pick: "${k}=${id ?? ""}" needs a Pexels video id (a number), e.g. ${k}=1234567`);
+  }
   if (!KEY) throw new Error("Set PEXELS_API_KEY first (free at https://www.pexels.com/api/). Windows: set PEXELS_API_KEY=your-key");
   if (!flag("dry-run") && spawnSync(FFMPEG, ["-version"], { stdio: "ignore" }).status !== 0) throw new Error("ffmpeg isn't installed. Windows: winget install Gyan.FFmpeg, then open a new window.");
   let manifest = {};
