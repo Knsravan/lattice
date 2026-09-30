@@ -1,7 +1,17 @@
-/** Small picture painters for the scroll-story chapters (people, envelope, padlock, key…). Pixels only. */
+/** Small picture painters for the scroll-story chapters (people, envelope, padlock, key…). Pixels only.
+ *  Drawn in the same glass-and-light look as the 3D stage: glass panels, glowing objects, wires that carry light. */
 import { palette, reducedMotion, clamp } from "../ui/dom.ts";
 import type { Vec } from "../core/index.ts";
-import { drawArrow } from "./draw2d.ts";
+import { drawArrow, withAlpha, clockSec, spark } from "./draw2d.ts";
+
+/** A pane of dark glass: a faint gradient body, a bright top edge, a coloured rim. */
+function glassPane(ctx: Ctx, x: number, y: number, w: number, h: number, r: number, rim: string, rimAlpha = 1) {
+  const g = ctx.createLinearGradient(x, y, x, y + h);
+  g.addColorStop(0, "rgba(40,48,66,.92)"); g.addColorStop(1, "rgba(14,18,28,.92)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill();
+  ctx.save(); ctx.globalAlpha *= rimAlpha; ctx.strokeStyle = rim; ctx.shadowColor = rim; ctx.shadowBlur = 8; ctx.stroke(); ctx.restore();
+  ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + r, y + .5); ctx.lineTo(x + w - r, y + .5); ctx.stroke();
+}
 import type { Viewport } from "./draw2d.ts";
 
 type Ctx = CanvasRenderingContext2D;
@@ -38,7 +48,7 @@ export function along(path: [number, number][], u: number): [number, number] {
 export function label(ctx: Ctx, text: string, x: number, y: number, opts: { color?: string; size?: number; weight?: number; align?: CanvasTextAlign; alpha?: number } = {}) {
   ctx.save();
   ctx.globalAlpha *= opts.alpha ?? 1;
-  ctx.fillStyle = opts.color ?? palette.ink;
+  ctx.fillStyle = opts.color ?? palette.ink; ctx.shadowColor = "rgba(0,0,0,.85)"; ctx.shadowBlur = 4;
   ctx.font = `${opts.weight ?? 500} ${opts.size ?? 14}px system-ui, -apple-system, "Segoe UI", sans-serif`;
   ctx.textAlign = opts.align ?? "center";
   ctx.textBaseline = "middle";
@@ -51,7 +61,10 @@ export function person(ctx: Ctx, x: number, y: number, s: number, name: string, 
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.fillStyle = color;
+  // lit from above, with a soft glow of their colour around them
+  const g = ctx.createLinearGradient(x, y - 28 * s, x, y + 14 * s);
+  g.addColorStop(0, "#fff"); g.addColorStop(.25, color); g.addColorStop(1, withAlpha(color, .7));
+  ctx.fillStyle = g; ctx.shadowColor = color; ctx.shadowBlur = 16 * s;
   ctx.beginPath(); ctx.arc(x, y - 16 * s, 11 * s, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(x, y + 12 * s, 19 * s, 15 * s, 0, Math.PI, 0); ctx.fill();
   ctx.restore();
@@ -66,10 +79,9 @@ export function bubble(ctx: Ctx, x: number, y: number, s: number, text: string, 
   ctx.font = `600 ${13 * s}px ui-monospace, SFMono-Regular, Menlo, monospace`;
   const w = ctx.measureText(text).width + 18 * s, h = 26 * s;
   const bx = x - w / 2, by = y - h - 8 * s;
-  ctx.fillStyle = "#161a24"; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(bx, by, w, h, 7 * s); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x - 6 * s, by + h); ctx.lineTo(x, y); ctx.lineTo(x + 6 * s, by + h); ctx.fillStyle = "#161a24"; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(x - 6 * s, by + h); ctx.lineTo(x, y); ctx.lineTo(x + 6 * s, by + h); ctx.stroke();
+  ctx.lineWidth = 1.5; glassPane(ctx, bx, by, w, h, 7 * s, color);
+  ctx.beginPath(); ctx.moveTo(x - 6 * s, by + h); ctx.lineTo(x, y); ctx.lineTo(x + 6 * s, by + h); ctx.fillStyle = "rgba(14,18,28,.92)"; ctx.fill();
+  ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(x - 6 * s, by + h); ctx.lineTo(x, y); ctx.lineTo(x + 6 * s, by + h); ctx.stroke();
   ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText(text, x, by + h / 2 + 0.5);
   ctx.restore();
@@ -80,9 +92,11 @@ export function node(ctx: Ctx, x: number, y: number, s: number, alpha = 1, color
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.strokeStyle = color; ctx.fillStyle = "#141824"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.roundRect(x - 13 * s, y - 11 * s, 26 * s, 18 * s, 3 * s); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x, y + 7 * s); ctx.lineTo(x, y + 12 * s); ctx.moveTo(x - 7 * s, y + 12 * s); ctx.lineTo(x + 7 * s, y + 12 * s); ctx.stroke();
+  // a glass screen with a faint glow on it, on a steel stand
+  ctx.lineWidth = 2; glassPane(ctx, x - 13 * s, y - 11 * s, 26 * s, 18 * s, 3 * s, color, .9);
+  const glow = ctx.createRadialGradient(x, y - 2 * s, 0, x, y - 2 * s, 11 * s); glow.addColorStop(0, withAlpha(palette.dotBright, .28)); glow.addColorStop(1, "rgba(159,176,214,0)");
+  ctx.fillStyle = glow; ctx.fillRect(x - 12 * s, y - 10 * s, 24 * s, 16 * s);
+  ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(x, y + 7 * s); ctx.lineTo(x, y + 12 * s); ctx.moveTo(x - 7 * s, y + 12 * s); ctx.lineTo(x + 7 * s, y + 12 * s); ctx.stroke();
   ctx.restore();
 }
 
@@ -93,8 +107,11 @@ export function envelope(ctx: Ctx, x: number, y: number, s: number, opts: { lock
   const c = opts.color ?? palette.ball;
   ctx.save();
   ctx.globalAlpha *= a;
-  ctx.fillStyle = c; ctx.strokeStyle = "#0b0d12"; ctx.lineWidth = 1.5 * s;
-  ctx.beginPath(); ctx.roundRect(x - 15 * s, y - 10 * s, 30 * s, 20 * s, 3 * s); ctx.fill();
+  // lit paper, glowing faintly in its colour
+  const g = ctx.createLinearGradient(x, y - 10 * s, x, y + 10 * s);
+  g.addColorStop(0, "#fff"); g.addColorStop(.3, c); g.addColorStop(1, withAlpha(c, .8));
+  ctx.fillStyle = c.startsWith("#") ? g : c; ctx.strokeStyle = "#0b0d12"; ctx.lineWidth = 1.5 * s; ctx.shadowColor = c; ctx.shadowBlur = 14 * s;
+  ctx.beginPath(); ctx.roundRect(x - 15 * s, y - 10 * s, 30 * s, 20 * s, 3 * s); ctx.fill(); ctx.shadowBlur = 0;
   ctx.beginPath(); ctx.moveTo(x - 14 * s, y - 9 * s); ctx.lineTo(x, y + 2 * s); ctx.lineTo(x + 14 * s, y - 9 * s); ctx.stroke();
   ctx.restore();
   if (opts.locked) padlock(ctx, x + 12 * s, y + 8 * s, 0.7 * s, { open: 0, color: palette.ink, alpha: a });
@@ -108,15 +125,17 @@ export function padlock(ctx: Ctx, x: number, y: number, s: number, opts: { open?
   const lift = (opts.open ?? 0) * 8 * s;
   ctx.save();
   ctx.globalAlpha *= a;
-  ctx.strokeStyle = c; ctx.lineWidth = 3.2 * s; ctx.lineCap = "round";
+  ctx.strokeStyle = c; ctx.lineWidth = 3.2 * s; ctx.lineCap = "round"; ctx.shadowColor = c; ctx.shadowBlur = 12 * s;
   ctx.beginPath();
   ctx.moveTo(x - 7 * s, y - 4 * s - lift);
   ctx.arc(x, y - 11 * s - lift, 7 * s, Math.PI, 0);
   ctx.lineTo(x + 7 * s, y - 4 * s - (opts.open ? lift + 4 * s : lift));
   ctx.stroke();
-  ctx.fillStyle = c;
+  const body = ctx.createLinearGradient(x, y - 5 * s, x, y + 12 * s);
+  body.addColorStop(0, "#fff"); body.addColorStop(.3, c); body.addColorStop(1, withAlpha(c, .75));
+  ctx.fillStyle = c.startsWith("#") ? body : c;
   ctx.beginPath(); ctx.roundRect(x - 11 * s, y - 5 * s, 22 * s, 17 * s, 3 * s); ctx.fill();
-  ctx.fillStyle = "#0b0d12";
+  ctx.shadowBlur = 0; ctx.fillStyle = "#0b0d12";
   ctx.beginPath(); ctx.arc(x, y + 2 * s, 2.4 * s, 0, Math.PI * 2); ctx.fill();
   if (opts.broken) {
     ctx.strokeStyle = "#0b0d12"; ctx.lineWidth = 2 * s;
@@ -130,7 +149,7 @@ export function key(ctx: Ctx, x: number, y: number, s: number, color: string, al
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.strokeStyle = color; ctx.lineWidth = 3 * s; ctx.lineCap = "round";
+  ctx.strokeStyle = color; ctx.lineWidth = 3 * s; ctx.lineCap = "round"; ctx.shadowColor = color; ctx.shadowBlur = 12 * s;
   ctx.beginPath(); ctx.arc(x - 9 * s, y, 5.5 * s, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x - 3.5 * s, y); ctx.lineTo(x + 12 * s, y); ctx.moveTo(x + 7 * s, y); ctx.lineTo(x + 7 * s, y + 5 * s); ctx.moveTo(x + 11 * s, y); ctx.lineTo(x + 11 * s, y + 4 * s); ctx.stroke();
   ctx.restore();
@@ -141,8 +160,7 @@ export function browserBar(ctx: Ctx, x: number, y: number, w: number, s: number,
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.fillStyle = "#161a24"; ctx.strokeStyle = palette.dot; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.roundRect(x - w / 2, y - 17 * s, w, 34 * s, 17 * s); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 1.2; glassPane(ctx, x - w / 2, y - 17 * s, w, 34 * s, 17 * s, palette.dot);
   ctx.restore();
   padlock(ctx, x - w / 2 + 24 * s, y + 1 * s, 0.62 * s, { color: palette.secret, alpha });
   label(ctx, url, x - w / 2 + 42 * s, y, { size: 14 * s, align: "left", color: palette.ink, alpha });
@@ -170,12 +188,16 @@ export function chip(ctx: Ctx, x: number, y: number, s: number, glow: number, al
   ctx.restore();
 }
 
-/** A dashed wire between two points. */
+/** A wire between two points: a thin fibre with light flowing along it from a to b. */
 export function wire(ctx: Ctx, a: [number, number], b: [number, number], alpha = 1, color: string = palette.dot) {
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]);
+  ctx.lineCap = "round";
+  ctx.strokeStyle = withAlpha(color, .45); ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+  ctx.strokeStyle = palette.dotBright; ctx.lineWidth = 1.6; ctx.shadowColor = palette.dotBright; ctx.shadowBlur = 6;
+  ctx.setLineDash([2, 10]); ctx.lineDashOffset = -clockSec() * 22;
   ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
   ctx.restore();
 }
@@ -207,8 +229,8 @@ export function drawWalker(
   }
   if (opts.showWalker !== false && tt > t0 - 0.3) {
     const [x, y] = vp.toScreen(at);
-    ctx.fillStyle = palette.ink; ctx.strokeStyle = "#0b0d12"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(x, y - lift, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    spark(ctx, x, y - lift, palette.ink, 16); // the walker: a small orb of white light
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(x, y - lift, 5, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
   return { done, at };
@@ -232,8 +254,7 @@ export function chip2(ctx: Ctx, text: string, x: number, y: number, s: number, c
   ctx.font = `700 ${13 * s}px system-ui, -apple-system, "Segoe UI", sans-serif`;
   const tw = ctx.measureText(text).width, pw = tw + 16 * s, ph = 24 * s;
   const x0 = align === "left" ? x : align === "right" ? x - pw : x - pw / 2;
-  ctx.fillStyle = "rgba(11,13,18,.85)"; ctx.strokeStyle = color; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.roundRect(x0, y - ph / 2, pw, ph, ph / 2); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 1.2; glassPane(ctx, x0, y - ph / 2, pw, ph, ph / 2, color);
   ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText(text, x0 + pw / 2, y + 0.5);
   ctx.restore();
