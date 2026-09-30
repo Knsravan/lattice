@@ -1,8 +1,9 @@
-import { site, chapter0, chapter1, chapter2, chapter3, chapter4, chapter5, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
+import { theme as themeCopy, site, chapter0, chapter1, chapter2, chapter3, chapter4, chapter5, scene1, scene2, scene3, scene4, scene5 } from "./ui/copy.ts";
 import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
 import { mountSoundControls } from "./ui/sound.ts";
-import { mountBackdrop } from "./ui/backdrop.ts";
+import { mountTown } from "./ui/town.ts";
+import { initTheme, mountThemeSwitch } from "./ui/theme.ts";
 import { mountSmoothScroll } from "./ui/smooth.ts";
 import { mountReveal } from "./ui/reveal.ts";
 import { mountChapter0 } from "./scenes/chapter0-problem.ts";
@@ -19,9 +20,10 @@ import { mountScene5 } from "./scenes/scene5-kyber.ts";
 
 /** Builds the page from copy.ts and mounts each scene into its section. */
 function build() {
+  initTheme(); // light = the town by day, dark = at night; set before anything draws
   const app = $("#app");
 
-  // hero (the 3D backdrop draws a shearing lattice behind it; the flat 2D one is the fallback)
+  // hero (the 3D town is behind it; the flat shearing lattice is the fallback)
   const hero = el(
     "header",
     { class: "hero" },
@@ -88,17 +90,20 @@ function build() {
     {},
     el("span", { text: "Lattice · built in September 2026 · " }),
     el("a", { href: "https://github.com/Knsravan/lattice", text: "source on GitHub" }),
+    el("p", { class: "credits", text: site.townCredits }),
   );
   app.append(footer);
 
-  // the page's own scroll feel: glide scrolling, elements that appear as they come into view, the 3D backdrop
+  // the page's own scroll feel: glide scrolling, elements that appear as they come into view, the 3D town
   mountSmoothScroll();
   mountReveal(app);
-  const anchors = [hero, ...[0, 1, 2, 3, 4, 5].map((i) => $(`#chapter-${i}`)), footer];
-  mountBackdrop(anchors).catch(() => mountHero(hero)); // no WebGL or no CDN: the flat shearing lattice instead
+  const chapters = [0, 1, 2, 3, 4, 5].map((i) => $(`#chapter-${i}`));
+  mountTown([hero, ...chapters, footer], chapters).catch(() => mountHero(hero)); // no WebGL or no CDN: the flat shearing lattice instead
 
   // voice + sound-effects switches, pinned in the corner
-  document.body.append(mountSoundControls());
+  const controls = mountSoundControls();
+  controls.prepend(mountThemeSwitch(themeCopy));
+  document.body.append(controls);
 
   // nav dots
   const nav = el("nav", { class: "dots", "aria-label": "Scenes" });

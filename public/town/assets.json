@@ -1,0 +1,164 @@
+{
+  "note": "The site uses the web-sized copies in public/town/web/ (WebP textures, meshopt-compressed .glb). npm run assets downloads the originals into public/town/textures and public/town/models (git-ignored); they are shrunk for the web with gltf-transform and sharp outside the project (see NOTES.md).",
+  "textures": {
+    "textures/facade-1": {
+      "source": "ambientCG Facade001",
+      "url": "https://ambientcg.com/view?id=Facade001",
+      "license": "CC0",
+      "maps": [
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/facade-2": {
+      "source": "ambientCG Facade018A",
+      "url": "https://ambientcg.com/view?id=Facade018A",
+      "license": "CC0",
+      "maps": [
+        "ao",
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/facade-3": {
+      "source": "ambientCG Facade017",
+      "url": "https://ambientcg.com/view?id=Facade017",
+      "license": "CC0",
+      "maps": [
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/facade-4": {
+      "source": "ambientCG Facade006",
+      "url": "https://ambientcg.com/view?id=Facade006",
+      "license": "CC0",
+      "maps": [
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/bricks": {
+      "source": "ambientCG Bricks105",
+      "url": "https://ambientcg.com/view?id=Bricks105",
+      "license": "CC0",
+      "maps": [
+        "ao",
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/roof": {
+      "source": "ambientCG RoofingTiles013A",
+      "url": "https://ambientcg.com/view?id=RoofingTiles013A",
+      "license": "CC0",
+      "maps": [
+        "ao",
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/asphalt": {
+      "source": "ambientCG Asphalt033",
+      "url": "https://ambientcg.com/view?id=Asphalt033",
+      "license": "CC0",
+      "maps": [
+        "ao",
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/paving": {
+      "source": "ambientCG PavingStones151",
+      "url": "https://ambientcg.com/view?id=PavingStones151",
+      "license": "CC0",
+      "maps": [
+        "ao",
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/grass": {
+      "source": "ambientCG Grass005",
+      "url": "https://ambientcg.com/view?id=Grass005",
+      "license": "CC0",
+      "maps": [
+        "ao",
+        "color",
+        "normal",
+        "roughness"
+      ]
+    },
+    "textures/concrete": {
+      "source": "ambientCG Concrete034",
+      "url": "https://ambientcg.com/view?id=Concrete034",
+      "license": "CC0",
+      "maps": [
+        "color",
+        "normal",
+        "roughness"
+      ]
+    }
+  },
+  "models": {
+    "shrub-1": {
+      "source": "Poly Haven shrub_01",
+      "name": "Shrub 01",
+      "url": "https://polyhaven.com/a/shrub_01",
+      "license": "CC0"
+    },
+    "bench-1": {
+      "source": "Poly Haven painted_wooden_bench",
+      "name": "Painted Wooden Bench",
+      "url": "https://polyhaven.com/a/painted_wooden_bench",
+      "license": "CC0"
+    },
+    "lamp-1": {
+      "source": "Poly Haven street_lamp_01",
+      "name": "Street Lamp 01",
+      "url": "https://polyhaven.com/a/street_lamp_01",
+      "license": "CC0"
+    },
+    "hydrant-1": {
+      "source": "Poly Haven fire_hydrant",
+      "name": "Fire Hydrant",
+      "url": "https://polyhaven.com/a/fire_hydrant",
+      "license": "CC0"
+    },
+    "bin-1": {
+      "source": "Poly Haven metal_trash_can",
+      "name": "Metal Trash Can",
+      "url": "https://polyhaven.com/a/metal_trash_can",
+      "license": "CC0"
+    },
+    "car": {
+      "source": "Khronos glTF Sample Assets: Car Concept",
+      "artist": "Eric Chadwick",
+      "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept",
+      "license": "CC BY 4.0"
+    },
+    "lantern": {
+      "source": "Khronos glTF Sample Assets: Lantern",
+      "url": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Lantern",
+      "license": "CC0"
+    }
+  },
+  "skies": {
+    "sky-day": {
+      "source": "Poly Haven Potsdamer Platz, via pmndrs/assets (city.exr)",
+      "license": "CC0"
+    },
+    "sky-night": {
+      "source": "Poly Haven Dikhololo Night, via pmndrs/assets (night.exr)",
+      "license": "CC0"
+    }
+  }
+}
