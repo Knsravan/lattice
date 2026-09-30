@@ -3,6 +3,7 @@ import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
 import { mountSoundControls } from "./ui/sound.ts";
 import { mountTown } from "./ui/town.ts";
+import { mountFootage } from "./ui/footage.ts";
 import { initTheme, mountThemeSwitch } from "./ui/theme.ts";
 import { mountSmoothScroll } from "./ui/smooth.ts";
 import { mountReveal } from "./ui/reveal.ts";
@@ -100,7 +101,9 @@ function build() {
   mountSmoothScroll();
   mountReveal(app);
   const chapters = [0, 1, 2, 3, 4, 5].map((i) => $(`#chapter-${i}`));
-  mountTown([hero, ...chapters, footer], chapters).catch(() => mountHero(hero)); // no WebGL or no CDN: the flat shearing lattice instead
+  // real footage when `npm run footage` has added clips; otherwise the 3D town; without WebGL or the CDN, the flat lattice
+  const anchors = [hero, ...chapters, footer];
+  mountFootage(anchors).catch(() => mountTown(anchors, chapters).catch(() => mountHero(hero)));
 
   // voice + sound-effects switches, pinned in the corner
   const controls = mountSoundControls();
