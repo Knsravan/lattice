@@ -89,7 +89,7 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
     leaves: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .9 }), // each tree has its own shade (instance colour)
     gold: new THREE.MeshStandardMaterial({ color: COL.gold, metalness: 1, roughness: .22 }),
     // flat roofs are tar and gravel, darker than the walls: pale roofs made the town look like a white model from above
-    roofTop: pbr("concrete", { color: new THREE.Color(.36, .36, .38) }),
+    roofTop: pbr("concrete", { color: new THREE.Color(.13, .13, .14) }), // (linear: about 40% grey on screen)
     lot: pbr("concrete", { color: new THREE.Color(.62, .61, .6) }),
     render: pbr("concrete", { color: new THREE.Color(1.05, 1, .92) }), // painted house walls
     shopfront: new THREE.MeshStandardMaterial({ color: 0x1c232b, roughness: .15, metalness: .6, emissive: 0xffc27a, emissiveIntensity: 0 }),
