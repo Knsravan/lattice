@@ -22,12 +22,7 @@ export function mountReveal(root: HTMLElement): () => void {
     h.replaceChildren(...words.map((w, i) => (/^\s+$/.test(w) ? w : el("span", { class: "word", "aria-hidden": "true", style: `--w:${i / 2}` }, w))));
     h.dataset.reveal = "words";
   });
-  root.querySelectorAll<HTMLElement>(".hero").forEach((hero) => {
-    [...hero.children].filter((c) => !c.classList.contains("hero-bg") && c.tagName !== "H1").forEach((c, i) => {
-      (c as HTMLElement).dataset.reveal = "rise";
-      (c as HTMLElement).style.setProperty("--i", String(i + 2));
-    });
-  });
+  root.querySelectorAll<HTMLElement>(".hero-text").forEach((c) => { c.dataset.reveal = "rise"; c.style.setProperty("--i", "2"); });
   mark(".chapter-head .kicker, .scene .prose .kicker", "rise");
   mark(".story-figure", "zoom");
   mark(".story-step", "side");
@@ -44,6 +39,14 @@ export function mountReveal(root: HTMLElement): () => void {
     { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
   );
   root.querySelectorAll("[data-reveal]").forEach((n) => io.observe(n));
+  // backup: on a busy phone the observer can report late, so anything on screen is shown on the next scroll or tick anyway
+  const sweep = () => {
+    for (const n of root.querySelectorAll<HTMLElement>("[data-reveal]:not(.in)")) {
+      const r = n.getBoundingClientRect();
+      if (r.top < innerHeight * .95 && r.bottom > 0) { n.classList.add("in"); io.unobserve(n); }
+    }
+  };
+  const tick = setInterval(sweep, 700);
   // whatever is already on screen at load plays in straight away
   requestAnimationFrame(() => document.documentElement.classList.add("reveal-ready"));
 
@@ -61,5 +64,5 @@ export function mountReveal(root: HTMLElement): () => void {
   addEventListener("resize", onScroll);
   paint();
 
-  return () => { io.disconnect(); bar.remove(); removeEventListener("scroll", onScroll); removeEventListener("resize", onScroll); };
+  return () => { io.disconnect(); clearInterval(tick); bar.remove(); removeEventListener("scroll", onScroll); removeEventListener("resize", onScroll); };
 }
