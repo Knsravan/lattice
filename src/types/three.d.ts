@@ -32,9 +32,11 @@ declare module "three" {
     visible: boolean;
     add(...objects: Object3D[]): this;
     updateMatrix(): void;
+    lookAt(x: number, y: number, z: number): void;
   }
   export class Group extends Object3D {}
-  export class Scene extends Object3D {}
+  export class Scene extends Object3D { fog: Fog | null }
+  export class Fog { constructor(color: ColorLike, near?: number, far?: number) }
   export class Camera extends Object3D { getWorldDirection(target: Vector3): Vector3 }
   export class PerspectiveCamera extends Camera {
     constructor(fov: number, aspect: number, near: number, far: number);
@@ -48,12 +50,21 @@ declare module "three" {
     needsUpdate: boolean;
     setXYZ(i: number, x: number, y: number, z: number): this;
   }
-  export class BufferGeometry { setAttribute(name: string, a: BufferAttribute): this }
+  export class BufferGeometry { setAttribute(name: string, a: BufferAttribute): this; dispose(): void }
+  export class Texture { dispose(): void }
+  export class CanvasTexture extends Texture { constructor(canvas: HTMLCanvasElement) }
+  export const AdditiveBlending: number;
+  export class PointsMaterial extends Material {
+    constructor(p?: MaterialParams & { size?: number; sizeAttenuation?: boolean; vertexColors?: boolean; map?: Texture; depthWrite?: boolean; blending?: number });
+    opacity: number;
+    size: number;
+  }
+  export class Points extends Object3D { constructor(g: BufferGeometry, m: Material) }
   export class SphereGeometry extends BufferGeometry { constructor(radius?: number, wSeg?: number, hSeg?: number) }
   export class CylinderGeometry extends BufferGeometry { constructor(rTop?: number, rBottom?: number, height?: number, seg?: number) }
   export class ConeGeometry extends BufferGeometry { constructor(radius?: number, height?: number, seg?: number) }
   interface MaterialParams { color?: ColorLike; wireframe?: boolean; transparent?: boolean; opacity?: number }
-  export class Material {}
+  export class Material { dispose(): void }
   export class MeshBasicMaterial extends Material { constructor(p?: MaterialParams); color: Color }
   export class MeshLambertMaterial extends Material { constructor(p?: MaterialParams); color: Color }
   export class LineBasicMaterial extends Material { constructor(p?: MaterialParams); color: Color }
