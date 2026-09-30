@@ -102,7 +102,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     g.userData.tick = ((t, p) => { g.rotation.y = t * .25; rings.forEach((r, i) => { const k = (t * .35 + i / 3) % 1; r.scale.setScalar(.3 + k * 2.6); r.material.opacity = (1 - k) * .8 * (1 - p * .7); }); }) as Tick;
     pieces.quantum = g; }
   { // chapter 5: glass plates close around the light into one sealed sphere, the seams turning green
-    const g = new THREE.Group(), ico = new THREE.IcosahedronGeometry(1.3, 1).toNonIndexed(), P = ico.attributes.position;
+    const g = new THREE.Group(), ico = new THREE.IcosahedronGeometry(1.3, 1) /* (already one triangle per face) */, P = ico.attributes.position;
     const pm = glass(0xf2fff8, { thickness: .5, iridescence: .5, side: THREE.DoubleSide }), seam = new THREE.LineBasicMaterial({ color: C.secret, transparent: true, opacity: .9 });
     const plates: [Any, Any, Any, Any][] = [];
     for (let f = 0; f < P.count; f += 3) { const a = V(0, 0, 0).fromBufferAttribute(P, f), b = V(0, 0, 0).fromBufferAttribute(P, f + 1), c = V(0, 0, 0).fromBufferAttribute(P, f + 2);

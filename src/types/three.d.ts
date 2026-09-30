@@ -47,14 +47,15 @@ declare module "three" {
   export class DirectionalLight extends Object3D { constructor(color?: ColorLike, intensity?: number) }
   export class BufferAttribute {
     constructor(array: Float32Array, itemSize: number);
+    array: Float32Array;
     needsUpdate: boolean;
     setXYZ(i: number, x: number, y: number, z: number): this;
   }
-  export class BufferGeometry { setAttribute(name: string, a: BufferAttribute): this; setIndex(index: number[]): this; dispose(): void }
+  export class BufferGeometry { setAttribute(name: string, a: BufferAttribute): this; setIndex(index: number[]): this; setDrawRange(start: number, count: number): void; dispose(): void }
   export const DoubleSide: number;
   export class ShaderMaterial extends Material {
     constructor(p: { uniforms: Record<string, { value: unknown }>; vertexShader: string; fragmentShader: string;
-      transparent?: boolean; depthWrite?: boolean; blending?: number; side?: number });
+      transparent?: boolean; depthWrite?: boolean; depthTest?: boolean; blending?: number; side?: number });
     uniforms: Record<string, { value: unknown }>;
   }
   export class Texture { dispose(): void }
@@ -65,12 +66,12 @@ declare module "three" {
     opacity: number;
     size: number;
   }
-  export class Points extends Object3D { constructor(g: BufferGeometry, m: Material) }
+  export class Points extends Object3D { constructor(g: BufferGeometry, m: Material); frustumCulled: boolean; renderOrder: number }
   export class SphereGeometry extends BufferGeometry { constructor(radius?: number, wSeg?: number, hSeg?: number) }
   export class CylinderGeometry extends BufferGeometry { constructor(rTop?: number, rBottom?: number, height?: number, seg?: number) }
   export class ConeGeometry extends BufferGeometry { constructor(radius?: number, height?: number, seg?: number) }
-  interface MaterialParams { color?: ColorLike; wireframe?: boolean; transparent?: boolean; opacity?: number }
-  export class Material { dispose(): void }
+  interface MaterialParams { color?: ColorLike; wireframe?: boolean; transparent?: boolean; opacity?: number; blending?: number; depthWrite?: boolean; map?: Texture }
+  export class Material { opacity: number; dispose(): void }
   export class MeshBasicMaterial extends Material { constructor(p?: MaterialParams); color: Color }
   export class MeshLambertMaterial extends Material { constructor(p?: MaterialParams); color: Color }
   export class LineBasicMaterial extends Material { constructor(p?: MaterialParams); color: Color }
@@ -91,6 +92,7 @@ declare module "three" {
     constructor(p?: { antialias?: boolean; alpha?: boolean });
     domElement: HTMLCanvasElement;
     setPixelRatio(r: number): void;
+    getPixelRatio(): number;
     setSize(w: number, h: number, updateStyle?: boolean): void;
     render(scene: Scene, camera: Camera): void;
     dispose(): void;
