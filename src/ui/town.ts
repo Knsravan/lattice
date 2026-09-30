@@ -46,11 +46,11 @@ export async function mountTown(anchors: HTMLElement[], chapters: HTMLElement[])
   let seed = 1; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
   // ================= renderer, scene, sky =================
-  const renderer = new THREE.WebGLRenderer({ antialias: !lite, powerPreference: "high-performance" });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   const canvas: HTMLCanvasElement = renderer.domElement;
   canvas.className = "backdrop";
   canvas.setAttribute("aria-hidden", "true");
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, lite ? 1 : 1.5));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, lite ? 1.75 : 2)); // sharp on phone and retina screens
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = !lite;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;

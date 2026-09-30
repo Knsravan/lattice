@@ -16,7 +16,8 @@ export const currentTheme = (): Theme => chosen ?? stored() ?? (system?.matches 
 function apply() {
   const t = currentTheme();
   document.documentElement.dataset.theme = t;
-  document.documentElement.style.colorScheme = t;
+  // "only light" stops phone browsers' own forced dark mode from darkening the light theme
+  document.documentElement.style.colorScheme = t === "dark" ? "dark" : "only light";
   dispatchEvent(new CustomEvent("themechange", { detail: t }));
 }
 

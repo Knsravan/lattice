@@ -28,9 +28,11 @@ function build() {
     "header",
     { class: "hero" },
     el("h1", { text: site.title }),
-    el("p", { class: "tagline", text: site.tagline }),
-    ...site.intro.map((t) => el("p", { class: "intro", text: t })),
-    el("a", { class: "scroll-hint", href: "#chapter-0", text: site.scrollHint + " ↓" }),
+    // the words sit together on one panel over the town
+    el("div", { class: "hero-text" },
+      el("p", { class: "tagline", text: site.tagline }),
+      ...site.intro.map((t) => el("p", { class: "intro", text: t })),
+      el("a", { class: "scroll-hint", href: "#chapter-0", text: site.scrollHint + " ↓" })),
   );
   app.append(hero);
 
