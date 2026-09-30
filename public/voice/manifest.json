@@ -1,1 +1,230 @@
-{}
+{
+  "c0-s0": {
+    "file": "c0-s0.mp3",
+    "text": "Meet Alex and Sam. Alex wants to send Sam a message: “meet at 5”."
+  },
+  "c0-s1": {
+    "file": "c0-s1.mp3",
+    "text": "The message doesn’t fly straight to Sam. It hops through lots of computers on the way: Wi-Fi boxes, routers, servers."
+  },
+  "c0-s2": {
+    "file": "c0-s2.mp3",
+    "text": "Meet Eve. Eve runs one of those computers. Every message that passes through, she can read and quietly copy."
+  },
+  "c0-s3": {
+    "file": "c0-s3.mp3",
+    "text": "So Alex locks the message before sending it. Now Eve only sees scrambled junk."
+  },
+  "c0-s4": {
+    "file": "c0-s4.mp3",
+    "text": "But there’s a catch. To open the lock, Sam needs the key. If Alex sends the key, Eve copies the key too. Alex and Sam have never met. How can they share a key?"
+  },
+  "c0-s5": {
+    "file": "c0-s5.mp3",
+    "text": "Here is the clever answer. Sam gets a special padlock. It comes with just one key, and Sam keeps that key at home. The key never travels."
+  },
+  "c0-s6": {
+    "file": "c0-s6.mp3",
+    "text": "Sam sends the padlock, open, to Alex. Eve copies it on the way. That’s fine: this padlock can only lock things. It can never unlock anything."
+  },
+  "c0-s7": {
+    "file": "c0-s7.mp3",
+    "text": "Alex puts the message in a box and clicks Sam’s padlock shut. Click! Now nobody can open it without Sam’s key. Not even Alex."
+  },
+  "c0-s8": {
+    "file": "c0-s8.mp3",
+    "text": "The locked box travels to Sam. Eve copies it too, but she has no key, so her copy stays shut. Sam uses the key, and the box opens."
+  },
+  "c0-s9": {
+    "file": "c0-s9.mp3",
+    "text": "That is what the little padlock next to a website’s address means. Your phone and the website just did this dance, in a blink."
+  },
+  "c0-s10": {
+    "file": "c0-s10.mp3",
+    "text": "Today’s padlocks are built on a number puzzle. Multiplying two numbers is easy. Going backwards, finding which two numbers were multiplied, is hard. Real padlocks use numbers hundreds of digits long."
+  },
+  "c0-s11": {
+    "file": "c0-s11.mp3",
+    "text": "But a big enough quantum computer can go backwards fast. When those machines arrive, today’s padlocks pop open. And Eve has been saving copies all along."
+  },
+  "c0-s12": {
+    "file": "c0-s12.mp3",
+    "text": "So the world is switching to a new padlock, built on a different puzzle. Nobody knows how to crack it, not even with a quantum computer. It is a puzzle about dots."
+  },
+  "c1-s0": {
+    "file": "c1-s0.mp3",
+    "text": "Start with one arrow. Call it A."
+  },
+  "c1-s1": {
+    "file": "c1-s1.mp3",
+    "text": "Take a step along A. Then another, and another. Backwards too. Every stop leaves a dot. You get a row of dots."
+  },
+  "c1-s2": {
+    "file": "c1-s2.mp3",
+    "text": "Now add a second arrow, B, pointing a different way."
+  },
+  "c1-s3": {
+    "file": "c1-s3.mp3",
+    "text": "Slide the whole row along B, again and again, up and down. The rows stack up into a grid."
+  },
+  "c1-s4": {
+    "file": "c1-s4.mp3",
+    "text": "This grid of dots is called a lattice. The two arrows that build it are called its basis."
+  },
+  "c1-s5": {
+    "file": "c1-s5.mp3",
+    "text": "Every dot has an address. Start at the centre dot. Walk 3 steps along A, then 2 steps along B. You land exactly on a dot. Its address is (3, 2)."
+  },
+  "c1-s6": {
+    "file": "c1-s6.mp3",
+    "text": "Steps can go backwards too. Walk 1 step back along A, then 2 steps along B. You land on the dot (−1, 2)."
+  },
+  "c1-s7": {
+    "file": "c1-s7.mp3",
+    "text": "But no half steps are allowed. Half a step along A lands between the dots, on no dot at all. Every dot is a whole number of steps away."
+  },
+  "c1-s8": {
+    "file": "c1-s8.mp3",
+    "text": "Now drop a ball anywhere between the dots. The question: which dot is closest to the ball?"
+  },
+  "c1-s9": {
+    "file": "c1-s9.mp3",
+    "text": "Measure from the ball to the dots around it. The shortest line wins."
+  },
+  "c1-s10": {
+    "file": "c1-s10.mp3",
+    "text": "In a flat grid you can almost see the answer. Remember this question: “which dot is closest?” It is the puzzle behind the new padlock, and it gets very hard when the grid goes in hundreds of directions instead of two."
+  },
+  "c2-s0": {
+    "file": "c2-s0.mp3",
+    "text": "Here is a new grid. It is built by two short, square arrows. Let’s call them the green arrows."
+  },
+  "c2-s1": {
+    "file": "c2-s1.mp3",
+    "text": "Now meet a different pair: two long, crooked arrows. Call them the red arrows."
+  },
+  "c2-s2": {
+    "file": "c2-s2.mp3",
+    "text": "Watch the dots while we swap the green arrows for the red ones. Not a single dot moves. The red arrows build exactly the same grid."
+  },
+  "c2-s3": {
+    "file": "c2-s3.mp3",
+    "text": "Take this dot. With the green arrows the walk is short: 1 step along the first arrow, 1 step along the second."
+  },
+  "c2-s4": {
+    "file": "c2-s4.mp3",
+    "text": "Now reach the same dot with the red arrows: 1 step backwards along the first, then 2 along the second. A long zig-zag, far out and back, to the same dot."
+  },
+  "c2-s5": {
+    "file": "c2-s5.mp3",
+    "text": "Now drop a ball. To find the closest dot, there is a simple method: walk with your two arrows, rounding to whole steps. With the green arrows, it lands on the closest dot."
+  },
+  "c2-s6": {
+    "file": "c2-s6.mp3",
+    "text": "With the red arrows, the very same method lands on the wrong dot, far from the ball. The real closest dot was right next to it."
+  },
+  "c2-s7": {
+    "file": "c2-s7.mp3",
+    "text": "This is the secret behind the new padlock. Sam keeps the green arrows private. Everyone, even Eve, gets the red arrows. Same grid, but only Sam can find the closest dot easily."
+  },
+  "c3-s0": {
+    "file": "c3-s0.mp3",
+    "text": "Now Alex sends Sam a secret bit: a 0 or a 1. Alex only has the red arrows, but that’s enough to find dots on Sam’s grid."
+  },
+  "c3-s1": {
+    "file": "c3-s1.mp3",
+    "text": "To send a 0, Alex picks any dot and puts the ball right on it."
+  },
+  "c3-s2": {
+    "file": "c3-s2.mp3",
+    "text": "To send a 1, Alex puts the ball exactly halfway between two dots."
+  },
+  "c3-s3": {
+    "file": "c3-s3.mp3",
+    "text": "But there’s a problem. Eve can read that too. On a dot means 0, exactly halfway means 1. No secret needed."
+  },
+  "c3-s4": {
+    "file": "c3-s4.mp3",
+    "text": "So before sending, Alex gives the ball a small random shake. Now it sits near its spot, but not exactly on it."
+  },
+  "c3-s5": {
+    "file": "c3-s5.mp3",
+    "text": "Sam rounds the shaken ball with the green arrows and looks at what is left over. Almost nothing means 0. About half a step means 1. Sam reads it right."
+  },
+  "c3-s6": {
+    "file": "c3-s6.mp3",
+    "text": "Eve rounds with the red arrows. Her long, crooked arrows take her to the wrong neighbouring dot, so the leftover she measures is nonsense. Her answer is just a guess."
+  },
+  "c3-s7": {
+    "file": "c3-s7.mp3",
+    "text": "Send ten bits. Sam reads all ten. Eve gets about half: no better than flipping a coin."
+  },
+  "c3-s8": {
+    "file": "c3-s8.mp3",
+    "text": "But too much shake and even Sam gets lost. Real padlocks use a shake that is just right. This trick is called Learning With Errors, and it is the heart of the new padlock."
+  },
+  "c4-s0": {
+    "file": "c4-s0.mp3",
+    "text": "Eve has a weapon: a famous method called LLL. It takes crooked red arrows and tidies them, one move at a time."
+  },
+  "c4-s1": {
+    "file": "c4-s1.mp3",
+    "text": "Move one: shorten an arrow by taking the other one away from it. Move two: swap the arrows if the shorter one is second. Repeat until nothing changes."
+  },
+  "c4-s2": {
+    "file": "c4-s2.mp3",
+    "text": "In a flat grid, Eve needs only a few moves to get short, square arrows. With those, she can read Sam’s messages. A flat grid is not safe."
+  },
+  "c4-s3": {
+    "file": "c4-s3.mp3",
+    "text": "So real padlocks don’t use a flat grid. They use grids that go in hundreds of directions at once. We can’t draw that, but we can test it."
+  },
+  "c4-s4": {
+    "file": "c4-s4.mp3",
+    "text": "This chart runs Eve’s weapon on grids with more and more directions: 2, 4, 6… up to 40. Each bar shows how often she found the secret."
+  },
+  "c4-s5": {
+    "file": "c4-s5.mp3",
+    "text": "With a few directions, Eve wins almost every time. Past about 30 directions she almost never does. Her weapon still finishes, but its arrows are no longer good enough."
+  },
+  "c4-s6": {
+    "file": "c4-s6.mp3",
+    "text": "Real padlocks use 500 to 1,000 directions. Far beyond anything Eve can tidy."
+  },
+  "c4-s7": {
+    "file": "c4-s7.mp3",
+    "text": "What about quantum computers? They are brilliant at one thing: finding hidden repeating patterns. That’s how they crack today’s number puzzle. A grid in hundreds of directions has no such pattern, so they barely help."
+  },
+  "c5-s0": {
+    "file": "c5-s0.mp3",
+    "text": "Now the real padlock, shrunk until every number fits on screen. It is called ML-KEM, and your browser has used it since 2024."
+  },
+  "c5-s1": {
+    "file": "c5-s1.mp3",
+    "text": "First, the numbers live on a clock with 97 hours. Go past 96 and you wrap back round to 0, just like a clock going past 12."
+  },
+  "c5-s2": {
+    "file": "c5-s2.mp3",
+    "text": "Sam makes keys. Sam’s secret is a short list of tiny numbers: −1, 0 or 1. These play the part of the green arrows."
+  },
+  "c5-s3": {
+    "file": "c5-s3.mp3",
+    "text": "Sam mixes the secret into a big public jumble of numbers, then adds a small shake. The result is Sam’s public padlock. Anyone can have it."
+  },
+  "c5-s4": {
+    "file": "c5-s4.mp3",
+    "text": "Alex picks a random secret key: eight 0s and 1s. Each 1 is pushed halfway round the clock, to 49. Then Alex mixes in Sam’s padlock, adds a fresh shake, and sends the result."
+  },
+  "c5-s5": {
+    "file": "c5-s5.mp3",
+    "text": "Eve sees the jumble, the padlock and Alex’s message. Without Sam’s secret, it is just a mess of numbers."
+  },
+  "c5-s6": {
+    "file": "c5-s6.mp3",
+    "text": "Sam uses the secret to cancel the jumble. On the clock, the eight numbers slide into two groups: near 0 means 0, near the far side means 1."
+  },
+  "c5-s7": {
+    "file": "c5-s7.mp3",
+    "text": "Now Alex and Sam share the same secret key, and nobody else has it. They use it to lock their real messages. The same trick as the grid, done with numbers."
+  }
+}

@@ -130,3 +130,4 @@
 - Voicebox only returns WAV (~10× larger than MP3). If ffmpeg is on the user's PATH each clip is converted to 64 kbps mono MP3; otherwise the WAV is kept (the page plays either). The VoiceStudio-only `--samples`/`--design` modes were removed; `--only c0-s0,…` added to test or redo single clips.
 - Tested against a stand-in Voicebox server: list, one step, all 57, re-run skips all, unknown profile and closed app give clear messages, MP3 path (fake ffmpeg) replaces the WAV and updates the manifest.
 
+- All 57 clips recorded on the user's laptop (CPU, 33–187 s per clip, ~70 min) and pushed as branch voice-clips. Checked here: every manifest entry matches its step's text in copy.ts, every file is MP3, 3.5 MB total; in the browser the Voice switch is enabled and each step requests its own clip, no errors.
