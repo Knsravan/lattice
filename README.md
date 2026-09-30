@@ -44,6 +44,20 @@ Voicebox makes WAV files; if `ffmpeg` is installed, each clip is saved as a smal
 
 Commit `public/voice/` and deploy. Visitors turn Voice and Sound effects on with the switches in the corner (both start off).
 
+## Real video footage behind the page
+
+The background can be real filmed footage: one clip per chapter, which plays forward and backward as you scroll, with day clips in the light theme and night clips in the dark one. The clips come from [Pexels](https://www.pexels.com/license/) (free to use). Fetch them on your own computer. You need `ffmpeg` and a free API key from https://www.pexels.com/api/:
+
+```
+set PEXELS_API_KEY=your-key                  # Windows (macOS/Linux: export PEXELS_API_KEY=your-key)
+npm run footage -- --dry-run                 # show which clips it would use; writes footage-candidates.html
+npm run footage                              # download and prepare all 14 clips into public/footage/
+npm run footage -- --pick grid-day=1234567   # swap one clip (ids are in footage-candidates.html)
+npm run footage -- --only grid --force       # redo one chapter
+```
+
+Commit `public/footage/` and deploy. The 3D town below keeps showing until every chapter has a clip.
+
 ## Real-world textures and models for the 3D town
 
 The 3D town behind the chapters can use real photographed textures and scanned props (all CC0). Download them on your own computer:
@@ -60,7 +74,7 @@ The originals land in `public/town/textures` and `public/town/models` (not commi
 
 - `src/core/` — pure math, no DOM: lattices, Gram–Schmidt, Babai, LLL (with animation trace), LWE, the Scene 4 attack, 4D projection, toy Kyber/ML-KEM, SHA-256.
 - `src/scenes/` — one file per scene, plus `draw2d.ts` (shared 2-D drawing) and Scene 4's chart and worker.
-- `src/ui/` — `copy.ts` (all narration text), `dom.ts` (DOM helpers, animation easing, reduced-motion check), `hero.ts` (flat title lattice, the fallback), `town.ts` (the 3D town behind the page), `theme.ts` (light = day, dark = night), `smooth.ts` (glide scrolling), `reveal.ts` (scroll reveal effects, progress line).
+- `src/ui/` — `copy.ts` (all narration text), `dom.ts` (DOM helpers, animation easing, reduced-motion check), `hero.ts` (flat title lattice, the last fallback), `footage.ts` (real video background, scrubbed by scroll), `town.ts` (the 3D town behind the page), `theme.ts` (light = day, dark = night), `smooth.ts` (glide scrolling), `reveal.ts` (scroll reveal effects, progress line).
 - `src/types/three.d.ts` — minimal types for the parts of Three.js Scene 4 uses (Three.js itself loads from the CDN at runtime).
 - `public/` — static page shell.
 - `tests/` — mirrors `src/core`.

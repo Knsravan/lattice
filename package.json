@@ -10,6 +10,7 @@
     "coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/core/**\" tests/*.test.ts",
     "serve": "node scripts/serve.mjs",
     "voice": "node scripts/voice.mjs",
-    "assets": "node scripts/assets.mjs"
+    "assets": "node scripts/assets.mjs",
+    "footage": "node scripts/footage.mjs"
   }
 }
