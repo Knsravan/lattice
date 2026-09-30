@@ -70,12 +70,12 @@ declare module "three" {
   export class SphereGeometry extends BufferGeometry { constructor(radius?: number, wSeg?: number, hSeg?: number) }
   export class CylinderGeometry extends BufferGeometry { constructor(rTop?: number, rBottom?: number, height?: number, seg?: number) }
   export class ConeGeometry extends BufferGeometry { constructor(radius?: number, height?: number, seg?: number) }
-  interface MaterialParams { color?: ColorLike; wireframe?: boolean; transparent?: boolean; opacity?: number; blending?: number; depthWrite?: boolean; map?: Texture }
+  interface MaterialParams { color?: ColorLike; wireframe?: boolean; transparent?: boolean; opacity?: number; blending?: number; depthWrite?: boolean; depthTest?: boolean; map?: Texture }
   export class Material { opacity: number; dispose(): void }
   export class MeshBasicMaterial extends Material { constructor(p?: MaterialParams); color: Color }
   export class MeshLambertMaterial extends Material { constructor(p?: MaterialParams); color: Color }
   export class LineBasicMaterial extends Material { constructor(p?: MaterialParams); color: Color }
-  export class Mesh extends Object3D { constructor(g: BufferGeometry, m: Material) }
+  export class Mesh extends Object3D { constructor(g: BufferGeometry, m: Material); renderOrder: number }
   export class InstancedMesh extends Mesh {
     constructor(g: BufferGeometry, m: Material, count: number);
     count: number;
@@ -84,7 +84,7 @@ declare module "three" {
     setMatrixAt(i: number, m: Matrix4): void;
     setColorAt(i: number, c: Color): void;
   }
-  export class Line extends Object3D { constructor(g: BufferGeometry, m: Material) }
+  export class Line extends Object3D { constructor(g: BufferGeometry, m: Material); renderOrder: number }
   export class Plane { constructor(normal?: Vector3, constant?: number) }
   export class Ray { intersectPlane(plane: Plane, target: Vector3): Vector3 | null }
   export class Raycaster { ray: Ray; setFromCamera(ndc: Vector2, camera: Camera): void }
