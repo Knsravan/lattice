@@ -2,6 +2,9 @@ import { site, chapter0, chapter1, chapter2, chapter3, chapter4, chapter5, scene
 import { el, $ } from "./ui/dom.ts";
 import { mountHero } from "./ui/hero.ts";
 import { mountSoundControls } from "./ui/sound.ts";
+import { mountBackdrop } from "./ui/backdrop.ts";
+import { mountSmoothScroll } from "./ui/smooth.ts";
+import { mountReveal } from "./ui/reveal.ts";
 import { mountChapter0 } from "./scenes/chapter0-problem.ts";
 import { mountChapter1 } from "./scenes/chapter1-grid.ts";
 import { mountChapter2 } from "./scenes/chapter2-basis.ts";
@@ -18,7 +21,7 @@ import { mountScene5 } from "./scenes/scene5-kyber.ts";
 function build() {
   const app = $("#app");
 
-  // hero, with a slowly shearing lattice behind the title
+  // hero (the 3D backdrop draws a shearing lattice behind it; the flat 2D one is the fallback)
   const hero = el(
     "header",
     { class: "hero" },
@@ -28,7 +31,6 @@ function build() {
     el("a", { class: "scroll-hint", href: "#chapter-0", text: site.scrollHint + " ↓" }),
   );
   app.append(hero);
-  mountHero(hero);
 
   // chapter 0: the problem (scroll story)
   const c0 = chapter("chapter-0", chapter0.kicker, chapter0.title);
@@ -81,14 +83,19 @@ function build() {
   mountScene5(s5.stage);
 
   // footer
-  app.append(
-    el(
-      "footer",
-      {},
-      el("span", { text: "Lattice · built in September 2026 · " }),
-      el("a", { href: "https://github.com/Knsravan/lattice", text: "source on GitHub" }),
-    ),
+  const footer = el(
+    "footer",
+    {},
+    el("span", { text: "Lattice · built in September 2026 · " }),
+    el("a", { href: "https://github.com/Knsravan/lattice", text: "source on GitHub" }),
   );
+  app.append(footer);
+
+  // the page's own scroll feel: glide scrolling, elements that appear as they come into view, the 3D backdrop
+  mountSmoothScroll();
+  mountReveal(app);
+  const anchors = [hero, ...[0, 1, 2, 3, 4, 5].map((i) => $(`#chapter-${i}`)), footer];
+  mountBackdrop(anchors).catch(() => mountHero(hero)); // no WebGL or no CDN: the flat shearing lattice instead
 
   // voice + sound-effects switches, pinned in the corner
   document.body.append(mountSoundControls());

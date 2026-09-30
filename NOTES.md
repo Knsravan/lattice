@@ -131,3 +131,12 @@
 - Tested against a stand-in Voicebox server: list, one step, all 57, re-run skips all, unknown profile and closed app give clear messages, MP3 path (fake ffmpeg) replaces the WAV and updates the manifest.
 
 - All 57 clips recorded on the user's laptop (CPU, 33–187 s per clip, ~70 min) and pushed as branch voice-clips. Checked here: every manifest entry matches its step's text in copy.ts, every file is MP3, 3.5 MB total; in the browser the Voice switch is enabled and each step requests its own clip, no errors.
+
+## Day 3 — Complete polish: no scrollbar, own scroll feel, 3D backdrop (user request, Sept 30)
+- Scrollbars hidden everywhere (`scrollbar-width: none` + `::-webkit-scrollbar`), with a 2 px progress line in the three colours instead.
+- Glide scrolling (`ui/smooth.ts`) animates `window.scrollTo`, rather than moving the page with a transform, so `position: sticky` (the story pictures) keeps working. Mouse/trackpad only; touch keeps native. Wheel events a scene already handled (the Scene 4 3D view's zoom calls preventDefault) are left alone, as are ctrl-zoom and elements that scroll by themselves. Nav-dot trips follow the section's live position, because the page can grow while travelling (they first stopped 57 px short).
+- Reveal effects set once per element with IntersectionObserver; `.reveal-ready` is only added by JS, so without it nothing is hidden. Reduced motion makes every transition instant (checked: 0 hidden elements on screen).
+- 3D backdrop: first try with 11³ points looked like dust; 9³, wider spacing, and each chapter's camera nearly along an axis (so the dots line up into rows) read as a lattice. The title was also caught a third of the way into the Chapter 0 morph because the title section is short: morphs now run from 0.3 to 1.05 screen heights around each chapter's start. A text glow keeps the title readable over the dots. On phones the pinned picture is solid, because frosted glass showed the step text sliding under it as a blur.
+- Fallback: with the CDN blocked, the flat 2D hero lattice mounts instead (checked). No errors at 1280×820 or 390×844.
+- To check on a real laptop: 60 fps with the backdrop plus the frosted panels (the blur is recomputed every frame over the moving backdrop). If it stutters, drop the backdrop-filter first.
+
