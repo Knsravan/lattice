@@ -1,9 +1,9 @@
 import { el } from "./dom.ts";
 
 /**
- * Light and dark theme. Light = the town by day, dark = the town at night.
+ * Light and dark theme. Light = a bright studio behind the page, dark = a dark one.
  * Follows the visitor's system setting until they press the switch; their choice is remembered on this device.
- * The page's colours come from CSS tokens keyed on <html data-theme>; the town listens for "themechange".
+ * The page's colours come from CSS tokens keyed on <html data-theme>; the 3D stage listens for "themechange".
  */
 export type Theme = "light" | "dark";
 const KEY = "lattice.theme";
