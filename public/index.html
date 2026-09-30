@@ -231,6 +231,7 @@
     .hero, .chapter-open { grid-template-columns: minmax(0, 1fr); min-height: auto; gap: 0; }
     .hero .slot, .chapter-open .slot, .chapter.flip .chapter-open .slot { order: -1; width: 72%; margin-bottom: -6%; }
     .chapter-head, .chapter.flip .chapter-head { justify-self: start; padding: 16px 20px 8px; }
+    .slot[data-slot=fibre] { display: none; } /* chapter 0's fibres stream from its heading card: no empty space above it */
     .story { display: block; }
     .story-figure { position: sticky; top: 56px; height: 48vh; z-index: 2; margin: 0 -20px; border-radius: 0 0 14px 14px; border-top: 0; background: var(--panel); -webkit-backdrop-filter: none; backdrop-filter: none; } /* solid: the steps slide under it */
     .story-steps { position: relative; z-index: 1; padding: 6vh 0 34vh; }
