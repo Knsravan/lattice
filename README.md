@@ -44,6 +44,18 @@ Voicebox makes WAV files; if `ffmpeg` is installed, each clip is saved as a smal
 
 Commit `public/voice/` and deploy. Visitors turn Voice and Sound effects on with the switches in the corner (both start off).
 
+## Real-world textures and models for the 3D town
+
+The 3D town behind the chapters can use real photographed textures and scanned props (all CC0). Download them on your own computer:
+
+```
+npm run assets                  # into public/town/: facades, bricks, roof tiles, asphalt, paving, grass, concrete (ambientCG) + street props (Poly Haven)
+npm run assets -- --dry-run     # just list what it would download
+npm run assets -- --only facade --force   # redo one set
+```
+
+Commit `public/town/` and deploy. `public/town/assets.json` records where each file came from.
+
 ## Layout
 
 - `src/core/` — pure math, no DOM: lattices, Gram–Schmidt, Babai, LLL (with animation trace), LWE, the Scene 4 attack, 4D projection, toy Kyber/ML-KEM, SHA-256.
