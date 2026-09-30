@@ -1,5 +1,5 @@
 import {
-  showcaseBases, pointsInBall, closestVectorExact, lll, rotationMatrix4, applyMatrix4, project4to3, unrotate4,
+  showcaseBases, pointsInBall, pointsInBox, closestVectorExact, lll, rotationMatrix4, applyMatrix4, project4to3, unrotate4,
 } from "../core/index.ts";
 import type { Basis, Vec, Angles4, LLLStep } from "../core/index.ts";
 import type * as T from "three";
@@ -11,7 +11,9 @@ import { startSweep } from "./scene4-sweep.ts";
 type Dim = 2 | 3 | 4;
 type Three = typeof import("three");
 
-const RADIUS: Record<Dim, number> = { 2: 4.2, 3: 3.0, 4: 2.4 }; // window of dots per dimension
+const RADIUS: Record<Dim, number> = { 2: 4.2, 3: 3.0, 4: 2.4 }; // the core of the grid: where balls land, how 4D fades with w
+const FILL: Record<3 | 4, number> = { 3: 5.8, 4: 3.4 }; // 3D/4D: the grid carries on past the box's edges, fading with distance
+const BOX2: [number, number] = [7.2, 5.4]; // 2D: the whole face-on view (the camera sees about ±6.4 × ±4.8), with a margin
 const DOT = 0.07;
 const STEP_S = 0.12; // one LLL step per ~100 ms
 const PROJ_DIST = 7; // 4D camera distance along w
@@ -92,7 +94,9 @@ export function mountScene4(root: HTMLElement): () => void {
   let fade = 0; // 0..1: dots and arrows grow in after a dimension change
   let good: Basis = showcaseBases(2).good;
   let bad: Basis = showcaseBases(2).bad;
-  let dots: Vec[] = pointsInBall(good, RADIUS[2]).map((p) => p.point);
+  /** The dots to show: they fill the whole box, not just a patch in the middle (user request). */
+  const dotsFor = (d: Dim, basis: Basis): Vec[] => (d === 2 ? pointsInBox(basis, BOX2) : pointsInBall(basis, FILL[d], 1500)).map((p) => p.point);
+  let dots: Vec[] = dotsFor(2, good);
   let shown: Basis = bad.map((v) => v.slice()); // the arrows as currently drawn
   let arrowTint = 0; // 0 = red (bad), 1 = green (good)
   let anim: { from: Basis; to: Basis; t: number; dur: number; tintFrom: number; tintTo: number } | null = null;
@@ -114,7 +118,7 @@ export function mountScene4(root: HTMLElement): () => void {
   function applyDim(d: Dim) {
     dim = d;
     ({ good, bad } = showcaseBases(d));
-    dots = pointsInBall(good, RADIUS[d]).map((p) => p.point);
+    dots = dotsFor(d, good);
     shown = bad.map((v) => v.slice());
     arrowTint = 0;
     readout.textContent = copy.hint;
@@ -169,11 +173,12 @@ export function mountScene4(root: HTMLElement): () => void {
   let rot4 = rotationMatrix4(angles);
   function place(v: Vec): { p: [number, number, number]; bright: number; size: number } {
     if (v.length === 2) return { p: [v[0], v[1], 0], bright: 1, size: 1 };
-    if (v.length === 3) return { p: [v[0], v[1], v[2]], bright: 1, size: 1 };
+    if (v.length === 3) { const far = Math.max(0, Math.hypot(v[0], v[1], v[2]) - RADIUS[3]) / (FILL[3] - RADIUS[3]); return { p: [v[0], v[1], v[2]], bright: 1 - far * .8, size: 1 }; }
     const r = applyMatrix4(rot4, v);
     const { p, scale } = project4to3(r, PROJ_DIST);
     const R = RADIUS[4];
-    const bright = 0.18 + 0.82 * Math.min(1, Math.max(0, (r[3] + R) / (2 * R)));
+    const far = Math.max(0, Math.hypot(...v) - R) / (FILL[4] - R); // the outer dots fade, like in 3D
+    const bright = (0.18 + 0.82 * Math.min(1, Math.max(0, (r[3] + R) / (2 * R)))) * (1 - far * .7);
     return { p: [p[0], p[1], p[2]], bright, size: scale };
   }
 
@@ -257,7 +262,7 @@ export function mountScene4(root: HTMLElement): () => void {
       g.strokeStyle = palette.secret; g.lineWidth = 5; g.shadowColor = palette.secret; g.shadowBlur = 12; g.beginPath(); g.arc(R, R, R * .62, 0, Math.PI * 2); g.stroke(); });
 
     // dots: glass-bead sprites, sized by distance like real spheres, dimmed and shrunk in 4D by their distance along w
-    const MAX = 800;
+    const MAX = 1500;
     const dotPos = new THREE.BufferAttribute(new Float32Array(MAX * 3), 3), dotSize = new THREE.BufferAttribute(new Float32Array(MAX), 1), dotBright = new THREE.BufferAttribute(new Float32Array(MAX), 1);
     const dotGeo = new THREE.BufferGeometry(); dotGeo.setAttribute("position", dotPos); dotGeo.setAttribute("aSize", dotSize); dotGeo.setAttribute("aBright", dotBright);
     const dotMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false,
@@ -268,9 +273,9 @@ export function mountScene4(root: HTMLElement): () => void {
         void main() { vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(t.rgb * mix(0.3, 1.0, vBright), t.a * mix(0.35, 1.0, vBright)); }` });
     const dotPoints = new THREE.Points(dotGeo, dotMat); dotPoints.frustumCulled = false; scene.add(dotPoints);
     /** A single glowing point (a spark, a halo, a ring) of a given colour, `px` across at one unit away. */
-    const glowPoint = (tex: T.Texture, color: string, additive = true) => {
+    const glowPoint = (tex: T.Texture, color: string, additive = true, onTop = false) => {
       const geo = new THREE.BufferGeometry(), pos = new THREE.BufferAttribute(new Float32Array(3), 3); geo.setAttribute("position", pos);
-      const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, ...(additive ? { blending: THREE.AdditiveBlending } : {}),
+      const mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: !onTop, ...(additive ? { blending: THREE.AdditiveBlending } : {}),
         uniforms: { uMap: { value: tex }, uColor: { value: new THREE.Color(color) }, uSize: { value: .3 }, uProj: { value: 1 }, uAlpha: { value: 1 } },
         vertexShader: `uniform float uSize, uProj; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = uSize * uProj / -mv.z; }`,
         fragmentShader: `uniform sampler2D uMap; uniform vec3 uColor; uniform float uAlpha;
@@ -319,13 +324,15 @@ export function mountScene4(root: HTMLElement): () => void {
     });
 
     // ball (a glowing amber orb), the nearest dot (a ring of green light), and the line between them
-    const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 14), new THREE.MeshBasicMaterial({ color: palette.ball }));
-    const ballGlow = glowPoint(glowTex, palette.ball); ballGlow.mat.uniforms.uSize.value = 1.1; projUniforms.push(ballGlow.mat.uniforms.uProj);
-    const ring = glowPoint(ringTex, palette.secret, false); ring.mat.uniforms.uSize.value = .7; projUniforms.push(ring.mat.uniforms.uProj);
+    const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.14, 20, 14), new THREE.MeshBasicMaterial({ color: palette.ball, depthTest: false }));
+    const ballGlow = glowPoint(glowTex, palette.ball, true, true); ballGlow.mat.uniforms.uSize.value = 1.8; projUniforms.push(ballGlow.mat.uniforms.uProj);
+    const ring = glowPoint(ringTex, palette.secret, false, true); ring.mat.uniforms.uSize.value = .7; projUniforms.push(ring.mat.uniforms.uProj);
     const lineGeo = new THREE.BufferGeometry();
     const linePos = new THREE.BufferAttribute(new Float32Array(6), 3);
     lineGeo.setAttribute("position", linePos);
-    const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: palette.ball }));
+    const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: palette.ball, depthTest: false }));
+    // the ball, its line and the ring always sit on top of the grid: they are what the reader follows
+    for (const o of [ballMesh, ballGlow.pt, ring.pt, line]) o.renderOrder = 10;
     scene.add(ballMesh, ballGlow.pt, ring.pt, line);
 
     // camera flights between 2D (face-on) and 3D/4D (angled)
