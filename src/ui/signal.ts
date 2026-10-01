@@ -31,7 +31,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   const [THREE, { RoomEnvironment }, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
     import("three"), addon("environments/RoomEnvironment.js"), addon("postprocessing/EffectComposer.js"), addon("postprocessing/RenderPass.js"),
     addon("postprocessing/UnrealBloomPass.js"), addon("postprocessing/OutputPass.js")]);
-  if (slots.length < 7) throw new Error("the stage needs the title slot and one per chapter");
+  if (slots.length < 8) throw new Error("the stage needs the title slot, one per chapter and the end slot");
 
   const reduced = reducedMotion;
   const lite = matchMedia("(max-width: 820px), (pointer: coarse)").matches; // phones: fewer fibres and dots, lighter geometry
@@ -277,8 +277,11 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     // next piece in the last ~0.8 screens before its heading reaches mid-screen.
     const cy = sy + H / 2; let j = 0; while (j < st.length - 2 && cy > st[j + 1].py) j++;
     const from = j === 0 ? Math.max(st[0].py, H / 2 + 1) : st[j].py; // (phones: the title piece sits above mid-screen at the top)
-    const gap = st[j + 1].py - from, s = clamp((cy - from) / gap, 0, 1);
-    const L1 = clamp(H * .6 / gap, .08, .4), L2 = clamp(H * .8 / gap, .1, .45), kLeave = sstep(s, 0, L1), kArr = sstep(s, 1 - L2, 1);
+    // the end (ch. 5 → the footer): the page may stop before the end slot reaches mid-screen, so the journey ends at the bottom
+    const ending = j === 6, target = ending ? Math.min(st[7].py, pageH - H / 2) : st[j + 1].py;
+    const gap = Math.max(target - from, 1), s = clamp((cy - from) / gap, 0, 1), landAt = ending ? 1 - clamp(H * .55 / gap, .02, .3) : 1; // (the end plays over the last half screen)
+    const L1 = clamp(H * .6 / gap, .08, .4), L2 = clamp(H * .8 / gap, .1, .45), kLeave = sstep(s, 0, L1), kArr = sstep(s, landAt - L2, landAt);
+    const fin = ending ? sstep(s, landAt, 1) : 0; // the ending: the lock opens and its light becomes the title wave again
     const pOf = (q) => clamp((H - st[q].top) / (H + st[q].h), 0, 1); // 0 as a slot enters the screen, 1 as it leaves (as before)
     // it rides on the fibres that run down the page (user request, Oct 1): each thread of dots on its own fibre, the sphere on the middle one
     const yv = -(sy + H / 2) * unit, Lt = H * unit * 1.5, nW = wires.length, midWire = (nW - 1) >> 1;
@@ -295,7 +298,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     G.rods = { 2: j === 1 ? sstep(kArr, .85, 1) : j === 2 ? 1 - sstep(kLeave, 0, .15) : 0, 3: j === 2 ? sstep(kArr, .85, 1) : j === 3 ? 1 - sstep(kLeave, 0, .15) : 0 };
 
     const last5 = j === 5; // ch. 4 → 5: only the sphere travels; the dots stay with the chandelier
-    const a = fill(A, Math.min(j, 5), j, t, pOf(j)), b = last5 ? a : fill(B, j + 1, j + 1, t, pOf(j + 1));
+    const a = fill(A, Math.min(j, 5), j, t, pOf(j)), b = last5 ? a : ending ? fill(B, 0, 7, t, 0) : fill(B, j + 1, j + 1, t, pOf(j + 1));
     if (last5) for (let i = 0; i < N; i++) { B.pos[i].copy(A.pos[i]); B.col[i].copy(A.col[i]); B.size[i] = A.size[i]; }
     // (title → ch. 0 only) the curve's middle, between the two pieces
     const mid = V((a.centre.x + b.centre.x) / 2 + Math.sin(j * 1.3 + .6) * 2.2, (a.centre.y + b.centre.y) / 2, -1.2), ab = V().subVectors(mid, a.centre), ba = V().subVectors(mid, b.centre);
@@ -311,6 +314,9 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
           if (curl > 0) { cur.pos[i].lerp(B.pos[i], curl); cur.pos[i].y += Math.sin(curl * Math.PI) * .5 * b.sc; }
           cur.col[i].copy(Wb.col[i]).lerp(B.col[i], curl); cur.size[i] = THREE.MathUtils.lerp(Wb.size[i], B.size[i], curl); } } }
     else if (last5) { for (let i = 0; i < N; i++) { cur.pos[i].copy(A.pos[i]); cur.col[i].copy(A.col[i]); cur.size[i] = A.size[i]; ki[i] = 0; } }
+    else if (ending) { // the light spreads out of the opened lock into the wave, from the middle outwards
+      for (let i = 0; i < N; i++) { const g = e3(clamp(sstep(fin, .2, .8) * 1.6 - order[i] * .6, 0, 1)); ki[i] = g;
+        cur.pos[i].copy(b.centre).lerp(B.pos[i], g); cur.col[i].copy(AMBER).lerp(B.col[i], g); cur.size[i] = B.size[i] * g; } }
     else { // the dots leave as threads of light, ride the path in view, and build the next piece
       const spread = .6, T = V();
       for (let i = 0; i < N; i++) {
@@ -334,6 +340,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     const rodFade = (st_) => 1 - (G.rods[st_] || 0) * .75;
     if (j === 0) { F[0].edges.forEach(([x, y]) => put(x, y, (side[x] === side[y] ? 1 : s < .55 ? 1 - sstep(wOpen, 0, .15) : sstep(wBack, .94, 1)) * (1 - sstep(Math.max(ki[x], ki[y]), 0, .15))));
       F[1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .85, 1))); }
+    else if (ending) F[0].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .7, 1)));
     else { F[Math.min(j, 5)].edges.forEach(([x, y]) => put(x, y, (last5 ? 1 : 1 - sstep(Math.max(kiL[x], kiL[y]), 0, .12)) * rodFade(j)));
       if (!last5) F[j + 1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .88, 1) * rodFade(j + 1))); } // (in flight they ride inside the fibres: no lines)
     lg.setDrawRange(0, n * 2); lg.attributes.position.needsUpdate = lg.attributes.color.needsUpdate = true;
@@ -355,19 +362,24 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
       for (let i = 0; i < pos.count; i++) { v.fromArray(dropBase, i * 3); const nn = Math.sin(v.x * 3.1 + t * 2.1) * Math.sin(v.y * 2.7 - t * 1.7) + Math.sin(v.z * 3.7 + t * 1.3) * .6; v.multiplyScalar(1 + nn * amp); pos.setXYZ(i, v.x, v.y, v.z); }
       pos.needsUpdate = true; dropGeo.computeVertexNormals(); }
     // gold plates open out of the sphere (ch. 4) and fold back into it when it leaves
-        const pv = j === 4 ? sstep(kArr, .85, 1) : j >= 5 ? 1 : 0, pg = j === 4 ? sstep(kArr, .9, 1) : j === 5 ? 1 - sstep(kLeave, 0, .3) : 0; // plates; the chip (the sphere, landed)
+        const pv = j === 4 ? sstep(kArr, .85, 1) : j === 5 ? 1 : 0, pg = j === 4 ? sstep(kArr, .9, 1) : j === 5 ? 1 - sstep(kLeave, 0, .3) : 0; // plates; the chip (the sphere, landed)
     plates.visible = pv > .01; if (plates.visible) { place(plates, j === 4 ? b.m : a.m, st[5].sc * (.92 + .08 * pv)); gold.opacity = .85 * pv;
       pulses.forEach((r, i) => { const q = (t * .35 + i / 3) % 1; r.scale.setScalar(.3 + q * 2.6); r.material.opacity = (1 - q) * .8 * pg * (1 - pOf(5) * .7); }); }
     chip.visible = pg > .01; if (chip.visible) { place(chip, j === 4 ? b.m : a.m, st[5].sc); chip.position.copy(V(0, CHIP_Y, 0).applyMatrix4(j === 4 ? b.m : a.m));
       chip.scale.set(st[5].sc * pg, st[5].sc * (.4 + .6 * pg), st[5].sc * pg); chipGlow.scale.setScalar(1.5); chipGlow.material.opacity = .6 * pg; }
     // the lock (ch. 5): its own scroll animation, as on the site
     const r6 = { top: st[6].py - st[6].h / 2 - sy }, p6 = clamp((H - r6.top) / (H + st[6].h), 0, 1), lockE = 1 - Math.pow(1 - clamp((p6 - .05) / .6, 0, 1), 3);
-    shield.visible = p6 > 0 && p6 < 1; if (shield.visible) { place(shield, station(6, [0, t * .12, 0]), st[6].sc);
-      const inv = shield.quaternion.clone().invert(), sc6 = st[6].sc, halfW = W * unit * .5;
+    // after chapter 5 it rides the middle fibre down to the footer (it shrinks a little while it travels)
+    const lockAt = ending ? V().setFromMatrixPosition(station(6, [0, 0, 0])).lerp(onWire(midWire, yv, V()), e3(kLeave)).lerp(b.centre, e3(kArr)) : null;
+    const lockSc = ending ? THREE.MathUtils.lerp(st[6].sc, st[7].sc, kArr) * (1 - Math.min(kLeave, 1 - kArr) * .55) : st[6].sc;
+    shield.visible = (p6 > 0 && p6 < 1) || (ending && fin < .99); if (shield.visible) { place(shield, station(6, [0, t * .12, 0]), lockSc); if (lockAt) shield.position.copy(lockAt);
+      const inv = shield.quaternion.clone().invert(), sc6 = lockSc, halfW = W * unit * .5;
       for (const [h, home, sd, r, rot] of shieldPlates) { // each plate starts just past the page's left or right edge
         const e = e3(clamp(lockE * 1.15 - r[0] * .15, 0, 1)), off = V(sd * (halfW + 1.5 + r[1] * 3) - shield.position.x, (r[2] - .5) * 4 * sc6, (r[0] - .5) * 3).applyQuaternion(inv).divideScalar(sc6);
-        h.position.copy(home).addScaledVector(off, 1 - e); h.rotation.set(rot.x * (1 - e) * 2, rot.y * (1 - e) * 2, rot.z * (1 - e) * 2); }
-      seam.opacity = .2 + lockE * .8; }
+        h.position.copy(home).addScaledVector(off, 1 - e); h.rotation.set(rot.x * (1 - e) * 2, rot.y * (1 - e) * 2, rot.z * (1 - e) * 2);
+        // the end: the plates fly back out to the sides and shrink away
+        const o = e3(clamp(fin * 1.6 - r[0] * .3, 0, 1)); h.position.addScaledVector(off, o); h.rotation.x += rot.x * o * 2; h.rotation.z += rot.z * o * 2; h.scale.setScalar(1 - o * .95); }
+      seam.opacity = (.2 + lockE * .8) * (1 - fin * .9); }
 
     // ---------- the sphere ----------
     // title → ch. 0: it sinks into the wave and flies on alone; ch. 0 → 2: it stays with the globe; ch. 3: it is the liquid sphere;
@@ -381,6 +393,10 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
       core = THREE.MathUtils.lerp(.12, .15, u); shellR = THREE.MathUtils.lerp(.34, .3, u); }
     else if (j === 1 || j === 2) { pos = j === 1 ? a.centre : V().setFromMatrixPosition(station(1, F[1].rot(t, 1))); core = .15; shellR = .3; vis = j === 1 ? 1 : 0; }
     else if (j === 3) { pos = b.centre; core = .16 * grow; shellR = 0; vis = grow > .01 ? 1 : 0; }
+    else if (ending) { // it rides inside the lock to the footer; when the lock opens it turns amber again and comes to rest on the wave
+      const rest = Math.sin(-t * 1.8) * .22 - .25 + .36, settle = sstep(fin, .5, 1); travel = Math.min(kLeave, 1 - kArr);
+      pos = lockAt.clone().lerp(local(b.m, 0, rest, 0), settle);
+      core = THREE.MathUtils.lerp(.32 * lockSc / st[6].sc, .12, sstep(fin, .1, .7)); shellR = .34 * sstep(fin, .3, .8); colG = lockE * (1 - sstep(fin, 0, .3)); }
     else if (j >= 4) { // it leaves its piece, rides the path at the head of the threads in view, and lands (ch. 4: as the chip; ch. 5: as the lock's heart)
       const ride = Math.min(kLeave, 1 - kArr); travel = ride;
       const start = j === 4 ? a.centre : local(a.m, 0, CHIP_Y, 0), end = j === 4 ? local(b.m, 0, CHIP_Y, 0) : V().setFromMatrixPosition(station(6, [0, 0, 0]));
@@ -389,7 +405,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
       if (j === 4) { const q = 1 - pg; core = .16 * Math.max(grow, kLeave) * q; shellR = .3 * sstep(kLeave, .2, .7) * q; vis = q > .01 ? 1 : 0; }
       else { const q = 1 - pg; core = THREE.MathUtils.lerp(.04, .32, sstep(kArr, .3, 1)) * Math.max(q, kArr); shellR = .3 * Math.min(sstep(kLeave, .3, .9), 1 - sstep(kArr, .6, 1));
         colG = lockE * sstep(kArr, .8, 1); } }
-    const sc = st[clamp(j, 0, 6)].sc;
+    const sc = ending ? THREE.MathUtils.lerp(st[6].sc, st[7].sc, kArr) : st[clamp(j, 0, 6)].sc;
     orb.visible = vis > 0; orb.position.copy(pos); orb.scale.setScalar(sc);
     orbCore.scale.setScalar(Math.max(core, .0001) * (1 + Math.sin(t * 1.8) * .06)); orbShell.scale.setScalar(Math.max(shellR, .0001)); orbShell.visible = shellR > .01;
     coreMat.color.copy(AMBER).lerp(GREEN, colG); orbGlow.material.color.setRGB(1.4, .8, .3).lerp(new THREE.Color(.4, 1.4, .8), colG);
