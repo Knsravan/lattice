@@ -204,8 +204,10 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
         float pulse = pow(max(0.0, 1.0 - fract(x) * 3.0), 3.0) * step(0.55, fract(floor(x) * 0.618 + vSeed));
         vec3 pc = mix(uA, uB, step(0.5, fract(vSeed * 7.0))); gl_FragColor = vec4(uB * 0.12 + pc * pulse * 1.6, 0.35 + pulse * 0.65); }` });
   const threads = new THREE.Group(); page.add(threads);
-  let unit = 1, W = 0, H = 0, mx = 0, my = 0, smx = 0, smy = 0, st = [], mids = [], pageH = 0, lift = 0; // lift: see the frame loop
+  let unit = 1, W = 0, H = 0, mx = 0, my = 0, smx = 0, smy = 0, st = [], mids = [], pageH = 0, edgeL = 0, edgeR = 0;
   function measure() {
+    // the page's empty margins, left and right of the content (the threads ride there so the diagrams' glass doesn't hide them)
+    edgeL = Math.min(...slots.map((q) => q.getBoundingClientRect().left)); edgeR = Math.max(...slots.map((q) => q.getBoundingClientRect().right));
     st = slots.map((s) => { const r = s.getBoundingClientRect(); return { x: (r.left + r.width / 2 - W / 2) * unit, y: -(r.top + scrollY + r.height / 2) * unit, py: r.top + scrollY + r.height / 2, top: r.top, h: r.height, sc: r.width * unit / 3.2 }; });
     mids = st.slice(0, -1).map((a, j) => { const b = st[j + 1]; return V((a.x + b.x) / 2 + Math.sin(j * 1.3 + .6) * 2.2, (a.y + b.y) / 2, -1.2); }); }
   function layout() {
@@ -245,7 +247,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   let rebuild = 0; const ro = new ResizeObserver(() => { clearTimeout(rebuild); rebuild = window.setTimeout(resize, 200); }); ro.observe(document.body); resize();
 
   const e3 = (x) => x * x * (3 - 2 * x), bez2 = (a, c, b, u) => { const w = 1 - u; return V().addScaledVector(a, w * w).addScaledVector(c, 2 * w * u).addScaledVector(b, u * u); };
-  const ki = new Float32Array(N);
+  const ki = new Float32Array(N), kiL = new Float32Array(N), tu = new Float32Array(N); // arrived, left, place on its thread
   let t = 0, last = performance.now(), trailInit = false, shakeT0 = null, grow = 0, raf = 0, frames = 0, slow = 0, sampled = 0, level = 0;
   // (user decision: keep the glow; sharpness goes first, then fewer pixels still, and the glow only as a last resort)
   const downgrades = [() => { renderer.setPixelRatio(1); composer.setPixelRatio(1); }, () => { renderer.setPixelRatio(.75); composer.setPixelRatio(.75); }, () => { bloom.enabled = false; }];
@@ -257,31 +259,35 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     threadMat.uniforms.uTime.value = t * 1.2; farMat.uniforms.uTime.value = t; farMat.uniforms.uScroll.value = sy / H * .35;
     dustMat.uniforms.uTime.value = t; dustMat.uniforms.uLift.value = sy * unit * .35; dust.position.set(-smx * 1.6, smy * 1.1, 0);
 
-    // where are we? segment j runs from station j (centred on screen, s = 0) to station j+1 (centred, s = 1)
-    // Chapters are long (story, then playground): each piece waits beside its heading, and the journey to the next one takes the
-    // last stretch (at most 1.5 screens) before the next heading reaches the middle of the screen. A piece left far above is moved
-    // to just above the top edge for that journey (both places are off screen), so what travels always comes into view.
+    // where are we? segment j runs from station j (centred on screen, s = 0) to station j+1 (centred, s = 1), however long the
+    // chapter in between is (story, then playground). What travels never waits off screen (user request, Oct 1): it leaves its
+    // piece in the first ~0.6 screens, then rides along the path in view the whole way down as threads of light, and builds the
+    // next piece in the last ~0.8 screens before its heading reaches mid-screen.
     const cy = sy + H / 2; let j = 0; while (j < st.length - 2 && cy > st[j + 1].py) j++;
-    const gap = st[j + 1].py - st[j].py, from = Math.max(st[j + 1].py - Math.min(gap, H * 1.5), j === 0 ? H / 2 + 1 : -Infinity); // (phones: the title piece sits
-  const span = st[j + 1].py - from, s = clamp((cy - from) / span, 0, 1);                                                      //  above mid-screen at the top)
-    lift = s > 0 ? Math.max(0, st[j + 1].py - span - H * .85 - st[j].py) : 0;
+    const from = j === 0 ? Math.max(st[0].py, H / 2 + 1) : st[j].py; // (phones: the title piece sits above mid-screen at the top)
+    const gap = st[j + 1].py - from, s = clamp((cy - from) / gap, 0, 1);
+    const L1 = clamp(H * .6 / gap, .08, .4), L2 = clamp(H * .8 / gap, .1, .45), kLeave = sstep(s, 0, L1), kArr = sstep(s, 1 - L2, 1);
     const pOf = (q) => clamp((H - st[q].top) / (H + st[q].h), 0, 1); // 0 as a slot enters the screen, 1 as it leaves (as before)
-    const k = sstep(s, .15, .9); // dots' journey (chapters 1–4)
+    // the carrier: a point on the path that stays in view, drifting from the old piece's side of the page to the new one's
+    // it rides in the margin on the side of the next piece (on phones, with no margin, along the edge behind the glass)
+    const right = st[j + 1].x > 0, gw = Math.max(right ? W - 44 - edgeR : edgeL, 70), gx = (right ? W - 44 - gw / 2 : gw / 2) - W / 2;
+    const yv = -(sy + H / 2) * unit, Lt = H * unit * .72, carrier = V(gx * unit + Math.sin(t * .3 + j) * gw * unit * .06, yv, -1), laneW = gw * unit * .7;
+    const flow = still ? 0 : t * .04 + (sy / H) * .35; // dots stream down their threads with time and with your scroll
 
     // ch. 3: once the dots have formed, they tumble for a second, then the liquid sphere grows from the middle
-    const shakeHere = (j === 3 && s > .9) || j >= 4;
+    const shakeHere = (j === 3 && kArr > .97) || j >= 4;
     if (shakeHere && shakeT0 === null) { shakeT0 = t; tumbleAxis.set(rnd(t) - .5, 1, rnd(t + 1) - .5).normalize(); } if (!shakeHere) shakeT0 = null;
     const since = shakeT0 === null ? 0 : still ? 9 : t - shakeT0; // (reduced motion: no tumble, the sphere is simply there)
     tumbleQ.setFromAxisAngle(tumbleAxis, e3(clamp(since / 1.1, 0, 1)) * Math.PI * 1.3);
     grow += ((shakeHere ? sstep(since, 1.1, 2.8) : 0) - grow) * (still ? 1 : .08);
 
     // rods show once the dots have formed the cube, and go before the dots leave
-    G.rods = { 2: j === 1 ? sstep(k, .85, 1) : j === 2 ? 1 - sstep(k, 0, .15) : 0, 3: j === 2 ? sstep(k, .85, 1) : j === 3 ? 1 - sstep(k, 0, .15) : 0 };
+    G.rods = { 2: j === 1 ? sstep(kArr, .85, 1) : j === 2 ? 1 - sstep(kLeave, 0, .15) : 0, 3: j === 2 ? sstep(kArr, .85, 1) : j === 3 ? 1 - sstep(kLeave, 0, .15) : 0 };
 
     const last5 = j === 5; // ch. 4 → 5: only the sphere travels; the dots stay with the chandelier
-    const a = fill(A, Math.min(j, 5), j, t, pOf(j), lift), b = last5 ? a : fill(B, j + 1, j + 1, t, pOf(j + 1));
+    const a = fill(A, Math.min(j, 5), j, t, pOf(j)), b = last5 ? a : fill(B, j + 1, j + 1, t, pOf(j + 1));
     if (last5) for (let i = 0; i < N; i++) { B.pos[i].copy(A.pos[i]); B.col[i].copy(A.col[i]); B.size[i] = A.size[i]; }
-    // the curve's middle: between where the two pieces are now (one may have been moved up for the journey)
+    // (title → ch. 0 only) the curve's middle, between the two pieces
     const mid = V((a.centre.x + b.centre.x) / 2 + Math.sin(j * 1.3 + .6) * 2.2, (a.centre.y + b.centre.y) / 2, -1.2), ab = V().subVectors(mid, a.centre), ba = V().subVectors(mid, b.centre);
 
     // ---------- the dots ----------
@@ -295,17 +301,19 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
           if (curl > 0) { cur.pos[i].lerp(B.pos[i], curl); cur.pos[i].y += Math.sin(curl * Math.PI) * .5 * b.sc; }
           cur.col[i].copy(Wb.col[i]).lerp(B.col[i], curl); cur.size[i] = THREE.MathUtils.lerp(Wb.size[i], B.size[i], curl); } } }
     else if (last5) { for (let i = 0; i < N; i++) { cur.pos[i].copy(A.pos[i]); cur.col[i].copy(A.col[i]); cur.size[i] = A.size[i]; ki[i] = 0; } }
-    else { // the dots float down the fibres as threads and build the next piece
-      const spread = .6, sc = Math.max(a.sc, b.sc);
-      for (let i = 0; i < N; i++) { const u = clamp(k * (1 + spread) - order[i] * spread, 0, 1), e = e3(u); ki[i] = e;
-        if (e <= 0) { cur.pos[i].copy(A.pos[i]); cur.col[i].copy(A.col[i]); cur.size[i] = A.size[i]; continue; }
-        if (e >= 1) { cur.pos[i].copy(B.pos[i]); cur.col[i].copy(B.col[i]); cur.size[i] = B.size[i]; continue; }
-        const L = lane[strand(i)].clone().multiplyScalar(sc * .7), P1 = V().copy(a.centre).addScaledVector(ab, .95).add(L), P2 = V().copy(b.centre).addScaledVector(ba, .95).add(L), w = 1 - e;
-        const S0 = V().copy(a.centre).add(L), S3 = V().copy(b.centre).add(L);
-        cur.pos[i].set(0, 0, 0).addScaledVector(S0, w * w * w).addScaledVector(P1, 3 * w * w * e).addScaledVector(P2, 3 * w * e * e).addScaledVector(S3, e * e * e)
-          .addScaledVector(V().subVectors(A.pos[i], S0), 1 - sstep(e, 0, .3)).addScaledVector(V().subVectors(B.pos[i], S3), sstep(e, .7, 1));
-        const glow = Math.sin(e * Math.PI); cur.col[i].copy(A.col[i]).lerp(B.col[i], e).lerp(AMBER, glow * .55);
-        cur.size[i] = THREE.MathUtils.lerp(A.size[i], B.size[i], e) * (1 - glow * .3) + glow * .016 * sc; } }
+    else { // the dots leave as threads of light, ride the path in view, and build the next piece
+      const spread = .6, sc = Math.max(a.sc, b.sc), T = V();
+      for (let i = 0; i < N; i++) {
+        const l = e3(clamp(kLeave * (1 + spread) - order[i] * spread, 0, 1)), r = e3(clamp(kArr * (1 + spread) - order[i] * spread, 0, 1));
+        kiL[i] = l; ki[i] = r;
+        // its place on its thread: threads hang down the path, gently waving, the dots streaming along them
+        const u = (order[i] + flow) % 1, L = lane[strand(i)];
+        tu[i] = u; T.set(carrier.x + L.x / 2.2 * laneW + Math.sin(u * 5 + strand(i) * 1.7 + t * .4) * laneW * .08, carrier.y + (.5 - u) * Lt, carrier.z + L.z * sc);
+        const fade = Math.sin(u * Math.PI); // (thinner at the ends of the threads)
+        cur.pos[i].copy(A.pos[i]).lerp(T, l).lerp(B.pos[i], r);
+        _c.copy(AMBER).multiplyScalar(.45 + fade * .5).lerp(WHITE, .25);
+        cur.col[i].copy(A.col[i]).lerp(_c, l).lerp(B.col[i], r);
+        cur.size[i] = THREE.MathUtils.lerp(THREE.MathUtils.lerp(A.size[i], (.01 + fade * .018) * sc, l), B.size[i], r); } }
     for (let i = 0; i < N; i++) { _m4.compose(cur.pos[i], _q.identity(), _s.setScalar(cur.size[i])); beads.setMatrixAt(i, _m4); beads.setColorAt(i, cur.col[i]); }
     beads.instanceMatrix.needsUpdate = true; beads.instanceColor.needsUpdate = true;
 
@@ -315,30 +323,31 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     const rodFade = (st_) => 1 - (G.rods[st_] || 0) * .75;
     if (j === 0) { F[0].edges.forEach(([x, y]) => put(x, y, (side[x] === side[y] ? 1 : s < .55 ? 1 - sstep(wOpen, 0, .15) : sstep(wBack, .94, 1)) * (1 - sstep(Math.max(ki[x], ki[y]), 0, .15))));
       F[1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .85, 1))); }
-    else { F[Math.min(j, 5)].edges.forEach(([x, y]) => put(x, y, (last5 ? 1 : 1 - sstep(Math.max(ki[x], ki[y]), 0, .12)) * rodFade(j)));
+    else { F[Math.min(j, 5)].edges.forEach(([x, y]) => put(x, y, (last5 ? 1 : 1 - sstep(Math.max(kiL[x], kiL[y]), 0, .12)) * rodFade(j)));
       if (!last5) { F[j + 1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .88, 1) * rodFade(j + 1)));
-        for (let i = 0; i + STR < N; i++) { const p = ki[i], q = ki[i + STR]; if (p > 0 && p < 1 && q > 0 && q < 1) put(i, i + STR, Math.min(Math.sin(p * Math.PI), Math.sin(q * Math.PI)) * .9); } } }
+        // the threads themselves: each dot joined to the next one down its strand
+        for (let i = 0; i + STR < N; i++) { const p = kiL[i] * (1 - ki[i]), q = kiL[i + STR] * (1 - ki[i + STR]);
+          if (Math.abs(tu[i] - tu[i + STR]) < .2) put(i, i + STR, sstep(Math.min(p, q), .6, 1) * .8); } } }
     lg.setDrawRange(0, n * 2); lg.attributes.position.needsUpdate = lg.attributes.color.needsUpdate = true;
 
     // ---------- the pieces' solid parts ----------
     const place = (obj, m, scale) => { m.decompose(obj.position, obj.quaternion, _s); obj.scale.setScalar(scale); };
     // globe glass: forms after the dots curl in, fades as they leave
-    const gv = j === 0 ? sstep(s, .9, 1) : j === 1 ? 1 - sstep(k, 0, .2) : 0;
+    const gv = j === 0 ? sstep(s, .9, 1) : j === 1 ? 1 - sstep(kLeave, 0, .2) : 0;
     globeGlass.visible = gv > .01; if (gv > .01) { place(globeGlass, j === 0 ? b.m : a.m, (j === 0 ? b.sc : a.sc) * (.7 + .3 * gv)); globeGlass.material.opacity = gv; }
     // glass rods and steel joints
     for (const q of [2, 3]) { const L = rodsAt[q], v = G.rods[q]; L.visible = v > .01; if (!L.visible) continue;
       const isA = j === q, m = isA ? a.m : b.m, f = pOf(q); place(L, m, st[q].sc); L.userData.shape(q === 3 ? shearM(f) : new THREE.Matrix3());
       L.userData.mat.opacity = v; steel.opacity = v; }
     // the liquid sphere (ch. 3)
-    const dropOut = j === 4 ? sstep(s, .15, .45) : 0, dv = grow * (1 - dropOut);
+    const dropOut = j === 4 ? sstep(kLeave, .2, .8) : 0, dv = grow * (1 - dropOut);
     drop.visible = dv > .01 && j >= 3 && j <= 4;
     if (drop.visible) { const m = j === 3 ? b.m : a.m, f = pOf(4); place(drop, m, st[4].sc * dv);
       const amp = .035 + f * .12, pos = dropGeo.attributes.position, v = V();
       for (let i = 0; i < pos.count; i++) { v.fromArray(dropBase, i * 3); const nn = Math.sin(v.x * 3.1 + t * 2.1) * Math.sin(v.y * 2.7 - t * 1.7) + Math.sin(v.z * 3.7 + t * 1.3) * .6; v.multiplyScalar(1 + nn * amp); pos.setXYZ(i, v.x, v.y, v.z); }
       pos.needsUpdate = true; dropGeo.computeVertexNormals(); }
     // gold plates open out of the sphere (ch. 4) and fold back into it when it leaves
-    let ko = 0; if (j === 4) ko = sstep(s, .2, .92); else if (j === 5) ko = sstep(s, .12, .95);
-    const pv = j === 4 ? sstep(k, .85, 1) : j >= 5 ? 1 : 0, pg = j === 4 ? sstep(ko, .86, 1) : j === 5 ? 1 - sstep(ko, 0, .2) : 0; // plates; the chip (the sphere, landed)
+        const pv = j === 4 ? sstep(kArr, .85, 1) : j >= 5 ? 1 : 0, pg = j === 4 ? sstep(kArr, .9, 1) : j === 5 ? 1 - sstep(kLeave, 0, .3) : 0; // plates; the chip (the sphere, landed)
     plates.visible = pv > .01; if (plates.visible) { place(plates, j === 4 ? b.m : a.m, st[5].sc * (.92 + .08 * pv)); gold.opacity = .85 * pv;
       pulses.forEach((r, i) => { const q = (t * .35 + i / 3) % 1; r.scale.setScalar(.3 + q * 2.6); r.material.opacity = (1 - q) * .8 * pg * (1 - pOf(5) * .7); }); }
     chip.visible = pg > .01; if (chip.visible) { place(chip, j === 4 ? b.m : a.m, st[5].sc); chip.position.copy(V(0, CHIP_Y, 0).applyMatrix4(j === 4 ? b.m : a.m));
@@ -364,11 +373,14 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
       core = THREE.MathUtils.lerp(.12, .15, u); shellR = THREE.MathUtils.lerp(.34, .3, u); }
     else if (j === 1 || j === 2) { pos = j === 1 ? a.centre : V().setFromMatrixPosition(station(1, F[1].rot(t, 1))); core = .15; shellR = .3; vis = j === 1 ? 1 : 0; }
     else if (j === 3) { pos = b.centre; core = .16 * grow; shellR = 0; vis = grow > .01 ? 1 : 0; }
-    else if (j === 4) { travel = ko; const q = 1 - pg, end = local(b.m, 0, CHIP_Y, 0); pos = bez2(a.centre, mid.clone().multiplyScalar(2).sub(a.centre.clone().add(end).multiplyScalar(.5)), end, ko);
-      core = .16 * grow * q; shellR = .3 * sstep(s, .15, .4) * q; vis = q > .01 ? 1 : 0; }
-    else { travel = ko; const q = 1 - pg, c6 = V().setFromMatrixPosition(station(6, [0, 0, 0])), from = local(a.m, 0, CHIP_Y, 0);
-      pos = bez2(from, mid.clone().multiplyScalar(2).sub(from.clone().add(c6).multiplyScalar(.5)), c6, ko);
-      core = THREE.MathUtils.lerp(.04, .32, sstep(ko, .3, 1)) * q; shellR = .3 * (1 - sstep(ko, .6, 1)) * q; colG = lockE * sstep(ko, .8, 1); }
+    else if (j >= 4) { // it leaves its piece, rides the path at the head of the threads in view, and lands (ch. 4: as the chip; ch. 5: as the lock's heart)
+      const ride = Math.min(kLeave, 1 - kArr); travel = ride;
+      const start = j === 4 ? a.centre : local(a.m, 0, CHIP_Y, 0), end = j === 4 ? local(b.m, 0, CHIP_Y, 0) : V().setFromMatrixPosition(station(6, [0, 0, 0]));
+      const head = V(carrier.x, carrier.y - Lt * (j === 4 ? .56 : 0), 0);
+      pos = start.clone().lerp(head, e3(kLeave)).lerp(end, e3(kArr));
+      if (j === 4) { const q = 1 - pg; core = .16 * Math.max(grow, kLeave) * q; shellR = .3 * sstep(kLeave, .2, .7) * q; vis = q > .01 ? 1 : 0; }
+      else { const q = 1 - pg; core = THREE.MathUtils.lerp(.04, .32, sstep(kArr, .3, 1)) * Math.max(q, kArr); shellR = .3 * Math.min(sstep(kLeave, .3, .9), 1 - sstep(kArr, .6, 1));
+        colG = lockE * sstep(kArr, .8, 1); } }
     const sc = st[clamp(j, 0, 6)].sc;
     orb.visible = vis > 0; orb.position.copy(pos); orb.scale.setScalar(sc);
     orbCore.scale.setScalar(Math.max(core, .0001) * (1 + Math.sin(t * 1.8) * .06)); orbShell.scale.setScalar(Math.max(shellR, .0001)); orbShell.visible = shellR > .01;
