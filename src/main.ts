@@ -93,7 +93,8 @@ function build() {
     el("span", { text: "Lattice · built in September 2026 · " }),
     el("a", { href: "https://github.com/Knsravan/lattice", text: "source on GitHub" }),
   );
-  app.append(footer);
+  // the end: the 3D stage's last piece (the title wave, back again) sits beside the footer
+  app.append(el("div", { class: "finale" }, el("div", { class: "slot", "data-slot": "end", "aria-hidden": "true" }), footer));
 
   // the page's own scroll feel: glide scrolling, elements that appear as they come into view, liquid glass, the 3D stage
   mountSmoothScroll();

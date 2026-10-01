@@ -111,6 +111,8 @@
   /* each chapter opens with its heading beside its piece of the 3D stage */
   .chapter-open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; min-height: 72vh; }
   .chapter.flip .chapter-open .slot { order: -1; }
+  .finale { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; min-height: 86vh; }
+  .finale footer { margin: 0; }
   .chapter-head { max-width: 520px; width: fit-content; padding: 22px 28px 12px; border-radius: 26px; justify-self: start; }
   .chapter.flip .chapter-head { justify-self: end; }
   .chapter-head h2 { font-size: clamp(36px, 5.4vw, 60px); margin: .25em 0 .45em; line-height: 1; letter-spacing: -.02em; font-weight: 800; }
@@ -236,6 +238,8 @@
     .chapter { padding-top: 8vh; }
     .hero, .chapter-open { grid-template-columns: minmax(0, 1fr); min-height: auto; gap: 0; }
     .hero .slot, .chapter-open .slot, .chapter.flip .chapter-open .slot { order: -1; width: 72%; margin-bottom: -6%; }
+    .finale { grid-template-columns: minmax(0, 1fr); min-height: auto; gap: 0; padding-bottom: 6vh; }
+    .finale .slot { width: 72%; justify-self: center; }
     .chapter-head, .chapter.flip .chapter-head { justify-self: start; padding: 16px 20px 8px; }
     .story { display: block; }
     .story-figure { position: sticky; top: 56px; height: 48vh; z-index: 2; margin: 0 -20px; border-radius: 0 0 14px 14px; border-top: 0; background: rgba(8,11,18,.94); } /* nearly solid: the steps slide under it */
