@@ -204,21 +204,32 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
         float pulse = pow(max(0.0, 1.0 - fract(x) * 3.0), 3.0) * step(0.55, fract(floor(x) * 0.618 + vSeed));
         vec3 pc = mix(uA, uB, step(0.5, fract(vSeed * 7.0))); gl_FragColor = vec4(uB * 0.12 + pc * pulse * 1.6, 0.35 + pulse * 0.65); }` });
   const threads = new THREE.Group(); page.add(threads);
-  let unit = 1, W = 0, H = 0, mx = 0, my = 0, smx = 0, smy = 0, st = [], mids = [], pageH = 0, edgeL = 0, edgeR = 0;
+  let unit = 1, W = 0, H = 0, mx = 0, my = 0, smx = 0, smy = 0, st = [], mids = [], pageH = 0, wires = []; // wires: each fibre sampled top to bottom, so what travels can ride on it
   function measure() {
-    // the page's empty margins, left and right of the content (the threads ride there so the diagrams' glass doesn't hide them)
-    edgeL = Math.min(...slots.map((q) => q.getBoundingClientRect().left)); edgeR = Math.max(...slots.map((q) => q.getBoundingClientRect().right));
     st = slots.map((s) => { const r = s.getBoundingClientRect(); return { x: (r.left + r.width / 2 - W / 2) * unit, y: -(r.top + scrollY + r.height / 2) * unit, py: r.top + scrollY + r.height / 2, top: r.top, h: r.height, sc: r.width * unit / 3.2 }; });
     mids = st.slice(0, -1).map((a, j) => { const b = st[j + 1]; return V((a.x + b.x) / 2 + Math.sin(j * 1.3 + .6) * 2.2, (a.y + b.y) / 2, -1.2); }); }
+  /** The point on fibre `w` at page height y (the fibres run down the page, so y picks one point; nearest sample, then blended). */
+  function onWire(w, y, out) { const f = wires[w], ys = f.y; let lo = 0, hi = ys.length - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ys[m] > y) lo = m; else hi = m; } // ys falls from top to bottom
+    const k = ys[lo] === ys[hi] ? 0 : clamp((ys[lo] - y) / (ys[lo] - ys[hi]), 0, 1);
+    return out.set(f.x[lo] + (f.x[hi] - f.x[lo]) * k, y, f.z[lo] + (f.z[hi] - f.z[lo]) * k + .04); }
   function layout() {
     measure(); pageH = document.documentElement.scrollHeight;
     threads.children.forEach((m) => m.geometry.dispose()); threads.clear();
-    const n = lite ? 8 : 16;
+    const n = lite ? 8 : 16; wires = [];
+    // the ribbon passes behind each piece; between pieces it runs down the empty margin on the side of the next piece, so it
+    // (and whatever rides it) isn't hidden behind the diagrams' glass (user request, Oct 1)
+    const rects = slots.map((q) => q.getBoundingClientRect()), edgeL = Math.min(...rects.map((r) => r.left)), edgeR = Math.max(...rects.map((r) => r.right));
     for (let i = 0; i < n; i++) { const u = i / (n - 1) - .5, pts = [V(st[0].x + u * 9, H * unit * .5 + 2, -2.5 - Math.abs(u) * 3)];
-      st.forEach((a, j) => { pts.push(V(a.x + u * 5.5, a.y + Math.sin(i * 1.7) * .4, -2.5 - (i % 3) * .7 - Math.abs(u) * 3));
-        if (mids[j]) pts.push(V(mids[j].x + u * 12, mids[j].y, mids[j].z - 1.5 - Math.abs(u) * 3)); });
+      st.forEach((a, j) => { const z = -2.5 - (i % 3) * .7 - Math.abs(u) * 3, b = st[j + 1];
+        pts.push(V(a.x + u * 5.5, a.y + Math.sin(i * 1.7) * .4, z));
+        if (!b) return;
+        const right = b.x > 0, gw = Math.max(right ? W - 44 - edgeR : edgeL, 56), gx = ((right ? W - 44 - gw / 2 : gw / 2) - W / 2) * unit;
+        const fan = u * gw * unit * .75, d = Math.min(H * .7, (b.py - a.py) * .3) * unit, sway = Math.sin(j * 1.3 + .6) * gw * unit * .12;
+        pts.push(V(gx + fan, a.y - d, z), V(gx + fan + sway, (a.y + b.y) / 2, z - .3), V(gx + fan, b.y + d, z)); });
       pts.push(V(u * 6, st[st.length - 1].y - H * unit, -3));
-      const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, "centripetal"), lite ? 500 : 900, .012 + (i % 3) * .006, 5);
+      const curve = new THREE.CatmullRomCurve3(pts, false, "centripetal"), geo = new THREE.TubeGeometry(curve, lite ? 500 : 900, .012 + (i % 3) * .006, 5);
+      const sp = curve.getSpacedPoints(lite ? 1200 : 2400); wires[i] = { y: Float32Array.from(sp, (p) => p.y), x: Float32Array.from(sp, (p) => p.x), z: Float32Array.from(sp, (p) => p.z) };
       geo.setAttribute("aSeed", new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count).fill(i / n), 1));
       threads.add(new THREE.Mesh(geo, threadMat)); } }
 
@@ -268,10 +279,8 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     const gap = st[j + 1].py - from, s = clamp((cy - from) / gap, 0, 1);
     const L1 = clamp(H * .6 / gap, .08, .4), L2 = clamp(H * .8 / gap, .1, .45), kLeave = sstep(s, 0, L1), kArr = sstep(s, 1 - L2, 1);
     const pOf = (q) => clamp((H - st[q].top) / (H + st[q].h), 0, 1); // 0 as a slot enters the screen, 1 as it leaves (as before)
-    // the carrier: a point on the path that stays in view, drifting from the old piece's side of the page to the new one's
-    // it rides in the margin on the side of the next piece (on phones, with no margin, along the edge behind the glass)
-    const right = st[j + 1].x > 0, gw = Math.max(right ? W - 44 - edgeR : edgeL, 70), gx = (right ? W - 44 - gw / 2 : gw / 2) - W / 2;
-    const yv = -(sy + H / 2) * unit, Lt = H * unit * .72, carrier = V(gx * unit + Math.sin(t * .3 + j) * gw * unit * .06, yv, -1), laneW = gw * unit * .7;
+    // it rides on the fibres that run down the page (user request, Oct 1): each thread of dots on its own fibre, the sphere on the middle one
+    const yv = -(sy + H / 2) * unit, Lt = H * unit * .72, nW = wires.length, wireOf = (q) => Math.round((.2 + .6 * (q + .5) / STR) * (nW - 1)), midWire = (nW - 1) >> 1;
     const flow = still ? 0 : t * .04 + (sy / H) * .35; // dots stream down their threads with time and with your scroll
 
     // ch. 3: once the dots have formed, they tumble for a second, then the liquid sphere grows from the middle
@@ -302,18 +311,18 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
           cur.col[i].copy(Wb.col[i]).lerp(B.col[i], curl); cur.size[i] = THREE.MathUtils.lerp(Wb.size[i], B.size[i], curl); } } }
     else if (last5) { for (let i = 0; i < N; i++) { cur.pos[i].copy(A.pos[i]); cur.col[i].copy(A.col[i]); cur.size[i] = A.size[i]; ki[i] = 0; } }
     else { // the dots leave as threads of light, ride the path in view, and build the next piece
-      const spread = .6, sc = Math.max(a.sc, b.sc), T = V();
+      const spread = .6, T = V();
       for (let i = 0; i < N; i++) {
         const l = e3(clamp(kLeave * (1 + spread) - order[i] * spread, 0, 1)), r = e3(clamp(kArr * (1 + spread) - order[i] * spread, 0, 1));
         kiL[i] = l; ki[i] = r;
         // its place on its thread: threads hang down the path, gently waving, the dots streaming along them
-        const u = (order[i] + flow) % 1, L = lane[strand(i)];
-        tu[i] = u; T.set(carrier.x + L.x / 2.2 * laneW + Math.sin(u * 5 + strand(i) * 1.7 + t * .4) * laneW * .08, carrier.y + (.5 - u) * Lt, carrier.z + L.z * sc);
+        const u = (order[i] + flow) % 1;
+        tu[i] = u; onWire(wireOf(strand(i)), yv + (.5 - u) * Lt, T);
         const fade = Math.sin(u * Math.PI); // (thinner at the ends of the threads)
         cur.pos[i].copy(A.pos[i]).lerp(T, l).lerp(B.pos[i], r);
         _c.copy(AMBER).multiplyScalar(.45 + fade * .5).lerp(WHITE, .25);
         cur.col[i].copy(A.col[i]).lerp(_c, l).lerp(B.col[i], r);
-        cur.size[i] = THREE.MathUtils.lerp(THREE.MathUtils.lerp(A.size[i], (.01 + fade * .018) * sc, l), B.size[i], r); } }
+        cur.size[i] = THREE.MathUtils.lerp(THREE.MathUtils.lerp(A.size[i], (.012 + fade * .022) * Math.max(a.sc, b.sc), l), B.size[i], r); } }
     for (let i = 0; i < N; i++) { _m4.compose(cur.pos[i], _q.identity(), _s.setScalar(cur.size[i])); beads.setMatrixAt(i, _m4); beads.setColorAt(i, cur.col[i]); }
     beads.instanceMatrix.needsUpdate = true; beads.instanceColor.needsUpdate = true;
 
@@ -376,7 +385,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     else if (j >= 4) { // it leaves its piece, rides the path at the head of the threads in view, and lands (ch. 4: as the chip; ch. 5: as the lock's heart)
       const ride = Math.min(kLeave, 1 - kArr); travel = ride;
       const start = j === 4 ? a.centre : local(a.m, 0, CHIP_Y, 0), end = j === 4 ? local(b.m, 0, CHIP_Y, 0) : V().setFromMatrixPosition(station(6, [0, 0, 0]));
-      const head = V(carrier.x, carrier.y - Lt * (j === 4 ? .56 : 0), 0);
+      const head = onWire(midWire, yv - Lt * (j === 4 ? .56 : 0), V());
       pos = start.clone().lerp(head, e3(kLeave)).lerp(end, e3(kArr));
       if (j === 4) { const q = 1 - pg; core = .16 * Math.max(grow, kLeave) * q; shellR = .3 * sstep(kLeave, .2, .7) * q; vis = q > .01 ? 1 : 0; }
       else { const q = 1 - pg; core = THREE.MathUtils.lerp(.04, .32, sstep(kArr, .3, 1)) * Math.max(q, kArr); shellR = .3 * Math.min(sstep(kLeave, .3, .9), 1 - sstep(kArr, .6, 1));
