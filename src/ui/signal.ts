@@ -103,10 +103,10 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   const fib = (n, R) => Array.from({ length: n }, (_, i) => { const y = 1 - (i + .5) / n * 2, r = Math.sqrt(1 - y * y), a = i * 2.399963; return V(Math.cos(a) * r, y, Math.sin(a) * r).multiplyScalar(R); });
   const F = [], G = {}; // G: shared state the formations read (rods showing, shear, tumble)
 
-  const WM = Math.round(Math.sqrt(N)), side = new Float32Array(N);
+  const WM = Math.round(Math.sqrt(N)), side = new Float32Array(N), waveAx = new Float32Array(N), waveR = new Float32Array(N); // (a wave dot's distance from the seam, and from the middle, 0–1)
   { // 0 · the wave
     const S = 2.9 / (WM - 1), base = [], E = [];
-    for (let i = 0; i < WM; i++) for (let j = 0; j < WM; j++) { base.push([(i - (WM - 1) / 2) * S, (j - (WM - 1) / 2) * S]); side[base.length - 1] = i < (WM - 1) / 2 || (i === (WM - 1) / 2 && j % 2) ? -1 : 1; }
+    for (let i = 0; i < WM; i++) for (let j = 0; j < WM; j++) { base.push([(i - (WM - 1) / 2) * S, (j - (WM - 1) / 2) * S]); const q = base.length - 1; side[q] = i < (WM - 1) / 2 || (i === (WM - 1) / 2 && j % 2) ? -1 : 1; waveAx[q] = Math.abs(base[q][0]) / 1.45; waveR[q] = Math.hypot(base[q][0], base[q][1]) / 2.05; }
     for (let i = 0; i < WM; i++) for (let j = 0; j < WM; j++) { if (i < WM - 1) E.push([i * WM + j, (i + 1) * WM + j]); if (j < WM - 1) E.push([i * WM + j, i * WM + j + 1]); }
     F.push({ n: base.length, edges: E, rot: (t, f) => [.55, t * .12, 0],
       bead(i, t, f, v, c) { const [x, z] = base[i], r = Math.hypot(x, z), ph = r * 3.2 - t * 1.8, w = Math.pow(Math.max(0, Math.sin(ph)), 4) * Math.exp(-r * .4);
@@ -224,6 +224,8 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
       st.forEach((a, j) => { const z = -2.5 - (i % 3) * .7 - Math.abs(u) * 3, b = st[j + 1];
         pts.push(V(a.x + u * 5.5, a.y + Math.sin(i * 1.7) * .4, z));
         if (!b) return;
+        if (b.py - a.py < H * 2.4) { // a short gap (title → ch. 0): one wide, gentle bend between the two pieces, no detour (user request, Oct 1)
+          pts.push(V((a.x + b.x) / 2 + Math.sin(j * 1.3 + .6) * 1.8 + u * 7, (a.y + b.y) / 2, z - .6)); return; }
         const right = b.x > 0, gw = Math.max(right ? W - 44 - edgeR : edgeL, 56), gx = ((right ? W - 44 - gw / 2 : gw / 2) - W / 2) * unit;
         const fan = u * gw * unit * .75, d = Math.min(H * .7, (b.py - a.py) * .3) * unit, sway = Math.sin(j * 1.3 + .6) * gw * unit * .12;
         pts.push(V(gx + fan, a.y - d, z), V(gx + fan + sway, (a.y + b.y) / 2, z - .3), V(gx + fan, b.y + d, z)); });
@@ -257,7 +259,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     dustMat.uniforms.uPx.value = renderer.getPixelRatio() * H / 800; layout(); };
   let rebuild = 0; const ro = new ResizeObserver(() => { clearTimeout(rebuild); rebuild = window.setTimeout(resize, 200); }); ro.observe(document.body); resize();
 
-  const e3 = (x) => x * x * (3 - 2 * x), bez2 = (a, c, b, u) => { const w = 1 - u; return V().addScaledVector(a, w * w).addScaledVector(c, 2 * w * u).addScaledVector(b, u * u); };
+  const e3 = (x) => x * x * (3 - 2 * x);
   const fract7 = (x) => { const v = x * 7; return v - Math.floor(v); }, FIB_A = new THREE.Color(1.6, .95, .4), FIB_B = new THREE.Color(.6, .95, 2); // (as the fibre shader: uA amber, uB blue)
   const ki = new Float32Array(N), kiL = new Float32Array(N), tu = new Float32Array(N); // arrived, left, place on its thread
   let t = 0, last = performance.now(), trailInit = false, shakeT0 = null, grow = 0, raf = 0, frames = 0, slow = 0, sampled = 0, level = 0;
@@ -300,16 +302,17 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     const last5 = j === 5; // ch. 4 → 5: only the sphere travels; the dots stay with the chandelier
     const a = fill(A, Math.min(j, 5), j, t, pOf(j)), b = last5 ? a : ending ? fill(B, 0, 7, t, 0) : fill(B, j + 1, j + 1, t, pOf(j + 1));
     if (last5) for (let i = 0; i < N; i++) { B.pos[i].copy(A.pos[i]); B.col[i].copy(A.col[i]); B.size[i] = A.size[i]; }
-    // (title → ch. 0 only) the curve's middle, between the two pieces
-    const mid = V((a.centre.x + b.centre.x) / 2 + Math.sin(j * 1.3 + .6) * 2.2, (a.centre.y + b.centre.y) / 2, -1.2), ab = V().subVectors(mid, a.centre), ba = V().subVectors(mid, b.centre);
 
     // ---------- the dots ----------
     let wHalf = 0, wBack = 0, wOpen = 0;
     if (j === 0) { // the wave splits; its halves leave the page left and right, come back at the globe the same way, and curl into it
       fill(Wb, 0, 1, t, 0); const D = W * unit * .5 + 3.4 * Math.max(a.sc, b.sc);
-      wOpen = sstep(s, .1, .2); wHalf = sstep(s, .2, .5); wBack = sstep(s, .56, .8);
+      wOpen = sstep(s, .14, .22); wHalf = sstep(s, .3, .54); wBack = sstep(s, .58, .8);
       for (let i = 0; i < N; i++) { const curl = e3(clamp((s - .8 - order[i] * .06) / .1, 0, 1)); ki[i] = curl;
-        if (s < .55) { cur.pos[i].copy(A.pos[i]); cur.pos[i].x += side[i] * (wOpen * .5 * a.sc + wHalf * wHalf * D); cur.pos[i].y -= wHalf * .6 * a.sc; cur.col[i].copy(A.col[i]); cur.size[i] = A.size[i]; }
+        if (s < .57) { // the sphere lands at s = .14: the sheet parts from the seam outwards like water, a ripple runs out, then the halves glide off
+          const ax = waveAx[i], oi = sstep(s, .14 + ax * .1, .3 + ax * .1), dip = Math.sin(oi * Math.PI) * (1 - ax) * .32 * a.sc;
+          const ring = (s - .14) * 7 - waveR[i], ripple = s > .14 ? Math.sin(ring * 9) * Math.exp(-ring * ring * 6) * .08 * a.sc * (1 - sstep(s, .3, .45)) : 0;
+          cur.pos[i].copy(A.pos[i]); cur.pos[i].x += side[i] * (oi * .42 * a.sc + wHalf * wHalf * D); cur.pos[i].y += ripple - dip - wHalf * .6 * a.sc; cur.col[i].copy(A.col[i]); cur.size[i] = A.size[i]; }
         else { const o = (1 - wBack) * (1 - wBack) * D; cur.pos[i].copy(Wb.pos[i]); cur.pos[i].x += side[i] * o;
           if (curl > 0) { cur.pos[i].lerp(B.pos[i], curl); cur.pos[i].y += Math.sin(curl * Math.PI) * .5 * b.sc; }
           cur.col[i].copy(Wb.col[i]).lerp(B.col[i], curl); cur.size[i] = THREE.MathUtils.lerp(Wb.size[i], B.size[i], curl); } } }
@@ -338,7 +341,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     let n = 0; const put = (x, y, al) => { if (al <= .01) return; const p = cur.pos[x], q = cur.pos[y]; _c.copy(cur.col[x]).multiplyScalar(al * .55);
       lp.set([p.x, p.y, p.z, q.x, q.y, q.z], n * 6); lc.set([_c.r, _c.g, _c.b, _c.r, _c.g, _c.b], n * 6); n++; };
     const rodFade = (st_) => 1 - (G.rods[st_] || 0) * .75;
-    if (j === 0) { F[0].edges.forEach(([x, y]) => put(x, y, (side[x] === side[y] ? 1 : s < .55 ? 1 - sstep(wOpen, 0, .15) : sstep(wBack, .94, 1)) * (1 - sstep(Math.max(ki[x], ki[y]), 0, .15))));
+    if (j === 0) { F[0].edges.forEach(([x, y]) => put(x, y, (side[x] === side[y] ? 1 : s < .57 ? 1 - sstep(wOpen, 0, .15) : sstep(wBack, .94, 1)) * (1 - sstep(Math.max(ki[x], ki[y]), 0, .15))));
       F[1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .85, 1))); }
     else if (ending) F[0].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .7, 1)));
     else { F[Math.min(j, 5)].edges.forEach(([x, y]) => put(x, y, (last5 ? 1 : 1 - sstep(Math.max(kiL[x], kiL[y]), 0, .12)) * rodFade(j)));
@@ -386,11 +389,13 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     // ch. 3 → 4: it travels with the dots and lands as the chandelier's chip; ch. 4 → 5: it travels alone and becomes the lock's heart
     const local = (m, x, y, z) => V(x, y, z).applyMatrix4(m);
     let pos = V(), core = .12, shellR = .34, vis = 1, travel = 0, colG = 0;
-    if (j === 0) { // it floats on the wave, bobbing with it; scrolling pushes it down through the sheet, which parts round it
-      const rest = Math.sin(-t * 1.8) * .22 - .25 + .36, under = -1.4, sink = sstep(s, .04, .3), u = sstep(s, .3, .95); travel = u;
-      if (s < .3) pos = local(a.m, 0, THREE.MathUtils.lerp(rest, under, e3(sink)), 0);
-      else { const P0 = local(a.m, 0, under, 0); pos = bez2(P0, mid.clone().multiplyScalar(2).sub(P0.clone().add(b.centre).multiplyScalar(.5)), b.centre, u); }
-      core = THREE.MathUtils.lerp(.12, .15, u); shellR = THREE.MathUtils.lerp(.34, .3, u); }
+    if (j === 0) { // it floats above the wave without touching it (user request, Oct 1); scrolling drops it onto the sheet, which parts,
+      // it falls through, and it follows the middle fibre down to chapter 0
+      const waveC = Math.sin(-t * 1.8) * .22 - .25, rest = waveC + 1.45 + Math.sin(t * 1.3) * .06, under = -1.5;
+      const fall = sstep(s, .03, .14), through = sstep(s, .14, .32), ride = sstep(s, .28, .46), arrive = sstep(s, .8, 1);
+      pos = local(a.m, 0, THREE.MathUtils.lerp(THREE.MathUtils.lerp(rest, waveC, fall * fall), under, through), 0)
+        .lerp(onWire(midWire, yv, V()), e3(ride)).lerp(b.centre, e3(arrive));
+      travel = Math.min(ride, 1 - arrive); core = THREE.MathUtils.lerp(.12, .15, arrive); shellR = THREE.MathUtils.lerp(.34, .3, arrive); }
     else if (j === 1 || j === 2) { pos = j === 1 ? a.centre : V().setFromMatrixPosition(station(1, F[1].rot(t, 1))); core = .15; shellR = .3; vis = j === 1 ? 1 : 0; }
     else if (j === 3) { pos = b.centre; core = .16 * grow; shellR = 0; vis = grow > .01 ? 1 : 0; }
     else if (ending) { // it rides inside the lock to the footer; when the lock opens it turns amber again and comes to rest on the wave
