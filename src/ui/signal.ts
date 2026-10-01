@@ -258,6 +258,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
   let rebuild = 0; const ro = new ResizeObserver(() => { clearTimeout(rebuild); rebuild = window.setTimeout(resize, 200); }); ro.observe(document.body); resize();
 
   const e3 = (x) => x * x * (3 - 2 * x), bez2 = (a, c, b, u) => { const w = 1 - u; return V().addScaledVector(a, w * w).addScaledVector(c, 2 * w * u).addScaledVector(b, u * u); };
+  const fract7 = (x) => { const v = x * 7; return v - Math.floor(v); }, FIB_A = new THREE.Color(1.6, .95, .4), FIB_B = new THREE.Color(.6, .95, 2); // (as the fibre shader: uA amber, uB blue)
   const ki = new Float32Array(N), kiL = new Float32Array(N), tu = new Float32Array(N); // arrived, left, place on its thread
   let t = 0, last = performance.now(), trailInit = false, shakeT0 = null, grow = 0, raf = 0, frames = 0, slow = 0, sampled = 0, level = 0;
   // (user decision: keep the glow; sharpness goes first, then fewer pixels still, and the glow only as a last resort)
@@ -280,7 +281,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     const L1 = clamp(H * .6 / gap, .08, .4), L2 = clamp(H * .8 / gap, .1, .45), kLeave = sstep(s, 0, L1), kArr = sstep(s, 1 - L2, 1);
     const pOf = (q) => clamp((H - st[q].top) / (H + st[q].h), 0, 1); // 0 as a slot enters the screen, 1 as it leaves (as before)
     // it rides on the fibres that run down the page (user request, Oct 1): each thread of dots on its own fibre, the sphere on the middle one
-    const yv = -(sy + H / 2) * unit, Lt = H * unit * .72, nW = wires.length, wireOf = (q) => Math.round((.2 + .6 * (q + .5) / STR) * (nW - 1)), midWire = (nW - 1) >> 1;
+    const yv = -(sy + H / 2) * unit, Lt = H * unit * 1.5, nW = wires.length, midWire = (nW - 1) >> 1;
     const flow = still ? 0 : t * .04 + (sy / H) * .35; // dots stream down their threads with time and with your scroll
 
     // ch. 3: once the dots have formed, they tumble for a second, then the liquid sphere grows from the middle
@@ -316,13 +317,14 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
         const l = e3(clamp(kLeave * (1 + spread) - order[i] * spread, 0, 1)), r = e3(clamp(kArr * (1 + spread) - order[i] * spread, 0, 1));
         kiL[i] = l; ki[i] = r;
         // its place on its thread: threads hang down the path, gently waving, the dots streaming along them
-        const u = (order[i] + flow) % 1;
-        tu[i] = u; onWire(wireOf(strand(i)), yv + (.5 - u) * Lt, T);
-        const fade = Math.sin(u * Math.PI); // (thinner at the ends of the threads)
+        // spread over every fibre, spaced out along it, so the dots read as the fibres' own pulses of light (user request, Oct 1)
+        const w = i % nW, u = (Math.floor(i / nW) / Math.ceil(N / nW) + rnd(i + 5) * .04 + flow * (1 + (w % 3) * .15)) % 1;
+        tu[i] = u; onWire(w, yv + (.5 - u) * Lt, T);
+        const fade = Math.sin(u * Math.PI), tw = .7 + .3 * Math.sin(t * 3 + i); // (dim at the ends, a little shimmer)
         cur.pos[i].copy(A.pos[i]).lerp(T, l).lerp(B.pos[i], r);
-        _c.copy(AMBER).multiplyScalar(.45 + fade * .5).lerp(WHITE, .25);
+        _c.copy(fract7(w / nW) < .5 ? FIB_A : FIB_B).multiplyScalar((.5 + fade * .9) * tw); // the fibre's own pulse colour
         cur.col[i].copy(A.col[i]).lerp(_c, l).lerp(B.col[i], r);
-        cur.size[i] = THREE.MathUtils.lerp(THREE.MathUtils.lerp(A.size[i], (.012 + fade * .022) * Math.max(a.sc, b.sc), l), B.size[i], r); } }
+        cur.size[i] = THREE.MathUtils.lerp(THREE.MathUtils.lerp(A.size[i], (.006 + fade * .01) * Math.max(a.sc, b.sc), l), B.size[i], r); } }
     for (let i = 0; i < N; i++) { _m4.compose(cur.pos[i], _q.identity(), _s.setScalar(cur.size[i])); beads.setMatrixAt(i, _m4); beads.setColorAt(i, cur.col[i]); }
     beads.instanceMatrix.needsUpdate = true; beads.instanceColor.needsUpdate = true;
 
@@ -333,10 +335,7 @@ export async function mountSignal(slots: HTMLElement[]): Promise<() => void> {
     if (j === 0) { F[0].edges.forEach(([x, y]) => put(x, y, (side[x] === side[y] ? 1 : s < .55 ? 1 - sstep(wOpen, 0, .15) : sstep(wBack, .94, 1)) * (1 - sstep(Math.max(ki[x], ki[y]), 0, .15))));
       F[1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .85, 1))); }
     else { F[Math.min(j, 5)].edges.forEach(([x, y]) => put(x, y, (last5 ? 1 : 1 - sstep(Math.max(kiL[x], kiL[y]), 0, .12)) * rodFade(j)));
-      if (!last5) { F[j + 1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .88, 1) * rodFade(j + 1)));
-        // the threads themselves: each dot joined to the next one down its strand
-        for (let i = 0; i + STR < N; i++) { const p = kiL[i] * (1 - ki[i]), q = kiL[i + STR] * (1 - ki[i + STR]);
-          if (Math.abs(tu[i] - tu[i + STR]) < .2) put(i, i + STR, sstep(Math.min(p, q), .6, 1) * .8); } } }
+      if (!last5) F[j + 1].edges.forEach(([x, y]) => put(x, y, sstep(Math.min(ki[x], ki[y]), .88, 1) * rodFade(j + 1))); } // (in flight they ride inside the fibres: no lines)
     lg.setDrawRange(0, n * 2); lg.attributes.position.needsUpdate = lg.attributes.color.needsUpdate = true;
 
     // ---------- the pieces' solid parts ----------
