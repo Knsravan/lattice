@@ -4,7 +4,7 @@
 
 Quantum computers will break the encryption most of the internet uses today. The replacement — lattice-based cryptography, standardised as ML-KEM (Kyber) — is built on a puzzle almost nobody outside the field understands: *find the nearest dot in a grid that has hundreds of dimensions.* This site lets you play with that grid until it clicks.
 
-**Live:** https://knsravan.github.io/lattice/
+**Live:** https://lattice-world.vercel.app/ (also https://knsravan.github.io/lattice/)
 
 Five scenes, one page, nothing to install:
 
