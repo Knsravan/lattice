@@ -92,6 +92,12 @@ function build() {
     {},
     el("span", { text: "Lattice · built in September 2026 · " }),
     el("a", { href: "https://github.com/Knsravan/lattice", text: "source on GitHub" }),
+    el("span", { text: " · " }),
+    el("a", { href: "/faq", text: "FAQ" }),
+    el("span", { text: " · " }),
+    el("a", { href: "/privacy", text: "Privacy" }),
+    el("span", { text: " · " }),
+    el("a", { href: "/terms", text: "Terms" }),
   );
   // the end: the 3D stage's last piece (the title wave, back again) sits beside the footer
   app.append(el("div", { class: "finale" }, el("div", { class: "slot", "data-slot": "end", "aria-hidden": "true" }), footer));
