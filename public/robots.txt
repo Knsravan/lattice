@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lattice-world.vercel.app/sitemap.xml
