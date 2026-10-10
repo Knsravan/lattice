@@ -180,4 +180,4 @@
 - After approval: repo Settings → Pages → Custom domain `lattice.eu.org`, then Enforce HTTPS (the site deploys with a workflow, so a CNAME file is not used). Not before: the github.io URL would redirect to a name that doesn't resolve yet.
 
 ## Vercel (Oct 10)
-- The eu.org request was still pending after 10 days, so the user chose Vercel. `vercel.json` sets install (`npm install --no-save typescript`), build (`npm run build`) and output (`dist`). Import the repo at vercel.com; every push to `main` then redeploys. The GitHub Pages workflow is kept as a backup. The eu.org / `lattice.eu.org` notes above are on hold.
+- Live at https://lattice-world.vercel.app (deployed Oct 10). The eu.org request was still pending after 10 days, so the user chose Vercel. `vercel.json` sets install (`npm install --no-save typescript`), build (`npm run build`) and output (`dist`). Import the repo at vercel.com; every push to `main` then redeploys. The GitHub Pages workflow is kept as a backup. The eu.org / `lattice.eu.org` notes above are on hold.
