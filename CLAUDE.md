@@ -18,7 +18,7 @@ A curious 15-year-old, or an adult developer who has never studied cryptography.
 - No frameworks. Vanilla DOM + a small hand-written scroll/scene manager.
 - Static files live in `public/` and are copied to `dist/` by `npm run build`. `npm run serve` previews `dist/` on port 5173.
 - Deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main` (installs only `typescript` globally).
-- Zero backend, zero accounts, zero analytics, zero external API calls other than the Three.js CDN.
+- Zero backend, zero accounts. Exception (user decision, Oct 10): optional Google Analytics 4 in `public/analytics.js`, off until a Measurement ID is set, Consent Mode "denied" (no cookies). Otherwise no external calls except the Three.js CDN. Static pages `faq`, `privacy`, `terms`, `404` live in `public/` (shared `page.css`); `vercel.json` has `cleanUrls`.
 - Why: the build machine has no npm/GitHub network access, and fewer moving parts = fewer surprises before the deadline.
 
 ### Repository layout
