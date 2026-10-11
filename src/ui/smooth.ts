@@ -3,9 +3,13 @@ import { reducedMotion, clamp } from "./dom.ts";
 /**
  * The page's own scroll feel, on computers with a mouse or trackpad.
  *
- * The wheel, the keyboard (arrows, Page Up/Down, Space, Home/End) and in-page links (nav dots, "scroll to start")
- * set a target, and the page glides there with an ease-out instead of jumping. It still scrolls the real window,
- * so sticky pictures, the story steps and the browser's own features (find, back/forward) keep working.
+ * The wheel and the keyboard (arrows, Page Up/Down, Space) move a target, and the page travels there at its own
+ * pace: it speeds up gently, never goes faster than about one screen a second, and eases to a stop. A hard flick
+ * and a gentle one feel the same (user request Oct 11: "it should not be fast or slow", so every 3D piece's motion
+ * is seen): each wheel event counts for at most a fixed step, and the target never runs more than a little ahead.
+ * In-page links (nav dots, "scroll to start") and Home/End travel straight to their place with an ease.
+ * It still scrolls the real window, so sticky pictures, the story steps and the browser's own features (find,
+ * back/forward) keep working.
  *
  * Left alone: touch screens (their native flick is already smooth), reduced motion, pinch/ctrl-zoom, anything a
  * scene has already handled (e.g. zooming the 3D view), and the wheel over an element that scrolls by itself.
@@ -16,8 +20,11 @@ export function mountSmoothScroll(): () => void {
   const root = document.documentElement;
   root.style.scrollBehavior = "auto"; // we animate; the browser's own smooth scroll would fight us
 
-  let target = scrollY, current = scrollY;
+  let target = scrollY, current = scrollY, vel = 0;
   let raf = 0, last = 0;
+  const maxSpeed = () => innerHeight * 1.0; // px per second: one screen a second at most
+  const lead = () => innerHeight * 0.9;     // how far the target may run ahead of the page (a Page Down still fits)
+  const STEP = 100;                         // the most one wheel event can add (a mouse notch is about this)
   let tween: { from: number; to: number; start: number; dur: number; dest?: HTMLElement } | null = null;
   const max = () => root.scrollHeight - innerHeight;
 
@@ -29,9 +36,15 @@ export function mountSmoothScroll(): () => void {
       const u = clamp((now - tween.start) / tween.dur, 0, 1);
       current = tween.from + (tween.to - tween.from) * (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
       if (u >= 1) { tween = null; target = current; }
+      vel = 0;
     } else {
-      current += (target - current) * (1 - Math.exp(-dt * 9));
-      if (Math.abs(target - current) < 0.5) current = target;
+      // head for the target at a speed that grows with the distance but never passes maxSpeed; change speed gently
+      const gap = target - current;
+      const want = clamp(gap * 5, -maxSpeed(), maxSpeed());
+      vel += (want - vel) * (1 - Math.exp(-dt * 7));
+      const next = current + vel * dt;
+      if (Math.abs(gap) < 0.5 || Math.sign(target - next) !== Math.sign(gap)) { current = target; vel = 0; }
+      else current = next;
     }
     scrollTo(0, current);
     if (tween || current !== target) raf = requestAnimationFrame(loop);
@@ -40,8 +53,9 @@ export function mountSmoothScroll(): () => void {
   const run = () => { if (!raf) raf = requestAnimationFrame(loop); };
   const glideBy = (d: number) => {
     if (tween) { target = tween.to; tween = null; }
-    if (!raf) current = scrollY;
+    if (!raf) { current = scrollY; vel = 0; }
     target = clamp(target + d, 0, max());
+    target = clamp(target, current - lead(), current + lead());
     run();
   };
   const travelTo = (y: number, dest?: HTMLElement) => {
@@ -53,7 +67,7 @@ export function mountSmoothScroll(): () => void {
   };
 
   // the page moved by other means (scrollbar keys we don't handle, find-in-page, back/forward): follow it
-  const onScroll = () => { if (!raf) { target = current = scrollY; } };
+  const onScroll = () => { if (!raf) { target = current = scrollY; vel = 0; } };
 
   const scrollsItself = (node: EventTarget | null, dy: number): boolean => {
     for (let n = node as HTMLElement | null; n && n !== document.body && n !== root; n = n.parentElement) {
@@ -69,7 +83,7 @@ export function mountSmoothScroll(): () => void {
     if (scrollsItself(e.target, e.deltaY)) return;
     e.preventDefault();
     const unit = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? innerHeight : 1;
-    glideBy(e.deltaY * unit);
+    glideBy(Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY * unit), STEP)); // a hard flick counts no more than a notch
   };
 
   const typing = (n: Element | null) =>
