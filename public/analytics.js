@@ -1,7 +1,7 @@
 // Google Analytics 4. Off until a Measurement ID is set below (looks like "G-XXXXXXXXXX").
 // Consent Mode starts at "denied": Google stores no cookies and only receives cookieless pings.
 // If you change this, update privacy.html to match.
-var GA_ID = "";
+var GA_ID = "G-CER8G1JMFG";
 if (GA_ID) {
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };
